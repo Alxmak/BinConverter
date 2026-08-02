@@ -2,12 +2,12 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public static class AppLogger
     {
         public static string LogFilePath { get; } =
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BinConverter.log.txt");
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TweakFirmware.log.txt");
 
         private static readonly object _lock = new();
 

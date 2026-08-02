@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public static class HashHelper
     {

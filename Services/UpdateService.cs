@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace BinConverter.Services
+namespace TweakFirmware.Services
 {
     public class UpdateCheckResult
     {
@@ -23,8 +23,8 @@ namespace BinConverter.Services
     /// </summary>
     public static class UpdateService
     {
-        // ЗАМЕНИ на свои значения после публикации репозитория на GitHub —
-        // например "ivanov" и "BinConverter".
+        // Имя репозитория на GitHub — не переименовывается вместе с программой,
+        // иначе проверка обновлений будет ходить по несуществующему адресу.
         private const string GitHubOwner = "Alxmak";
         private const string GitHubRepo = "BinConverter";
 
@@ -34,7 +34,7 @@ namespace BinConverter.Services
         {
             var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             // GitHub API требует обязательный User-Agent, иначе отвечает 403.
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("BinConverter", GetCurrentVersion()));
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TweakFirmware", GetCurrentVersion()));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
             return client;
         }

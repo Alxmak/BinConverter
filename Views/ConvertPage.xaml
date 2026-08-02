@@ -1,9 +1,8 @@
-<Page x:Class="BinConverter.Views.ConvertPage"
+<Page x:Class="TweakFirmware.Views.ConvertPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="Конвертирование"
-      PreviewMouseWheel="Page_PreviewMouseWheel">
+      Title="Конвертирование">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -30,10 +29,39 @@
             <Setter Property="Margin" Value="0,0,0,12"/>
         </Style>
 
-        <Style x:Key="PauseButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <!-- Пункт 2: у стандартного стиля кнопки WPF-UI фон при наведении/нажатии
+             переопределяется на цвет темы (в светлой теме — почти белый), из-за чего
+             белый текст этих кнопок становился невидимым. Свой шаблон меняет только
+             прозрачность, а не сам цвет фона, — Foreground/Background остаются как заданы. -->
+        <Style x:Key="SolidButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="18,9"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PauseButtonStyle" TargetType="Button" BasedOn="{StaticResource SolidButtonStyle}">
             <Setter Property="Background" Value="#F2A93B"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsPaused}" Value="True">
@@ -109,7 +137,8 @@
                                  Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
                                  IsEnabled="{Binding IsCustomPreset}"
                                  PreviewTextInput="LimitTextBox_PreviewTextInput"
-                                 DataObject.Pasting="LimitTextBox_Pasting"/>
+                                 DataObject.Pasting="LimitTextBox_Pasting"
+                                 TextChanged="LimitTextBox_TextChanged"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -191,13 +220,12 @@
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="▶ Начать конвертирование" Command="{Binding StartCommand}"
-                                Background="#2F6FED" Foreground="White" FontWeight="SemiBold"
-                                Padding="18,9" Margin="0,0,10,0"/>
+                        <Button Content="▶ Начать" Command="{Binding StartCommand}"
+                                Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,10,0"/>
                         <Button Content="{Binding PauseButtonText}" Command="{Binding TogglePauseCommand}"
                                 Style="{StaticResource PauseButtonStyle}" IsEnabled="{Binding CanPause}" Margin="0,0,10,0"/>
                         <Button Content="✕ Отмена" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
-                                Background="#E5484D" Foreground="White" FontWeight="SemiBold" Padding="18,9"/>
+                                Style="{StaticResource SolidButtonStyle}" Background="#E5484D"/>
                     </StackPanel>
 
                     <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" Margin="0,10,0,0"/>

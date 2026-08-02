@@ -1,9 +1,8 @@
-<Page x:Class="BinConverter.Views.AboutPage"
+<Page x:Class="TweakFirmware.Views.AboutPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="О программе"
-      PreviewMouseWheel="Page_PreviewMouseWheel">
+      Title="О программе">
 
     <Page.Resources>
         <Style x:Key="CardStyle" TargetType="Border">
@@ -32,11 +31,11 @@
                             <GradientStop Color="#5B93FF" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
-                    <TextBlock Text="B" Foreground="White" FontSize="20" FontWeight="Bold"
+                    <TextBlock Text="T" Foreground="White" FontSize="20" FontWeight="Bold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="BinConverter" FontSize="20" FontWeight="SemiBold"/>
+                    <TextBlock Text="Tweak Firmware" FontSize="20" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding VersionText}" FontSize="12" Opacity="0.6"/>
                 </StackPanel>
             </StackPanel>

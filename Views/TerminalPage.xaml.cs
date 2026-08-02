@@ -1,6 +1,6 @@
 using System.Windows.Controls;
 
-namespace BinConverter.Views
+namespace TweakFirmware.Views
 {
     public partial class TerminalPage : Page
     {

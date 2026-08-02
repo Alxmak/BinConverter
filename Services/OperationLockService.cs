@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace BinConverter.Services
+namespace TweakFirmware.Services
 {
     /// <summary>
     /// Единая на всё приложение точка правды "идёт ли сейчас операция" (разбиение или сборка).

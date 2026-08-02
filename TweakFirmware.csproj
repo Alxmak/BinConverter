@@ -6,10 +6,10 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>BinConverter</AssemblyName>
-    <RootNamespace>BinConverter</RootNamespace>
+    <AssemblyName>TweakFirmware</AssemblyName>
+    <RootNamespace>TweakFirmware</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <ApplicationTitle>BinConverter</ApplicationTitle>
+    <ApplicationTitle>Tweak Firmware</ApplicationTitle>
     <Version>2.0.0</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
@@ -19,20 +19,20 @@
     <!-- Папка тестового проекта лежит внутри этой же директории — явно исключаем её,
          иначе SDK-стиль проекта автоматически подхватит .cs файлы тестов и в основную
          программу тоже (а там нет ссылки на xUnit -> ошибки CS0246 про FactAttribute). -->
-    <Compile Remove="BinConverter.Tests\**" />
-    <EmbeddedResource Remove="BinConverter.Tests\**" />
-    <None Remove="BinConverter.Tests\**" />
-    <Page Remove="BinConverter.Tests\**" />
+    <Compile Remove="TweakFirmware.Tests\**" />
+    <EmbeddedResource Remove="TweakFirmware.Tests\**" />
+    <None Remove="TweakFirmware.Tests\**" />
+    <Page Remove="TweakFirmware.Tests\**" />
 
-    <!-- Папка BinConverter.Core теперь отдельный проект — тоже исключаем из этой сборки. -->
-    <Compile Remove="BinConverter.Core\**" />
-    <EmbeddedResource Remove="BinConverter.Core\**" />
-    <None Remove="BinConverter.Core\**" />
-    <Page Remove="BinConverter.Core\**" />
+    <!-- Папка TweakFirmware.Core теперь отдельный проект — тоже исключаем из этой сборки. -->
+    <Compile Remove="TweakFirmware.Core\**" />
+    <EmbeddedResource Remove="TweakFirmware.Core\**" />
+    <None Remove="TweakFirmware.Core\**" />
+    <Page Remove="TweakFirmware.Core\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="BinConverter.Core\BinConverter.Core.csproj" />
+    <ProjectReference Include="TweakFirmware.Core\TweakFirmware.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

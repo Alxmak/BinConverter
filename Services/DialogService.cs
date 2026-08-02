@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace BinConverter.Services
+namespace TweakFirmware.Services
 {
     public enum DialogChoice { Primary, Secondary, Close }
 

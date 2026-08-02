@@ -1,9 +1,9 @@
 using System.Windows;
-using BinConverter.Core;
-using BinConverter.Services;
-using BinConverter.Views;
+using TweakFirmware.Core;
+using TweakFirmware.Services;
+using TweakFirmware.Views;
 
-namespace BinConverter
+namespace TweakFirmware
 {
     public partial class App : Application
     {

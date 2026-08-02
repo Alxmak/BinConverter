@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>BinConverter.Tests</RootNamespace>
+    <RootNamespace>TweakFirmware.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +18,7 @@
   <ItemGroup>
     <!-- Ссылаемся на библиотеку с логикой (Core), а не на само WPF-приложение —
          так надёжнее и не вызывает конфликтов сборки. -->
-    <ProjectReference Include="..\BinConverter.Core\BinConverter.Core.csproj" />
+    <ProjectReference Include="..\TweakFirmware.Core\TweakFirmware.Core.csproj" />
   </ItemGroup>
 
 </Project>

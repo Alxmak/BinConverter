@@ -10,11 +10,11 @@ using System.Windows;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using BinConverter.Core;
-using BinConverter.Models;
-using BinConverter.Services;
+using TweakFirmware.Core;
+using TweakFirmware.Models;
+using TweakFirmware.Services;
 
-namespace BinConverter.ViewModels
+namespace TweakFirmware.ViewModels
 {
     public partial class ConvertViewModel : ObservableObject
     {
@@ -85,12 +85,21 @@ namespace BinConverter.ViewModels
         /// но метод оставлен для совместимости точки вызова из code-behind.</summary>
         public void Detach() { }
 
-        private static string GetDefaultOutputFolder() =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BinConverter", "New firmware files");
+        private static string GetDefaultOutputFolder() => OutputPathSettingsService.GetConvertFolder();
 
         private long CurrentLimitBytes =>
             SelectedPreset?.MaxPartSizeBytes
-            ?? (long.TryParse(CustomLimitBytesText.Replace(" ", ""), out var bytes) && bytes > 0 ? bytes : 0);
+            ?? (long.TryParse(DigitsOnly(CustomLimitBytesText), out var bytes) && bytes > 0 ? bytes : 0);
+
+        // Пункт 3: поле лимита показывает разряды с разделителем (как в "Общая информация"),
+        // поэтому для разбора значения сначала убираем всё, кроме цифр.
+        private static string DigitsOnly(string text)
+        {
+            var sb = new StringBuilder(text.Length);
+            foreach (char c in text)
+                if (char.IsDigit(c)) sb.Append(c);
+            return sb.ToString();
+        }
 
         partial void OnSelectedPresetChanged(ProgrammerPreset value)
         {
@@ -157,7 +166,7 @@ namespace BinConverter.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "BinConverter.log.txt" };
+            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
@@ -170,16 +179,21 @@ namespace BinConverter.ViewModels
 
         // ============================= Предпросмотр =============================
 
+        // Пункт 5: строки всегда на экране — до выбора файла напротив них прочерк.
+        private const string NoValuePlaceholder = "—";
+
         private void UpdatePreview()
         {
             long limit = CurrentLimitBytes;
 
-            if (!File.Exists(SourcePath) || limit <= 0)
+            if (!File.Exists(SourcePath))
             {
-                GeneralInfoText = "";
+                GeneralInfoText =
+                    $"Размер исходного файла: {NoValuePlaceholder}\n" +
+                    $"Ожидаемое количество файлов: {NoValuePlaceholder}";
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = "";
+                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
                 return;
             }
 
@@ -187,10 +201,12 @@ namespace BinConverter.ViewModels
 
             if (limit < 1024)
             {
-                GeneralInfoText = "Введите корректный размер части (минимум 1024 байта)";
+                GeneralInfoText =
+                    $"Размер исходного файла: {SizeFormatHelper.Format(size)}\n" +
+                    $"Ожидаемое количество файлов: {NoValuePlaceholder} (введите корректный размер части, минимум 1024 байта)";
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = "";
+                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
                 return;
             }
 
@@ -203,7 +219,7 @@ namespace BinConverter.ViewModels
                     $"Ожидаемое количество файлов: {count:N0} (слишком много для отображения по отдельности)";
                 _expectedFileCount = count;
                 ShowExpandButton = false;
-                DisplayedFilesText = "";
+                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
                 return;
             }
 
@@ -222,7 +238,7 @@ namespace BinConverter.ViewModels
 
         private void RebuildFilesText()
         {
-            if (_expectedFileCount == 0) { DisplayedFilesText = ""; return; }
+            if (_expectedFileCount == 0) { DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}"; return; }
 
             int toShow = ShowAllFiles ? _expectedFileCount : Math.Min(CollapsedFileListCount, _expectedFileCount);
 
@@ -298,7 +314,7 @@ namespace BinConverter.ViewModels
             PauseButtonText = "⏸ Приостановить";
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
             StatusText = "Конвертирование начато...";
-            AppLogger.Log($"=== Начало конвертирования: {SourcePath} -> {outFolder}\\{baseName} (макс. {limit:N0} байт/файл) ===");
+            AppLogger.Log($"Начало конвертирования: {SourcePath} -> {outFolder}\\{baseName} (макс. {limit:N0} байт/файл)");
 
             var createdFiles = new List<string>();
             long totalWorkBytes = sourceInfo.Length * (VerifyHashAfter ? 2 : 1);
@@ -334,7 +350,7 @@ namespace BinConverter.ViewModels
                     SourcePath, outFolder, baseName, limit, VerifyHashAfter,
                     splitProgress, AppLogger.Log, _cts.Token, createdFiles, hashProgress, _pauseController));
 
-                AppLogger.Log($"=== Конвертирование завершено. Файлов: {result.PartsCreated}, всего байт: {result.TotalBytes:N0} ===");
+                AppLogger.Log($"Конвертирование завершено. Файлов: {result.PartsCreated}, всего байт: {result.TotalBytes:N0}");
 
                 bool safeToDeleteSource = !result.VerifyPerformed || result.HashesMatch;
 
@@ -386,7 +402,7 @@ namespace BinConverter.ViewModels
             catch (OperationCanceledException)
             {
                 StatusText = "Отмена — удаление незавершённых файлов...";
-                AppLogger.Log("=== Конвертирование отменено пользователем ===");
+                AppLogger.Log("Конвертирование отменено пользователем");
                 CleanupCreatedFiles(createdFiles);
                 StatusText = "Отменено. Незавершённые файлы удалены.";
                 await DialogService.ShowInfoAsync("Отменено", $"Конвертирование отменено.\nУдалено незавершённых файлов: {createdFiles.Count}");

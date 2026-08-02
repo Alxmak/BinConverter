@@ -6,9 +6,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using BinConverter.ViewModels;
+using TweakFirmware.ViewModels;
 
-namespace BinConverter.Views
+namespace TweakFirmware.Views
 {
     public partial class ConvertPage : Page
     {
@@ -21,13 +21,30 @@ namespace BinConverter.Views
             InitializeComponent();
             DataContext = _viewModel;
             Unloaded += (_, _) => _viewModel.Detach();
+
+            // Пункт 10: подписываемся с handledEventsToo=true — иначе колесо мыши работает
+            // только тогда, когда родительский NavigationView/Frame ещё не пометил событие
+            // обработанным (на практике это давало скролл только над самим скроллбаром).
+            AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler(Page_PreviewMouseWheel), true);
         }
 
-        // Пункт 6: колесо мыши прокручивает страницу из любой точки, а не только над скроллбаром.
         private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // Пункт 13: над журналом должен скроллиться сам список, а не вся страница.
+            if (IsWithinListBox(e.OriginalSource as DependencyObject)) return;
+
             RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
             e.Handled = true;
+        }
+
+        private static bool IsWithinListBox(DependencyObject? source)
+        {
+            while (source != null)
+            {
+                if (source is ListBox) return true;
+                source = source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+            }
+            return false;
         }
 
         // Пункт 15: drag&drop работает только над строкой выбора исходного файла,
@@ -45,6 +62,36 @@ namespace BinConverter.Views
         }
 
         // ============================= Только цифры в поле лимита =============================
+
+        // Пункт 3: показываем байты с разбивкой по разрядам, как в "Общая информация"
+        // (SizeFormatHelper тоже использует "N0"). Разбираем/собираем значение вручную,
+        // чтобы курсор не "прыгал" при появлении новых разделителей.
+        private bool _formattingLimit;
+
+        private void LimitTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_formattingLimit) return;
+            var tb = (TextBox)sender;
+
+            string digits = new string(tb.Text.Where(char.IsDigit).ToArray());
+            string formatted = digits.Length > 0 && long.TryParse(digits, out var n) ? n.ToString("N0") : digits;
+
+            if (formatted == tb.Text) return;
+
+            int digitsBeforeCaret = tb.Text.Take(tb.CaretIndex).Count(char.IsDigit);
+
+            _formattingLimit = true;
+            tb.Text = formatted;
+
+            int newCaret = 0, seen = 0;
+            while (newCaret < formatted.Length && seen < digitsBeforeCaret)
+            {
+                if (char.IsDigit(formatted[newCaret])) seen++;
+                newCaret++;
+            }
+            tb.CaretIndex = newCaret;
+            _formattingLimit = false;
+        }
 
         private void LimitTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {

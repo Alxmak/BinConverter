@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public static class FileConflictHelper
     {

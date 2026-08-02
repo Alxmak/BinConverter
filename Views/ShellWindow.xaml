@@ -1,9 +1,9 @@
-<ui:FluentWindow x:Class="BinConverter.Views.ShellWindow"
+<ui:FluentWindow x:Class="TweakFirmware.Views.ShellWindow"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                 xmlns:views="clr-namespace:BinConverter.Views"
-                 Title="BinConverter — UFPI ↔ TNM5000"
+                 xmlns:views="clr-namespace:TweakFirmware.Views"
+                 Title="Tweak Firmware — UFPI ↔ TNM5000"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
@@ -16,11 +16,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="BinConverter" Icon="{ui:SymbolIcon ArrowSplit24}"/>
+        <ui:TitleBar Grid.Row="0" Title="Tweak Firmware" Icon="{ui:SymbolIcon ArrowSplit24}"/>
 
         <ui:NavigationView Grid.Row="1" x:Name="RootNavigation"
                             IsBackButtonVisible="Collapsed"
-                            IsPaneToggleVisible="False"
+                            IsPaneToggleVisible="True"
                             OpenPaneLength="210">
 
             <!-- Пункт 5: пока где-то идёт операция (IsNotBusy=false), пункты меню недоступны —
