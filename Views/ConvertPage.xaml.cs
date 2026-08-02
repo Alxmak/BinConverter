@@ -1,0 +1,113 @@
+using System;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
+using BinConverter.ViewModels;
+
+namespace BinConverter.Views
+{
+    public partial class ConvertPage : Page
+    {
+        private readonly ConvertViewModel _viewModel = new();
+        private Popup? _toastPopup;
+        private DispatcherTimer? _toastTimer;
+
+        public ConvertPage()
+        {
+            InitializeComponent();
+            DataContext = _viewModel;
+            Unloaded += (_, _) => _viewModel.Detach();
+        }
+
+        // Пункт 6: колесо мыши прокручивает страницу из любой точки, а не только над скроллбаром.
+        private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
+
+        // Пункт 15: drag&drop работает только над строкой выбора исходного файла,
+        // а не над всей страницей.
+        private void SourceRow_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private void SourceRow_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
+                _viewModel.SetSource(files[0]);
+        }
+
+        // ============================= Только цифры в поле лимита =============================
+
+        private void LimitTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!e.Text.All(char.IsDigit))
+            {
+                e.Handled = true;
+                ShowInvalidInputToast((TextBox)sender, "Разрешены только цифры");
+            }
+        }
+
+        private void LimitTextBox_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string text = (string)e.DataObject.GetData(typeof(string))!;
+                if (!text.All(char.IsDigit))
+                {
+                    e.CancelCommand();
+                    ShowInvalidInputToast((TextBox)sender, "Разрешены только цифры");
+                }
+            }
+            else
+            {
+                e.CancelCommand();
+            }
+        }
+
+        private void ShowInvalidInputToast(FrameworkElement anchor, string message)
+        {
+            if (_toastPopup == null)
+            {
+                var border = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(0x33, 0x38, 0x3F)),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 6, 10, 6)
+                };
+                var text = new TextBlock { Foreground = Brushes.White, FontSize = 12 };
+                border.Child = text;
+
+                _toastPopup = new Popup
+                {
+                    Child = border,
+                    Placement = PlacementMode.Bottom,
+                    PlacementTarget = anchor,
+                    AllowsTransparency = true,
+                    StaysOpen = true,
+                    VerticalOffset = 4
+                };
+            }
+
+            ((TextBlock)((Border)_toastPopup.Child).Child).Text = message;
+            _toastPopup.PlacementTarget = anchor;
+            _toastPopup.IsOpen = true;
+
+            _toastTimer?.Stop();
+            _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1300) };
+            _toastTimer.Tick += (_, _) =>
+            {
+                _toastPopup!.IsOpen = false;
+                _toastTimer!.Stop();
+            };
+            _toastTimer.Start();
+        }
+    }
+}
