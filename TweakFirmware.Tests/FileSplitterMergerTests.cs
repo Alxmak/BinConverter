@@ -500,5 +500,184 @@ namespace TweakFirmware.Tests
             Assert.Equal(hash1, hash2);
             Assert.Equal(64, hash1.Length); // SHA-256 в hex = 64 символа
         }
+
+        // ===================== Некорректные входные данные =====================
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Split_InvalidMaxPartSize_ThrowsArgumentOutOfRangeException(long invalidLimit)
+        {
+            string source = CreateRandomFile("invalid_limit.bin", 1024);
+            string outFolder = Path.Combine(_tempDir, "invalid_limit_out");
+
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+                FileSplitter.SplitAsync(source, outFolder, "emmc.bin", invalidLimit,
+                    verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None));
+        }
+
+        [Fact]
+        public void CalculateExpectedPartCount_InvalidMaxPartSize_ThrowsArgumentOutOfRangeException()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => FileSplitter.CalculateExpectedPartCount(1000, 0));
+        }
+
+        [Fact]
+        public async Task Split_SourceFileMissing_ThrowsFileNotFoundException()
+        {
+            string missingSource = Path.Combine(_tempDir, "does_not_exist.bin");
+            string outFolder = Path.Combine(_tempDir, "missing_source_out");
+
+            await Assert.ThrowsAsync<FileNotFoundException>(() =>
+                FileSplitter.SplitAsync(missingSource, outFolder, "emmc.bin", 1024,
+                    verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None));
+        }
+
+        [Fact]
+        public void HashHelper_FindPartChain_ThrowsWhenBaseFileMissing()
+        {
+            string basePath = Path.Combine(_tempDir, "no_such_base.bin");
+            Assert.Throws<FileNotFoundException>(() => HashHelper.FindPartChain(basePath));
+        }
+
+        // ===================== Сборка: повреждённые/пропущенные/лишние файлы =====================
+
+        [Fact]
+        public async Task Merge_CorruptedPart_ProducesDifferentHashThanOriginal()
+        {
+            // Ядро не обязано само детектировать повреждение — это делает сверка хэшей
+            // на уровне UI. Здесь фиксируем именно это: результат молча собирается,
+            // но его хэш отличается от хэша исходного файла.
+            string source = CreateRandomFile("corrupt_source.bin", 3 * 1024 * 1024);
+            string outFolder = Path.Combine(_tempDir, "corrupt_out");
+            long maxPartSize = 1 * 1024 * 1024;
+
+            await FileSplitter.SplitAsync(source, outFolder, "emmc.bin", maxPartSize,
+                verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            string corruptedPart = Path.Combine(outFolder, "emmc.bin.part1");
+            byte[] bytes = await File.ReadAllBytesAsync(corruptedPart);
+            bytes[0] = (byte)~bytes[0]; // портим один байт
+            await File.WriteAllBytesAsync(corruptedPart, bytes);
+
+            string mergedPath = Path.Combine(_tempDir, "corrupt_merged.bin");
+            var mergeResult = await FileMerger.MergeAsync(Path.Combine(outFolder, "emmc.bin"), mergedPath,
+                progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            string sourceHash = await HashHelper.ComputeFileHashAsync(source);
+            Assert.NotEqual(sourceHash, mergeResult.MergedHash);
+        }
+
+        [Fact]
+        public async Task Merge_MissingMiddlePart_StopsAtGap_ProducesTruncatedFile()
+        {
+            string source = CreateRandomFile("gap_source.bin", 4 * 1024 * 1024);
+            string outFolder = Path.Combine(_tempDir, "gap_out");
+            long maxPartSize = 1 * 1024 * 1024; // ожидаем base + part1..part3
+
+            await FileSplitter.SplitAsync(source, outFolder, "emmc.bin", maxPartSize,
+                verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            File.Delete(Path.Combine(outFolder, "emmc.bin.part2")); // part3 остаётся, но недостижим
+
+            string mergedPath = Path.Combine(_tempDir, "gap_merged.bin");
+            var mergeResult = await FileMerger.MergeAsync(Path.Combine(outFolder, "emmc.bin"), mergedPath,
+                progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            Assert.Equal(2, mergeResult.PartsUsed); // base + part1, part2/part3 не попали в цепочку
+            Assert.Equal(maxPartSize * 2, mergeResult.TotalBytes);
+            Assert.True(new FileInfo(mergedPath).Length < new FileInfo(source).Length,
+                "Результат должен быть короче оригинала — часть данных пропущена");
+        }
+
+        [Fact]
+        public async Task Merge_ExtraUnrelatedFilesInFolder_AreIgnored()
+        {
+            string source = CreateRandomFile("extra_source.bin", 2 * 1024 * 1024);
+            string outFolder = Path.Combine(_tempDir, "extra_out");
+            long maxPartSize = 1 * 1024 * 1024;
+
+            await FileSplitter.SplitAsync(source, outFolder, "emmc.bin", maxPartSize,
+                verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            // Файлы, не подходящие под шаблон "emmc.bin" / "emmc.bin.partN", не должны влиять на сборку
+            File.WriteAllText(Path.Combine(outFolder, "notes.txt"), "не часть цепочки");
+            File.WriteAllBytes(Path.Combine(outFolder, "emmc.bin.backup"), new byte[] { 1, 2, 3 });
+
+            string mergedPath = Path.Combine(_tempDir, "extra_merged.bin");
+            var mergeResult = await FileMerger.MergeAsync(Path.Combine(outFolder, "emmc.bin"), mergedPath,
+                progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            string sourceHash = await HashHelper.ComputeFileHashAsync(source);
+            Assert.Equal(sourceHash, mergeResult.MergedHash);
+        }
+
+        [Fact]
+        public async Task Merge_SingleFileNoParts_ReturnsSameBytes()
+        {
+            string source = CreateRandomFile("single_source.bin", 128 * 1024);
+            string basePath = Path.Combine(_tempDir, "single_base.bin");
+            File.Copy(source, basePath);
+
+            string mergedPath = Path.Combine(_tempDir, "single_merged.bin");
+            var mergeResult = await FileMerger.MergeAsync(basePath, mergedPath,
+                progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            Assert.Equal(1, mergeResult.PartsUsed);
+            string sourceHash = await HashHelper.ComputeFileHashAsync(source);
+            Assert.Equal(sourceHash, mergeResult.MergedHash);
+        }
+
+        [Fact]
+        public async Task Merge_CancelledMidway_CreatedFileTrackedAndIncomplete()
+        {
+            string source = CreateRandomFile("merge_cancel_source.bin", 6 * 1024 * 1024);
+            string outFolder = Path.Combine(_tempDir, "merge_cancel_out");
+            long maxPartSize = 1 * 1024 * 1024;
+
+            await FileSplitter.SplitAsync(source, outFolder, "emmc.bin", maxPartSize,
+                verifyHash: false, progress: null, log: _ => { }, ct: CancellationToken.None);
+
+            string mergedPath = Path.Combine(_tempDir, "merge_cancel_merged.bin");
+            var createdFiles = new List<string>();
+            var cts = new CancellationTokenSource();
+
+            var progress = new Progress<MergeProgress>(p =>
+            {
+                if (p.CurrentFileIndex >= 3) cts.Cancel();
+            });
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                FileMerger.MergeAsync(Path.Combine(outFolder, "emmc.bin"), mergedPath,
+                    progress, log: _ => { }, ct: cts.Token, createdFilePaths: createdFiles));
+
+            Assert.Single(createdFiles);
+            Assert.True(File.Exists(mergedPath));
+            Assert.True(new FileInfo(mergedPath).Length < new FileInfo(source).Length,
+                "Файл результата на момент отмены должен быть короче исходного — сборка прервана до конца");
+        }
+
+        // ===================== DiskSpaceHelper: нехватка места =====================
+
+        [Fact]
+        public void DiskSpaceHelper_CheckSpace_DetectsInsufficientSpace()
+        {
+            // Запрашиваем заведомо больше места, чем есть на любом реальном диске
+            var result = DiskSpaceHelper.CheckSpace(_tempDir, dataSizeBytes: long.MaxValue / 4);
+
+            Assert.False(result.HasEnoughSpace);
+            Assert.True(result.MissingBytes > 0);
+        }
+
+        // ===================== SizeFormatHelper: дополнительные границы =====================
+
+        [Theory]
+        [InlineData(0L, "МБ")]
+        [InlineData(1024L * 1024 * 1024 - 1, "МБ")] // на 1 байт меньше 1 ГБ — ещё МБ
+        public void SizeFormatHelper_Format_BoundaryValues_UseCorrectUnit(long bytes, string expectedUnit)
+        {
+            string result = SizeFormatHelper.Format(bytes);
+            Assert.Contains(expectedUnit, result);
+        }
     }
 }
