@@ -9,10 +9,10 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using BinConverter.Core;
-using BinConverter.Services;
+using TweakFirmware.Core;
+using TweakFirmware.Services;
 
-namespace BinConverter.ViewModels
+namespace TweakFirmware.ViewModels
 {
     public partial class MergeViewModel : ObservableObject
     {
@@ -73,9 +73,8 @@ namespace BinConverter.ViewModels
 
                 if (string.IsNullOrWhiteSpace(OutputPath))
                 {
-                    string dir = Path.GetDirectoryName(basePath) ?? "";
                     string name = Path.GetFileNameWithoutExtension(basePath) + "_merged" + Path.GetExtension(basePath);
-                    OutputPath = Path.Combine(dir, name);
+                    OutputPath = Path.Combine(OutputPathSettingsService.GetMergeFolder(), name);
                 }
             }
             catch (Exception ex)
@@ -99,7 +98,7 @@ namespace BinConverter.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "BinConverter.log.txt" };
+            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
@@ -170,7 +169,7 @@ namespace BinConverter.ViewModels
             PauseButtonText = "⏸ Приостановить";
             OverallProgress = 0; CurrentFileProgress = 0;
             StatusText = "Сборка начата...";
-            AppLogger.Log($"=== Начало сборки: {SourcePath} -> {output} ===");
+            AppLogger.Log($"Начало сборки: {SourcePath} -> {output}");
 
             var createdFiles = new List<string>();
 
@@ -190,7 +189,7 @@ namespace BinConverter.ViewModels
             {
                 var result = await Task.Run(() => FileMerger.MergeAsync(SourcePath, output, progress, AppLogger.Log, _cts.Token, createdFiles, _pauseController));
 
-                AppLogger.Log($"=== Сборка завершена. Частей: {result.PartsUsed}, байт: {result.TotalBytes:N0} ===");
+                AppLogger.Log($"Сборка завершена. Частей: {result.PartsUsed}, байт: {result.TotalBytes:N0}");
                 AppLogger.Log($"SHA-256 результата: {result.MergedHash}");
 
                 string expected = ExpectedHashText.Trim();
@@ -224,7 +223,7 @@ namespace BinConverter.ViewModels
             catch (OperationCanceledException)
             {
                 StatusText = "Отмена — удаление незавершённого файла...";
-                AppLogger.Log("=== Сборка отменена пользователем ===");
+                AppLogger.Log("Сборка отменена пользователем");
                 CleanupCreatedFiles(createdFiles);
                 StatusText = "Отменено. Незавершённый файл удалён.";
                 await DialogService.ShowInfoAsync("Отменено", "Сборка отменена.\nНезавершённый файл результата удалён.");

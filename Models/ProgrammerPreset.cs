@@ -1,4 +1,4 @@
-namespace BinConverter.Models
+namespace TweakFirmware.Models
 {
     /// <summary>
     /// Пресет программатора — фиксированный лимит размера файла (например, TNM5000),

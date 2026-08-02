@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     /// <summary>
     /// Временно переводит процесс в "фоновый" режим Windows (Background Mode):

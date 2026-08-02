@@ -1,4 +1,4 @@
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public static class SizeFormatHelper
     {

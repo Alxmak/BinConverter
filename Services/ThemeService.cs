@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Wpf.Ui.Appearance;
 
-namespace BinConverter.Services
+namespace TweakFirmware.Services
 {
     public enum AppThemeMode { Light, Dark, System }
 
@@ -14,32 +14,41 @@ namespace BinConverter.Services
     public static class ThemeService
     {
         private static readonly string SettingsPath =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BinConverter", "theme.txt");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tweak Firmware", "theme.txt");
 
         public static AppThemeMode CurrentMode { get; private set; } = AppThemeMode.System;
 
         public static void Initialize()
         {
             CurrentMode = LoadSavedMode();
-            Apply(CurrentMode);
+            ApplicationTheme resolved = Resolve(CurrentMode);
+
+            // Пункт 2: App.xaml статически подключает тёмный словарь ресурсов (Theme="Dark").
+            // Если сохранённая тема тоже тёмная, ApplicationThemeManager считает, что тема
+            // не изменилась, и не проводит применение полностью — часть текста остаётся
+            // нечитаемой (чёрной) до первого ручного переключения темы. Поэтому сначала
+            // "переключаем" на противоположную тему, а затем — на нужную; это то же самое,
+            // что временное ручное переключение, которым пользователи обходили баг вручную.
+            ApplicationThemeManager.Apply(resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
+            ApplicationThemeManager.Apply(resolved);
+            SaveMode(CurrentMode);
         }
 
         public static void Apply(AppThemeMode mode)
         {
             CurrentMode = mode;
-
-            ApplicationTheme theme = mode switch
-            {
-                AppThemeMode.Light => ApplicationTheme.Light,
-                AppThemeMode.Dark => ApplicationTheme.Dark,
-                _ => ApplicationThemeManager.GetSystemTheme() == SystemTheme.Dark
-                    ? ApplicationTheme.Dark
-                    : ApplicationTheme.Light
-            };
-
-            ApplicationThemeManager.Apply(theme);
+            ApplicationThemeManager.Apply(Resolve(mode));
             SaveMode(mode);
         }
+
+        private static ApplicationTheme Resolve(AppThemeMode mode) => mode switch
+        {
+            AppThemeMode.Light => ApplicationTheme.Light,
+            AppThemeMode.Dark => ApplicationTheme.Dark,
+            _ => ApplicationThemeManager.GetSystemTheme() == SystemTheme.Dark
+                ? ApplicationTheme.Dark
+                : ApplicationTheme.Light
+        };
 
         private static AppThemeMode LoadSavedMode()
         {

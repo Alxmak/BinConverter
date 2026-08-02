@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     /// <summary>
     /// Позволяет приостанавливать и возобновлять длительную операцию (разбиение/сборку)

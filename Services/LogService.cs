@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using BinConverter.Core;
+using TweakFirmware.Core;
 
-namespace BinConverter.Services
+namespace TweakFirmware.Services
 {
     /// <summary>
     /// Единственный на всё приложение источник строк журнала. Подписка на AppLogger

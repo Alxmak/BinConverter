@@ -19,11 +19,11 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Восстановить зависимости
-        run: dotnet restore BinConverter.csproj
+        run: dotnet restore TweakFirmware.csproj
 
       - name: Собрать один exe-файл (self-contained, win-x64)
         run: >
-          dotnet publish BinConverter.csproj
+          dotnet publish TweakFirmware.csproj
           -c Release
           -r win-x64
           --self-contained true
@@ -32,13 +32,13 @@ jobs:
           -o ./publish
 
       - name: Упаковать в zip
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./BinConverter-${{ github.ref_name }}-win-x64.zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
         shell: pwsh
 
       - name: Создать релиз на GitHub
         uses: softprops/action-gh-release@v2
         with:
-          files: ./BinConverter-${{ github.ref_name }}-win-x64.zip
+          files: ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

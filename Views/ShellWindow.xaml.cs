@@ -1,8 +1,8 @@
 using System.Windows;
-using BinConverter.Services;
+using TweakFirmware.Services;
 using Wpf.Ui.Controls;
 
-namespace BinConverter.Views
+namespace TweakFirmware.Views
 {
     public partial class ShellWindow : FluentWindow
     {
@@ -10,7 +10,9 @@ namespace BinConverter.Views
         {
             InitializeComponent();
             DataContext = OperationLockService.Instance;
+            WindowPlacementService.Restore(this);
             Loaded += (_, _) => RootNavigation.Navigate(typeof(ConvertPage));
+            Closing += (_, _) => WindowPlacementService.Save(this);
         }
     }
 }

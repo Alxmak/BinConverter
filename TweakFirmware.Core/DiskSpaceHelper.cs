@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public readonly struct SpaceCheckResult
     {

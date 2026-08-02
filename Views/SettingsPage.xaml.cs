@@ -1,8 +1,8 @@
 using System.Windows.Controls;
 using System.Windows.Input;
-using BinConverter.ViewModels;
+using TweakFirmware.ViewModels;
 
-namespace BinConverter.Views
+namespace TweakFirmware.Views
 {
     public partial class SettingsPage : Page
     {
@@ -10,6 +10,10 @@ namespace BinConverter.Views
         {
             InitializeComponent();
             DataContext = new SettingsViewModel();
+
+            // Пункт 10: handledEventsToo=true — иначе колесо мыши работает только
+            // тогда, когда родительский NavigationView/Frame не пометил событие обработанным.
+            AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler(Page_PreviewMouseWheel), true);
         }
 
         private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

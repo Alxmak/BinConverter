@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using BinConverter.Core;
+using TweakFirmware.Core;
 using Xunit;
 
-namespace BinConverter.Tests
+namespace TweakFirmware.Tests
 {
     /// <summary>
     /// Тесты ядра конвертера: разбиение, сборка, хэши.
@@ -19,7 +19,7 @@ namespace BinConverter.Tests
 
         public FileSplitterMergerTests()
         {
-            _tempDir = Path.Combine(Path.GetTempPath(), "BinConverterTests_" + Guid.NewGuid().ToString("N"));
+            _tempDir = Path.Combine(Path.GetTempPath(), "TweakFirmwareTests_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
         }
 

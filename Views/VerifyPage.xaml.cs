@@ -1,9 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using BinConverter.ViewModels;
+using System.Windows.Media;
+using TweakFirmware.ViewModels;
 
-namespace BinConverter.Views
+namespace TweakFirmware.Views
 {
     public partial class VerifyPage : Page
     {
@@ -13,12 +14,29 @@ namespace BinConverter.Views
         {
             InitializeComponent();
             DataContext = _viewModel;
+
+            // Пункт 10: handledEventsToo=true — иначе колесо мыши работает только
+            // тогда, когда родительский NavigationView/Frame не пометил событие обработанным.
+            AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler(Page_PreviewMouseWheel), true);
         }
 
         private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // Пункт 13: над журналом должен скроллиться сам список, а не вся страница.
+            if (IsWithinListBox(e.OriginalSource as DependencyObject)) return;
+
             RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
             e.Handled = true;
+        }
+
+        private static bool IsWithinListBox(DependencyObject? source)
+        {
+            while (source != null)
+            {
+                if (source is ListBox) return true;
+                source = source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
+            }
+            return false;
         }
 
         private void Row_DragOver(object sender, DragEventArgs e)

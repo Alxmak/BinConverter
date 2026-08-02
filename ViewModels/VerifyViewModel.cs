@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using BinConverter.Core;
-using BinConverter.Services;
+using TweakFirmware.Core;
+using TweakFirmware.Services;
 
-namespace BinConverter.ViewModels
+namespace TweakFirmware.ViewModels
 {
     public partial class VerifyViewModel : ObservableObject
     {
@@ -70,7 +70,7 @@ namespace BinConverter.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "BinConverter.log.txt" };
+            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
@@ -94,7 +94,7 @@ namespace BinConverter.ViewModels
             IsBusy = true;
             HasResult = false;
             OverallProgress = 0;
-            AppLogger.Log($"=== Сравнение хэшей: {FileAPath}  vs  {FileBPath} ===");
+            AppLogger.Log($"Сравнение хэшей: {FileAPath}  vs  {FileBPath}");
 
             try
             {

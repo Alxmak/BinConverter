@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using BinConverter.Services;
+using TweakFirmware.Services;
 
-namespace BinConverter.ViewModels
+namespace TweakFirmware.ViewModels
 {
     public partial class AboutViewModel : ObservableObject
     {

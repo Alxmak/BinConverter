@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BinConverter.Core
+namespace TweakFirmware.Core
 {
     public class SplitResult
     {
