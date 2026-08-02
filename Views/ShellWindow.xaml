@@ -6,9 +6,7 @@
                  Title="Tweak Firmware — UFPI ↔ TNM5000"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
-                 ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="Mica"
-                 WindowCornerPreference="Round">
+                 ExtendsContentIntoTitleBar="True">
 
     <Grid>
         <Grid.RowDefinitions>

@@ -31,14 +31,44 @@ namespace TweakFirmware.Services
 
                 if (width < window.MinWidth || height < window.MinHeight) return;
 
-                window.WindowStartupLocation = WindowStartupLocation.Manual;
-                window.Left = left;
-                window.Top = top;
                 window.Width = width;
                 window.Height = height;
+
+                // Пункт 2: если сохранённые координаты были на мониторе, который сейчас
+                // отключён (или разрешение/расстановка мониторов изменилась), окно может
+                // оказаться полностью за пределами видимой области — тогда оставляем
+                // WindowStartupLocation по умолчанию (окно центрируется на текущем экране),
+                // но размер всё равно восстанавливаем.
+                if (FitsOnCurrentScreens(left, top, width, height))
+                {
+                    window.WindowStartupLocation = WindowStartupLocation.Manual;
+                    window.Left = left;
+                    window.Top = top;
+                }
+
                 window.WindowState = state == WindowState.Minimized ? WindowState.Normal : state;
             }
             catch { /* используем размеры и положение по умолчанию, если не удалось прочитать */ }
+        }
+
+        /// <summary>
+        /// Хотя бы небольшая часть окна (достаточная, чтобы за неё можно было ухватиться
+        /// мышью и перетащить обратно) должна попадать в объединённую область всех сейчас
+        /// подключённых мониторов.
+        /// </summary>
+        private static bool FitsOnCurrentScreens(double left, double top, double width, double height)
+        {
+            const double MinVisible = 80;
+
+            double vLeft = SystemParameters.VirtualScreenLeft;
+            double vTop = SystemParameters.VirtualScreenTop;
+            double vRight = vLeft + SystemParameters.VirtualScreenWidth;
+            double vBottom = vTop + SystemParameters.VirtualScreenHeight;
+
+            double visibleWidth = Math.Min(left + width, vRight) - Math.Max(left, vLeft);
+            double visibleHeight = Math.Min(top + height, vBottom) - Math.Max(top, vTop);
+
+            return visibleWidth >= MinVisible && visibleHeight >= MinVisible;
         }
 
         public static void Save(Window window)
