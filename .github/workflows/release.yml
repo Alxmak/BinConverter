@@ -31,14 +31,33 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o ./publish
 
-      - name: Упаковать в zip
+      - name: Упаковать в zip (портативная версия)
         run: Compress-Archive -Path ./publish/* -DestinationPath ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
         shell: pwsh
+
+      - name: Определить версию для установщика
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Установить Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Собрать установщик (Inno Setup)
+        shell: pwsh
+        # choco кладёт "shim" iscc.exe в C:\ProgramData\chocolatey\bin, который уже
+        # входит в PATH на GitHub-раннерах — отдельно искать путь к Inno Setup не нужно.
+        run: iscc /DMyAppVersion=${{ steps.version.outputs.value }} installer\Setup.iss
 
       - name: Создать релиз на GitHub
         uses: softprops/action-gh-release@v2
         with:
-          files: ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
+          files: |
+            ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
+            ./installer-output/*.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
