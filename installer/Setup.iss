@@ -36,6 +36,19 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 ; Программа не подписана цифровой подписью — это ожидаемо для небольшой
 ; программы для личного использования (см. README/"О программе").
 
+; Установка в профиль текущего пользователя, без прав администратора — {autopf}
+; и {group}/{autodesktop} выше сами превращаются в пользовательские эквиваленты
+; (%LocalAppData%\Programs, Меню Пуск/Рабочий стол текущего пользователя), когда
+; PrivilegesRequired=lowest. Без этого при каждом автообновлении показывался бы
+; запрос UAC — а обновление должно проходить полностью без действий пользователя.
+PrivilegesRequired=lowest
+; На случай, если exe всё же остался запущен к моменту копирования файлов
+; (авто-обновление само закрывает программу перед запуском установщика, но это
+; подстраховка) — Setup сам закроет процесс, а не покажет ошибку "файл занят".
+; Обратно не перезапускаем — этим занимается секция [Run] ниже.
+CloseApplications=yes
+RestartApplications=no
+
 [Languages]
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
@@ -53,4 +66,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+; Без skipifsilent: при автообновлении установка проходит в тихом режиме (/VERYSILENT),
+; и программу всё равно нужно перезапустить самостоятельно — интерактивного мастера
+; с чекбоксом "Запустить программу" в этом режиме просто не будет.
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall

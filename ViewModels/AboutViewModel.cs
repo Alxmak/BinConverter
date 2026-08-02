@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Services;
@@ -22,15 +21,20 @@ namespace TweakFirmware.ViewModels
             versionText = $"Версия {UpdateService.GetCurrentVersion()}";
         }
 
+        // Пункт 5: та же логика, что и фоновая ежедневная проверка — если обновление
+        // найдено, дальше им занимается общий баннер в ShellWindow (скачивание и тихая
+        // установка), а не диалог с переходом в браузер, как было раньше.
         [RelayCommand(CanExecute = nameof(CanCheck))]
         private async System.Threading.Tasks.Task CheckForUpdatesAsync()
         {
             IsChecking = true;
             UpdateStatusText = "Проверка...";
 
-            var result = await UpdateService.CheckForUpdateAsync();
+            var result = await UpdateManager.Instance.CheckNowAsync();
 
             IsChecking = false;
+
+            if (result == null) return;
 
             if (result.ErrorMessage != null)
             {
@@ -39,22 +43,9 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            if (result.UpdateAvailable)
-            {
-                UpdateStatusText = $"Доступна новая версия: {result.LatestVersion}";
-                var choice = await DialogService.ShowConfirmAsync(
-                    "Доступно обновление",
-                    $"Текущая версия: {result.CurrentVersion}\nНовая версия: {result.LatestVersion}\n\nОткрыть страницу загрузки?",
-                    "Открыть", null, "Позже");
-
-                if (choice == DialogChoice.Primary && !string.IsNullOrEmpty(result.ReleaseUrl))
-                    Process.Start(new ProcessStartInfo { FileName = result.ReleaseUrl, UseShellExecute = true });
-            }
-            else
-            {
-                UpdateStatusText = "У вас последняя версия.";
-                await DialogService.ShowInfoAsync("Проверка обновлений", $"У вас установлена последняя версия ({result.CurrentVersion}).");
-            }
+            UpdateStatusText = result.UpdateAvailable
+                ? $"Доступна новая версия: {result.LatestVersion} (см. уведомление сверху)"
+                : "У вас последняя версия.";
         }
     }
 }
