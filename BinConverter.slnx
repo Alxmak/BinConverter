@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BinConverter.csproj" />
+  <Project Path="BinConverter.Core/BinConverter.Core.csproj" />
+  <Project Path="BinConverter.Tests/BinConverter.Tests.csproj" />
+</Solution>

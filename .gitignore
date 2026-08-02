@@ -1,0 +1,16 @@
+# Сборка
+bin/
+obj/
+publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Тестовые результаты
+TestResults/
+
+# Прочее
+*.log
+.DS_Store

@@ -1,0 +1,157 @@
+<Page x:Class="BinConverter.Views.MergePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Сборка файла"
+      PreviewMouseWheel="Page_PreviewMouseWheel">
+
+    <Page.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+        <Style x:Key="RowLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Opacity" Value="0.75"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style x:Key="RowGrid" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+        <Style x:Key="PauseButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="18,9"/>
+            <Setter Property="Background" Value="#F2A93B"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Background" Value="#16A34A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ProgressBarRounded" TargetType="ProgressBar">
+            <Setter Property="Height" Value="10"/>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
+        <StackPanel HorizontalAlignment="Stretch">
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+
+                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Любая часть цепочки" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding SourcePath}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseSourceCommand}"/>
+                    </Grid>
+
+                    <TextBlock Text="{Binding ChainInfoText}" FontSize="11" Opacity="0.6" TextWrapping="Wrap" Margin="190,-8,0,14"/>
+
+                    <Grid Style="{StaticResource RowGrid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Папка назначения" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding OutputPath}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseOutputCommand}"/>
+                    </Grid>
+
+                    <Grid Style="{StaticResource RowGrid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Ожидаемый SHA-256" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding ExpectedHashText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"
+                                 ToolTip="Если известен хэш оригинального файла — вставьте сюда для сверки"/>
+                    </Grid>
+
+                    <CheckBox Content="Открыть папку с результатом после завершения" IsChecked="{Binding OpenFolderAfter}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="Прогресс" Style="{StaticResource CardTitle}"/>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Общий прогресс сборки" Style="{StaticResource RowLabel}"/>
+                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
+                        </Border>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Прогресс текущего файла" Style="{StaticResource RowLabel}"/>
+                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}"/>
+                        </Border>
+                    </Grid>
+                    <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="▶ Начать сборку" Command="{Binding StartCommand}"
+                                Background="#2F6FED" Foreground="White" FontWeight="SemiBold"
+                                Padding="18,9" Margin="0,0,10,0"/>
+                        <Button Content="{Binding PauseButtonText}" Command="{Binding TogglePauseCommand}"
+                                Style="{StaticResource PauseButtonStyle}" IsEnabled="{Binding IsBusy}" Margin="0,0,10,0"/>
+                        <Button Content="✕ Отмена" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+                                Background="#E5484D" Foreground="White" FontWeight="SemiBold" Padding="18,9"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="18,16,18,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Журнал" Style="{StaticResource CardTitle}" Margin="0"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Content="Открыть" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="Сохранить" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="Очистить" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
+                        </StackPanel>
+                    </Grid>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="170" BorderThickness="0"
+                             FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

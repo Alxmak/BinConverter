@@ -1,0 +1,13 @@
+<Page x:Class="BinConverter.Views.TerminalPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Терминал">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
+            <ui:SymbolIcon Symbol="Info24" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
+            <TextBlock Text="Терминал" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <TextBlock Text="В разработке" TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7" Margin="0,8,0,0"/>
+        </StackPanel>
+    </Grid>
+</Page>

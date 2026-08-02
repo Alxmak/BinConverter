@@ -1,0 +1,44 @@
+name: Собрать и опубликовать релиз
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout кода
+        uses: actions/checkout@v4
+
+      - name: Установить .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Восстановить зависимости
+        run: dotnet restore BinConverter.csproj
+
+      - name: Собрать один exe-файл (self-contained, win-x64)
+        run: >
+          dotnet publish BinConverter.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o ./publish
+
+      - name: Упаковать в zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./BinConverter-${{ github.ref_name }}-win-x64.zip
+        shell: pwsh
+
+      - name: Создать релиз на GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./BinConverter-${{ github.ref_name }}-win-x64.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>BinConverter</AssemblyName>
+    <RootNamespace>BinConverter</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <ApplicationTitle>BinConverter</ApplicationTitle>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Папка тестового проекта лежит внутри этой же директории — явно исключаем её,
+         иначе SDK-стиль проекта автоматически подхватит .cs файлы тестов и в основную
+         программу тоже (а там нет ссылки на xUnit -> ошибки CS0246 про FactAttribute). -->
+    <Compile Remove="BinConverter.Tests\**" />
+    <EmbeddedResource Remove="BinConverter.Tests\**" />
+    <None Remove="BinConverter.Tests\**" />
+    <Page Remove="BinConverter.Tests\**" />
+
+    <!-- Папка BinConverter.Core теперь отдельный проект — тоже исключаем из этой сборки. -->
+    <Compile Remove="BinConverter.Core\**" />
+    <EmbeddedResource Remove="BinConverter.Core\**" />
+    <None Remove="BinConverter.Core\**" />
+    <Page Remove="BinConverter.Core\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="BinConverter.Core\BinConverter.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+</Project>
