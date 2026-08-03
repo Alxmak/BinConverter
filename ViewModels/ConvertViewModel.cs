@@ -155,13 +155,6 @@ namespace TweakFirmware.ViewModels
         }
 
         [RelayCommand]
-        private void CopyOutputPath()
-        {
-            try { Clipboard.SetText(OutputFolder); }
-            catch { /* буфер обмена иногда занят другим процессом — не критично */ }
-        }
-
-        [RelayCommand]
         private void ToggleExpand() => ShowAllFiles = !ShowAllFiles;
 
         // ============================= Журнал =============================
