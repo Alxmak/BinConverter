@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
+using TweakFirmware.Services;
 using TweakFirmware.ViewModels;
 
 namespace TweakFirmware.Views
@@ -23,21 +23,11 @@ namespace TweakFirmware.Views
 
         private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            // Пункт 13: над журналом должен скроллиться сам список, а не вся страница.
-            if (IsWithinListBox(e.OriginalSource as DependencyObject)) return;
+            // Пункт 13/доп.: журнал скроллится изолированно от страницы — см. LogScrollHelper.
+            if (LogScrollHelper.TryHandleListBoxWheel(e)) return;
 
             RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
             e.Handled = true;
-        }
-
-        private static bool IsWithinListBox(DependencyObject? source)
-        {
-            while (source != null)
-            {
-                if (source is ListBox) return true;
-                source = source is Visual ? VisualTreeHelper.GetParent(source) : LogicalTreeHelper.GetParent(source);
-            }
-            return false;
         }
 
         private void SourceRow_DragOver(object sender, DragEventArgs e)
