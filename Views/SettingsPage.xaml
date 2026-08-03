@@ -93,32 +93,34 @@
                 <ui:CardControl.Header>
                     <TextBlock Text="{loc:Loc Settings_DefaultFoldersTitle}" FontWeight="Medium"/>
                 </ui:CardControl.Header>
-                <CheckBox Content="{loc:Loc Settings_UseDefaultFolderCheckbox}" IsChecked="{Binding UseDefaultPaths}"/>
+                <StackPanel MinWidth="320">
+                    <CheckBox Content="{loc:Loc Settings_UseDefaultFolderCheckbox}" IsChecked="{Binding UseDefaultPaths}" Margin="0,0,0,10"/>
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
+                        <TextBox Grid.Column="1" Text="{Binding ConvertFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
+                                IsEnabled="{Binding CanEditCustomPaths}"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Merge_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
+                        <TextBox Grid.Column="1" Text="{Binding MergeFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
+                                IsEnabled="{Binding CanEditCustomPaths}"/>
+                    </Grid>
+                </StackPanel>
             </ui:CardControl>
-
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Loc Convert_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
-                <TextBox Grid.Column="1" Text="{Binding ConvertFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
-                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
-                        IsEnabled="{Binding CanEditCustomPaths}"/>
-            </Grid>
-
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Loc Merge_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
-                <TextBox Grid.Column="1" Text="{Binding MergeFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
-                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
-                        IsEnabled="{Binding CanEditCustomPaths}"/>
-            </Grid>
 
             <ui:CardControl Margin="0,0,0,4">
                 <ui:CardControl.Icon>
@@ -129,8 +131,6 @@
                 </ui:CardControl.Header>
                 <ui:Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearCacheCommand}"/>
             </ui:CardControl>
-            <TextBlock Text="{loc:Loc Settings_ClearCacheHint}"
-                       Opacity="0.6" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
         </StackPanel>
     </ScrollViewer>
 </Page>

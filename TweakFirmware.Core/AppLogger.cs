@@ -20,12 +20,15 @@ namespace TweakFirmware.Core
         /// </summary>
         public static event Action<string>? LogWritten;
 
+        private static string FormatTimestamp() =>
+            $"{Strings.Get("Log_TimestampLabel")}: {DateTime.Now:MM.dd.yyyy, HH:mm:ss}:";
+
         public static void Log(string message)
         {
             string line;
             lock (_lock)
             {
-                line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}";
+                line = $"{FormatTimestamp()} {message}";
                 File.AppendAllText(LogFilePath, line + Environment.NewLine);
             }
             LogWritten?.Invoke(line);
@@ -34,7 +37,7 @@ namespace TweakFirmware.Core
         public static void OpenLogFile()
         {
             if (!File.Exists(LogFilePath))
-                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {Strings.Get("Log_Created")}{Environment.NewLine}");
+                File.WriteAllText(LogFilePath, $"{FormatTimestamp()} {Strings.Get("Log_Created")}{Environment.NewLine}");
 
             Process.Start(new ProcessStartInfo
             {
@@ -43,12 +46,12 @@ namespace TweakFirmware.Core
             });
         }
 
-        /// <summary>Полностью очищает файл лога (используется функцией "Очистить кэш" в настройках).</summary>
+        /// <summary>Полностью очищает файл лога (используется функцией "Очистить кеш" в настройках).</summary>
         public static void ClearLog()
         {
             lock (_lock)
             {
-                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {Strings.Get("Log_Cleared")}{Environment.NewLine}");
+                File.WriteAllText(LogFilePath, $"{FormatTimestamp()} {Strings.Get("Log_Cleared")}{Environment.NewLine}");
             }
         }
     }

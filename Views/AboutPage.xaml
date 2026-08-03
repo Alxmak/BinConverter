@@ -44,11 +44,15 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc About_UpdatesTitle}" Style="{StaticResource CardTitle}"/>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="{loc:Loc About_CheckUpdatesButton}" Command="{Binding CheckForUpdatesCommand}" Margin="0,0,10,0"/>
-                        <TextBlock Text="{Binding UpdateStatusText}" VerticalAlignment="Center" Opacity="0.7" FontSize="12"/>
-                    </StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc About_UpdatesTitle}" Style="{StaticResource CardTitle}" Margin="0" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="{loc:Loc About_CheckUpdatesButton}" Command="{Binding CheckForUpdatesCommand}"/>
+                    </Grid>
+                    <TextBlock Text="{Binding UpdateStatusText}" Opacity="0.7" FontSize="12"/>
                 </StackPanel>
             </Border>
 
