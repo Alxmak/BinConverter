@@ -91,9 +91,28 @@
                             IsPaneToggleVisible="True"
                             OpenPaneLength="210">
 
+            <ui:NavigationView.Resources>
+                <!-- Пункты меню — серифным шрифтом (по образцу дизайна Claude), с фолбэком
+                     на стандартные шрифты Windows, если Cambria/Georgia недоступны. Цветовая
+                     гамма (акцент, фон выделенного пункта) — из текущей темы приложения,
+                     не переопределяется: WPF-UI сам привязывает подсветку выбранного пункта
+                     к системному/акцентному цвету темы. -->
+                <Style TargetType="{x:Type ui:NavigationViewItem}">
+                    <Setter Property="FontFamily" Value="Cambria, Georgia, Times New Roman"/>
+                </Style>
+                <Style TargetType="{x:Type ui:NavigationViewItemHeader}">
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="Margin" Value="12,14,12,4"/>
+                </Style>
+            </ui:NavigationView.Resources>
+
             <!-- Пункт 5: пока где-то идёт операция (IsNotBusy=false), пункты меню недоступны —
-                 переключение раздела больше не может сорвать активный процесс. -->
+                 переключение раздела больше не может сорвать активный процесс.
+                 Сгруппировано по образцу дизайна Claude: заголовки групп + разделитель. -->
             <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItemHeader Content="{loc:Loc Shell_ToolsGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavConvert}" Icon="{ui:SymbolIcon ArrowSplit24}"
                                         TargetPageType="{x:Type views:ConvertPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
@@ -109,16 +128,15 @@
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:TerminalPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-            </ui:NavigationView.MenuItems>
-
-            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItemSeparator/>
+                <ui:NavigationViewItemHeader Content="{loc:Loc Shell_SystemGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
                                         TargetPageType="{x:Type views:SettingsPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavAbout}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:AboutPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-            </ui:NavigationView.FooterMenuItems>
+            </ui:NavigationView.MenuItems>
 
         </ui:NavigationView>
     </Grid>
