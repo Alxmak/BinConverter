@@ -39,18 +39,6 @@ namespace TweakFirmware.Views
             e.Handled = true;
         }
 
-        private void SourcePathTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
-        {
-            string? path = ClipboardPathHelper.TryGetPath();
-            if (path != null) _viewModel.SetSource(path);
-        }
-
-        private void OutputFolderTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
-        {
-            string? path = ClipboardPathHelper.TryGetPath();
-            if (path != null) _viewModel.SetOutputFolder(path);
-        }
-
         // Пункт 15: drag&drop работает только над строкой выбора исходного файла,
         // а не над всей страницей.
         private void SourceRow_DragOver(object sender, DragEventArgs e)

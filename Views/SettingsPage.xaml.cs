@@ -1,6 +1,5 @@
 using System.Windows.Controls;
 using System.Windows.Input;
-using TweakFirmware.Services;
 using TweakFirmware.ViewModels;
 
 namespace TweakFirmware.Views
@@ -23,18 +22,6 @@ namespace TweakFirmware.Views
         {
             RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
             e.Handled = true;
-        }
-
-        private void ConvertFolderTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
-        {
-            string? path = ClipboardPathHelper.TryGetPath();
-            if (path != null) _viewModel.SetCustomConvertFolder(path);
-        }
-
-        private void MergeFolderTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
-        {
-            string? path = ClipboardPathHelper.TryGetPath();
-            if (path != null) _viewModel.SetCustomMergeFolder(path);
         }
     }
 }

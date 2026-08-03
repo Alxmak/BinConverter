@@ -111,6 +111,9 @@ namespace TweakFirmware.ViewModels
         }
 
         partial void OnCustomLimitBytesTextChanged(string value) => UpdatePreview();
+        // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
+        // предпросмотр должен обновляться и при прямом вводе, не только через SetSource.
+        partial void OnSourcePathChanged(string value) => UpdatePreview();
         partial void OnShowAllFilesChanged(bool value) => RebuildFilesText();
         partial void OnIsBusyChanged(bool value)
         {
@@ -135,7 +138,6 @@ namespace TweakFirmware.ViewModels
             }
 
             SourcePath = path;
-            UpdatePreview();
         }
 
         [RelayCommand]

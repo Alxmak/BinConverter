@@ -95,11 +95,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding SourcePath}" IsReadOnly="True" Margin="0,0,8,0">
-                            <TextBox.CommandBindings>
-                                <CommandBinding Command="ApplicationCommands.Paste" Executed="SourcePathTextBox_PasteExecuted"/>
-                            </TextBox.CommandBindings>
-                        </TextBox>
+                        <TextBox Grid.Column="1" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
@@ -110,11 +106,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding OutputFolder}" IsReadOnly="True" Margin="0,0,8,0">
-                            <TextBox.CommandBindings>
-                                <CommandBinding Command="ApplicationCommands.Paste" Executed="OutputFolderTextBox_PasteExecuted"/>
-                            </TextBox.CommandBindings>
-                        </TextBox>
+                        <TextBox Grid.Column="1" Text="{Binding OutputFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 

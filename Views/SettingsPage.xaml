@@ -101,12 +101,8 @@
                         <CheckBox Grid.Column="0" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"
                                   VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <TextBlock Grid.Column="1" Text="{loc:Loc Convert_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
-                        <TextBox Grid.Column="2" Text="{Binding ConvertFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditConvertPath}">
-                            <TextBox.CommandBindings>
-                                <CommandBinding Command="ApplicationCommands.Paste" Executed="ConvertFolderTextBox_PasteExecuted"/>
-                            </TextBox.CommandBindings>
-                        </TextBox>
+                        <TextBox Grid.Column="2" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                 IsEnabled="{Binding CanEditConvertPath}"/>
                         <Button Grid.Column="3" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                                 IsEnabled="{Binding CanEditConvertPath}"/>
                     </Grid>
@@ -121,12 +117,8 @@
                         <CheckBox Grid.Column="0" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"
                                   VerticalAlignment="Center" Margin="0,0,16,0"/>
                         <TextBlock Grid.Column="1" Text="{loc:Loc Merge_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
-                        <TextBox Grid.Column="2" Text="{Binding MergeFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditMergePath}">
-                            <TextBox.CommandBindings>
-                                <CommandBinding Command="ApplicationCommands.Paste" Executed="MergeFolderTextBox_PasteExecuted"/>
-                            </TextBox.CommandBindings>
-                        </TextBox>
+                        <TextBox Grid.Column="2" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                 IsEnabled="{Binding CanEditMergePath}"/>
                         <Button Grid.Column="3" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                                 IsEnabled="{Binding CanEditMergePath}"/>
                     </Grid>

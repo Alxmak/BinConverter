@@ -47,6 +47,10 @@ namespace TweakFirmware.ViewModels
 
         partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanStart));
 
+        // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
+        // цепочка частей должна пересчитываться и при прямом вводе, не только через SetSource.
+        partial void OnSourcePathChanged(string value) => TryResolveChain();
+
         [RelayCommand]
         private void BrowseSource()
         {
@@ -63,9 +67,13 @@ namespace TweakFirmware.ViewModels
             }
 
             SourcePath = path;
+        }
+
+        private void TryResolveChain()
+        {
             try
             {
-                string basePath = HashHelper.ResolveBasePath(path);
+                string basePath = HashHelper.ResolveBasePath(SourcePath);
                 var chain = HashHelper.FindPartChain(basePath);
                 long total = 0;
                 foreach (var f in chain) total += new FileInfo(f).Length;

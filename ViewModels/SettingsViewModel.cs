@@ -57,6 +57,19 @@ namespace TweakFirmware.ViewModels
             MergeFolder = OutputPathSettingsService.GetMergeFolder();
         }
 
+        // Пункт: поля путей теперь редактируются свободно (можно вставлять и печатать).
+        // Проверка "не в режиме по умолчанию" — иначе показ дефолтного пути при включённой
+        // галочке "Путь по умолчанию" затирал бы ранее сохранённый пользовательский путь.
+        partial void OnConvertFolderChanged(string value)
+        {
+            if (!UseDefaultConvertPath) OutputPathSettingsService.SetCustomConvertFolder(value);
+        }
+
+        partial void OnMergeFolderChanged(string value)
+        {
+            if (!UseDefaultMergePath) OutputPathSettingsService.SetCustomMergeFolder(value);
+        }
+
         [RelayCommand]
         private void SetTheme(string modeName)
         {
