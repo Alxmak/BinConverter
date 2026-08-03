@@ -22,6 +22,10 @@ namespace TweakFirmware
 
             var window = new ShellWindow();
             window.Show();
+
+            // Пункт 1/3: проверка обновлений — в фоне, не блокирует запуск, и не чаще
+            // одного раза в день (сама проверка частоты — внутри UpdateManager).
+            _ = UpdateManager.Instance.CheckOnStartupAsync();
         }
     }
 }

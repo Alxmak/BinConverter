@@ -3,20 +3,89 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:views="clr-namespace:TweakFirmware.Views"
+                 xmlns:services="clr-namespace:TweakFirmware.Services"
                  Title="Tweak Firmware — UFPI ↔ TNM5000"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True">
 
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Тот же приём, что и на страницах Конвертирования/Сборки/Проверки: у стандартного
+             стиля кнопки WPF-UI фон при наведении переопределяется цветом темы (в светлой
+             теме — почти белым), из-за чего белый текст становится не виден. -->
+        <Style x:Key="SolidButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:FluentWindow.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Title="Tweak Firmware" Icon="{ui:SymbolIcon ArrowSplit24}"/>
 
-        <ui:NavigationView Grid.Row="1" x:Name="RootNavigation"
+        <!-- Баннер автообновления: своя DataContext (UpdateManager), не зависит от
+             OperationLockService, который используется остальным окном. -->
+        <Border Grid.Row="1" DataContext="{x:Static services:UpdateManager.Instance}"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,0,0,1"
+                Padding="20,10"
+                Visibility="{Binding ShowUpdateBanner, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{Binding BannerText}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                    <Setter Property="Text" Value="{Binding StatusText}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Обновить сейчас" Command="{Binding UpdateNowCommand}"
+                            Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"/>
+                    <Button Content="Позже" Command="{Binding DismissCommand}" Padding="14,7"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ui:NavigationView Grid.Row="2" x:Name="RootNavigation"
                             IsBackButtonVisible="Collapsed"
                             IsPaneToggleVisible="True"
                             OpenPaneLength="210">

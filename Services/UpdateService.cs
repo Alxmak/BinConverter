@@ -1,8 +1,10 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TweakFirmware.Services
@@ -14,10 +16,16 @@ namespace TweakFirmware.Services
         public string? LatestVersion { get; init; }
         public string? ReleaseUrl { get; init; }
         public string? ErrorMessage { get; init; }
+
+        // Пункт: для автообновления нужна прямая ссылка на .exe-установщик из ассетов
+        // релиза, а не просто страница релиза (её пользователь не должен открывать сам).
+        public string? InstallerAssetUrl { get; init; }
+        public string? InstallerAssetName { get; init; }
     }
 
     /// <summary>
-    /// Сравнивает текущую версию программы с последним релизом на GitHub.
+    /// Сравнивает текущую версию программы с последним релизом на GitHub, и умеет
+    /// скачать сам файл установщика (используется автообновлением — см. UpdateManager).
     /// Использует публичный REST API GitHub (без токена — работает для публичных
     /// репозиториев и укладывается в лимит запросов без авторизации).
     /// </summary>
@@ -28,11 +36,19 @@ namespace TweakFirmware.Services
         private const string GitHubOwner = "Alxmak";
         private const string GitHubRepo = "BinConverter";
 
+        // Имя файла установщика без версии и расширения — должно совпадать
+        // с OutputBaseFilename в installer/Setup.iss.
+        private const string InstallerAssetPrefix = "TweakFirmwareSetup";
+
         private static readonly HttpClient _http = CreateClient();
 
         private static HttpClient CreateClient()
         {
-            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            // Без ограничения по времени на уровне клиента — скачивание установщика
+            // может занять больше, чем разумный таймаут для короткого запроса к API.
+            // Быстрый отказ для самого запроса к API обеспечивается отдельным
+            // CancellationToken с коротким таймаутом в CheckForUpdateAsync.
+            var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
             // GitHub API требует обязательный User-Agent, иначе отвечает 403.
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TweakFirmware", GetCurrentVersion()));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
@@ -51,8 +67,10 @@ namespace TweakFirmware.Services
 
             try
             {
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
                 string url = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
-                using var response = await _http.GetAsync(url);
+                using var response = await _http.GetAsync(url, timeoutCts.Token);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -63,8 +81,8 @@ namespace TweakFirmware.Services
                     };
                 }
 
-                using var stream = await response.Content.ReadAsStreamAsync();
-                using var doc = await JsonDocument.ParseAsync(stream);
+                using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: timeoutCts.Token);
                 var root = doc.RootElement;
 
                 string tagName = root.GetProperty("tag_name").GetString() ?? "";
@@ -75,12 +93,31 @@ namespace TweakFirmware.Services
                                TryParseVersion(current, out var currentVer) &&
                                latestVer > currentVer;
 
+                string? installerUrl = null;
+                string? installerName = null;
+                if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var asset in assets.EnumerateArray())
+                    {
+                        string name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "" : "";
+                        if (name.StartsWith(InstallerAssetPrefix, StringComparison.OrdinalIgnoreCase) &&
+                            name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        {
+                            installerUrl = asset.TryGetProperty("browser_download_url", out var urlProp2) ? urlProp2.GetString() : null;
+                            installerName = name;
+                            break;
+                        }
+                    }
+                }
+
                 return new UpdateCheckResult
                 {
                     UpdateAvailable = isNewer,
                     CurrentVersion = current,
                     LatestVersion = latest,
-                    ReleaseUrl = htmlUrl
+                    ReleaseUrl = htmlUrl,
+                    InstallerAssetUrl = installerUrl,
+                    InstallerAssetName = installerName
                 };
             }
             catch (Exception ex)
@@ -91,6 +128,34 @@ namespace TweakFirmware.Services
                     ErrorMessage = $"Не удалось проверить обновления: {ex.Message}"
                 };
             }
+        }
+
+        /// <summary>Скачивает файл установщика во временную папку и возвращает путь к нему.</summary>
+        public static async Task<string> DownloadInstallerAsync(
+            string url, string fileName, IProgress<double>? progress, CancellationToken ct)
+        {
+            string tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+            using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
+
+            long totalBytes = response.Content.Headers.ContentLength ?? -1;
+
+            await using var httpStream = await response.Content.ReadAsStreamAsync(ct);
+            await using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+
+            byte[] buffer = new byte[81920];
+            long totalRead = 0;
+            int read;
+            while ((read = await httpStream.ReadAsync(buffer.AsMemory(0, buffer.Length), ct)) > 0)
+            {
+                await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
+                totalRead += read;
+                if (totalBytes > 0)
+                    progress?.Report((double)totalRead / totalBytes * 100.0);
+            }
+
+            return tempPath;
         }
 
         private static bool TryParseVersion(string text, out Version version)
