@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
 {
@@ -18,7 +19,7 @@ namespace TweakFirmware.Core
             string fullPath = Path.GetFullPath(anyPathOnDrive);
             string? root = Path.GetPathRoot(fullPath);
             if (string.IsNullOrEmpty(root))
-                throw new IOException("Не удалось определить диск для пути: " + anyPathOnDrive);
+                throw new IOException(Strings.Format("Core_CannotDetermineDrive", anyPathOnDrive));
 
             var drive = new DriveInfo(root);
             return drive.AvailableFreeSpace;

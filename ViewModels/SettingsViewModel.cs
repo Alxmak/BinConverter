@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -13,10 +14,8 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty]
         private AppThemeMode currentTheme;
 
-        // Пункт 13: задел на будущую локализацию через .resx — сама настройка пока
-        // ни на что не влияет, только хранит выбор.
         [ObservableProperty]
-        private string selectedLanguage = "ru";
+        private string selectedLanguage;
 
         // Пункт 7: папки по умолчанию для «Конвертирования» и «Сборки файла».
         [ObservableProperty]
@@ -30,6 +29,7 @@ namespace TweakFirmware.ViewModels
         public SettingsViewModel()
         {
             currentTheme = ThemeService.CurrentMode;
+            selectedLanguage = LocalizationService.Instance.CurrentLanguage;
             useDefaultPaths = OutputPathSettingsService.UseDefaultPaths;
             RefreshFolderDisplays();
         }
@@ -58,12 +58,16 @@ namespace TweakFirmware.ViewModels
         }
 
         [RelayCommand]
-        private void SetLanguage(string code) => SelectedLanguage = code;
+        private void SetLanguage(string code)
+        {
+            SelectedLanguage = code;
+            LocalizationService.Instance.SetLanguage(code);
+        }
 
         [RelayCommand]
         private void BrowseConvertFolder()
         {
-            var dlg = new OpenFolderDialog { Title = "Папка по умолчанию для конвертирования" };
+            var dlg = new OpenFolderDialog { Title = Strings.Get("Settings_ChooseConvertFolderTitle") };
             if (dlg.ShowDialog() == true)
             {
                 OutputPathSettingsService.SetCustomConvertFolder(dlg.FolderName);
@@ -74,7 +78,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseMergeFolder()
         {
-            var dlg = new OpenFolderDialog { Title = "Папка по умолчанию для сборки файла" };
+            var dlg = new OpenFolderDialog { Title = Strings.Get("Settings_ChooseMergeFolderTitle") };
             if (dlg.ShowDialog() == true)
             {
                 OutputPathSettingsService.SetCustomMergeFolder(dlg.FolderName);
@@ -86,7 +90,7 @@ namespace TweakFirmware.ViewModels
         private void ClearCache()
         {
             AppLogger.ClearLog();
-            MessageBox.Show("Временные файлы и журналы очищены.", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(Strings.Get("Settings_CacheClearedMessage"), Strings.Get("Settings_CacheClearedTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

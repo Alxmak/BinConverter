@@ -11,6 +11,7 @@ using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Models;
 using TweakFirmware.Services;
 
@@ -25,7 +26,7 @@ namespace TweakFirmware.ViewModels
         {
             new ProgrammerPreset("TNM5000", FileSplitter.DefaultMaxPartSizeBytes),
             new ProgrammerPreset("RT809H", FileSplitter.DefaultMaxPartSizeBytes),
-            new ProgrammerPreset("Пользовательские настройки", null)
+            new ProgrammerPreset(Strings.Get("Convert_CustomPresetName"), null)
         };
 
         // Пункт 4/14: журнал общий на всё приложение — просто проброс, не своя коллекция.
@@ -43,7 +44,7 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string displayedFilesText = "";
         [ObservableProperty] private bool showExpandButton;
         [ObservableProperty] private bool showAllFiles;
-        [ObservableProperty] private string expandButtonText = "Показать все файлы";
+        [ObservableProperty] private string expandButtonText = Strings.Get("Convert_ShowAllFilesButton");
 
         [ObservableProperty] private bool verifyHashAfter = true;
         [ObservableProperty] private bool openFolderAfter = true;
@@ -55,14 +56,14 @@ namespace TweakFirmware.ViewModels
         private bool isBusy;
 
         [ObservableProperty] private bool isPaused;
-        [ObservableProperty] private string pauseButtonText = "⏸ Приостановить";
+        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
         [ObservableProperty] private bool isVerifying;
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
         [ObservableProperty] private double shaProgress;
-        [ObservableProperty] private string statusText = "Готово";
+        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         public bool CanStart => !IsBusy;
         public bool CanPause => IsBusy && !IsVerifying;
@@ -121,7 +122,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseSource()
         {
-            var dlg = new OpenFileDialog { Filter = "BIN файлы (*.bin)|*.bin|Все файлы (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Strings.Get("Common_BinFileFilter") };
             if (dlg.ShowDialog() == true) SetSource(dlg.FileName);
         }
 
@@ -129,7 +130,7 @@ namespace TweakFirmware.ViewModels
         {
             if (!File.Exists(path))
             {
-                MessageBox.Show("Файл не найден.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(Strings.Get("Common_FileNotFoundMessage"), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -140,7 +141,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseOutput()
         {
-            var dlg = new OpenFolderDialog { Title = "Выберите папку вывода" };
+            var dlg = new OpenFolderDialog { Title = Strings.Get("Convert_ChooseOutputFolderTitle") };
             if (dlg.ShowDialog() == true)
             {
                 OutputFolder = dlg.FolderName;
@@ -166,11 +167,11 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
+            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { MessageBox.Show($"Не удалось сохранить лог:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
+                catch (Exception ex) { MessageBox.Show(Strings.Format("Common_SaveLogFailed", ex.Message), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
 
@@ -189,11 +190,11 @@ namespace TweakFirmware.ViewModels
             if (!File.Exists(SourcePath))
             {
                 GeneralInfoText =
-                    $"Размер исходного файла: {NoValuePlaceholder}\n" +
-                    $"Ожидаемое количество файлов: {NoValuePlaceholder}";
+                    Strings.Format("Convert_SourceSizeLine", NoValuePlaceholder) + "\n" +
+                    Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder);
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
                 return;
             }
 
@@ -202,11 +203,11 @@ namespace TweakFirmware.ViewModels
             if (limit < 1024)
             {
                 GeneralInfoText =
-                    $"Размер исходного файла: {SizeFormatHelper.Format(size)}\n" +
-                    $"Ожидаемое количество файлов: {NoValuePlaceholder} (введите корректный размер части, минимум 1024 байта)";
+                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder) + Strings.Get("Convert_InvalidLimitSuffix");
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
                 return;
             }
 
@@ -215,11 +216,11 @@ namespace TweakFirmware.ViewModels
             if (count > MaxFilesToEnumerate)
             {
                 GeneralInfoText =
-                    $"Размер исходного файла: {SizeFormatHelper.Format(size)}\n" +
-                    $"Ожидаемое количество файлов: {count:N0} (слишком много для отображения по отдельности)";
+                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Format("Convert_ExpectedCountLine", count.ToString("N0")) + Strings.Get("Convert_TooManyFilesSuffix");
                 _expectedFileCount = count;
                 ShowExpandButton = false;
-                DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}";
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
                 return;
             }
 
@@ -228,8 +229,8 @@ namespace TweakFirmware.ViewModels
             _expectedLimitBytes = limit;
 
             GeneralInfoText =
-                $"Размер исходного файла: {SizeFormatHelper.Format(size)}\n" +
-                $"Ожидаемое количество файлов: {count}";
+                Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                Strings.Format("Convert_ExpectedCountLine", count);
 
             ShowExpandButton = count > CollapsedFileListCount;
             ShowAllFiles = false;
@@ -238,36 +239,36 @@ namespace TweakFirmware.ViewModels
 
         private void RebuildFilesText()
         {
-            if (_expectedFileCount == 0) { DisplayedFilesText = $"Размер каждого файла:\n{NoValuePlaceholder}"; return; }
+            if (_expectedFileCount == 0) { DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder; return; }
 
             int toShow = ShowAllFiles ? _expectedFileCount : Math.Min(CollapsedFileListCount, _expectedFileCount);
 
             var sb = new StringBuilder();
-            sb.AppendLine("Размер каждого файла:");
+            sb.AppendLine(Strings.Get("Convert_EachFileSizeHeader"));
             long remaining = _expectedTotalSize;
             for (int i = 1; i <= _expectedFileCount; i++)
             {
                 long partSize = Math.Min(_expectedLimitBytes, remaining);
                 remaining -= partSize;
                 if (i > toShow) continue;
-                sb.AppendLine($"Файл {i}: {SizeFormatHelper.Format(partSize)}");
+                sb.AppendLine(Strings.Format("Convert_FileSizeLine", i, SizeFormatHelper.Format(partSize)));
             }
 
             if (!ShowAllFiles && _expectedFileCount > CollapsedFileListCount)
-                sb.AppendLine($"… и ещё {_expectedFileCount - CollapsedFileListCount} файл(ов)");
+                sb.AppendLine(Strings.Format("Convert_MoreFilesLine", _expectedFileCount - CollapsedFileListCount));
 
-            ExpandButtonText = ShowAllFiles ? "Свернуть список" : $"Показать все {_expectedFileCount} файлов";
+            ExpandButtonText = ShowAllFiles ? Strings.Get("Convert_CollapseList") : Strings.Format("Convert_ShowAllFilesCount", _expectedFileCount);
             DisplayedFilesText = sb.ToString().TrimEnd();
         }
 
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()
         {
-            if (!File.Exists(SourcePath)) { StatusText = "Выберите существующий исходный файл."; return; }
-            if (string.IsNullOrWhiteSpace(OutputFolder)) { StatusText = "Укажите папку вывода."; return; }
+            if (!File.Exists(SourcePath)) { StatusText = Strings.Get("Convert_SelectSourceFirst"); return; }
+            if (string.IsNullOrWhiteSpace(OutputFolder)) { StatusText = Strings.Get("Convert_SpecifyOutputFolder"); return; }
 
             long limit = CurrentLimitBytes;
-            if (limit <= 0) { StatusText = "Некорректный размер части."; return; }
+            if (limit <= 0) { StatusText = Strings.Get("Convert_InvalidPartSize"); return; }
 
             string baseName = string.IsNullOrWhiteSpace(BaseFileName) ? "emmc.bin" : BaseFileName.Trim();
             var sourceInfo = new FileInfo(SourcePath);
@@ -276,16 +277,16 @@ namespace TweakFirmware.ViewModels
             if (FileConflictHelper.AnyConflict(outFolder, baseName))
             {
                 var choice = await DialogService.ShowConfirmAsync(
-                    "Файлы уже существуют",
-                    $"В папке уже есть файлы с именем «{baseName}» (или его частей).",
-                    "Перезаписать", "Новая папка рядом", "Отмена");
+                    Strings.Get("Convert_ConflictTitle"),
+                    Strings.Format("Convert_ConflictMessage", baseName),
+                    Strings.Get("Common_OverwriteChoice"), Strings.Get("Convert_NewFolderNearby"), Strings.Get("Common_CancelChoice"));
 
                 if (choice == DialogChoice.Close) return;
                 if (choice == DialogChoice.Secondary)
                 {
                     outFolder = FileConflictHelper.SuggestAlternativeFolder(outFolder);
                     OutputFolder = outFolder;
-                    AppLogger.Log($"Обнаружен конфликт имён — используется новая папка: {outFolder}");
+                    AppLogger.Log(Strings.Format("Convert_ConflictLog", outFolder));
                 }
             }
 
@@ -296,11 +297,12 @@ namespace TweakFirmware.ViewModels
                 var spaceCheck = DiskSpaceHelper.CheckSpace(outFolder, sourceInfo.Length);
                 if (!spaceCheck.HasEnoughSpace)
                 {
-                    await DialogService.ShowWarningAsync("Недостаточно места",
-                        $"Размер исходного файла: {SizeFormatHelper.Format(sourceInfo.Length)}\n" +
-                        $"Необходимо (с запасом 5%): {SizeFormatHelper.Format(spaceCheck.RequiredBytes)}\n" +
-                        $"Свободно: {SizeFormatHelper.Format(spaceCheck.AvailableBytes)}\n" +
-                        $"Не хватает: {SizeFormatHelper.Format(spaceCheck.MissingBytes)}");
+                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                        Strings.Format("Convert_LowSpaceMessage",
+                            SizeFormatHelper.Format(sourceInfo.Length),
+                            SizeFormatHelper.Format(spaceCheck.RequiredBytes),
+                            SizeFormatHelper.Format(spaceCheck.AvailableBytes),
+                            SizeFormatHelper.Format(spaceCheck.MissingBytes)));
                     return;
                 }
             }
@@ -311,10 +313,10 @@ namespace TweakFirmware.ViewModels
             IsPaused = false;
             IsVerifying = false;
             OperationLockService.Instance.IsBusy = true;
-            PauseButtonText = "⏸ Приостановить";
+            PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
-            StatusText = "Конвертирование начато...";
-            AppLogger.Log($"Начало конвертирования: {SourcePath} -> {outFolder}\\{baseName} (макс. {limit:N0} байт/файл)");
+            StatusText = Strings.Get("Convert_Started");
+            AppLogger.Log(Strings.Format("Convert_StartLog", SourcePath, outFolder, baseName, limit));
 
             var createdFiles = new List<string>();
             long totalWorkBytes = sourceInfo.Length * (VerifyHashAfter ? 2 : 1);
@@ -325,8 +327,8 @@ namespace TweakFirmware.ViewModels
                 double overallPct = totalWorkBytes > 0 ? (double)p.TotalBytesWritten / totalWorkBytes * 100.0 : 100.0;
                 CurrentFileProgress = filePct;
                 OverallProgress = overallPct;
-                CurrentFileLabel = $"{p.CurrentFileName} — файл {p.CurrentFileIndex} из {p.TotalFiles}";
-                StatusText = $"{p.TotalBytesWritten:N0} / {p.TotalBytes:N0} байт  ({filePct:F0}% текущего файла)";
+                CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                StatusText = Strings.Format("Convert_ProgressStatus", p.TotalBytesWritten, p.TotalBytes, filePct);
             });
 
             var hashProgress = new Progress<(long done, long total)>(p =>
@@ -334,8 +336,8 @@ namespace TweakFirmware.ViewModels
                 if (!IsVerifying)
                 {
                     IsVerifying = true;
-                    if (IsPaused) { _pauseController?.Resume(); IsPaused = false; PauseButtonText = "⏸ Приостановить"; }
-                    StatusText = "Проверка SHA-256...";
+                    if (IsPaused) { _pauseController?.Resume(); IsPaused = false; PauseButtonText = Strings.Get("Common_PauseButton"); }
+                    StatusText = Strings.Get("Common_VerifyingHash");
                 }
                 ShaProgress = p.total > 0 ? (double)p.done / p.total * 100.0 : 100.0;
                 double overallPct = totalWorkBytes > 0 ? (double)(sourceInfo.Length + p.done) / totalWorkBytes * 100.0 : 100.0;
@@ -350,29 +352,29 @@ namespace TweakFirmware.ViewModels
                     SourcePath, outFolder, baseName, limit, VerifyHashAfter,
                     splitProgress, AppLogger.Log, _cts.Token, createdFiles, hashProgress, _pauseController));
 
-                AppLogger.Log($"Конвертирование завершено. Файлов: {result.PartsCreated}, всего байт: {result.TotalBytes:N0}");
+                AppLogger.Log(Strings.Format("Convert_FinishedLog", result.PartsCreated, result.TotalBytes));
 
                 bool safeToDeleteSource = !result.VerifyPerformed || result.HashesMatch;
 
                 if (result.VerifyPerformed)
                 {
                     // Пункт 1: статус-строку не дублируем текстом успеха — итог и так виден в диалоге ниже.
-                    StatusText = result.HashesMatch ? "Готово." : "Ошибка проверки SHA-256.";
+                    StatusText = result.HashesMatch ? Strings.Get("Common_Done") : Strings.Get("Convert_HashCheckFailed");
                     if (result.HashesMatch)
                     {
-                        await DialogService.ShowInfoAsync("Готово",
-                            $"Конвертирование завершено успешно.\nСоздано файлов: {result.PartsCreated}\n\nSHA-256 совпадает — данные не повреждены.\n\n{result.SourceHash}");
+                        await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                            Strings.Format("Convert_DoneVerifiedMessage", result.PartsCreated, result.SourceHash));
                     }
                     else
                     {
-                        await DialogService.ShowErrorAsync("Ошибка проверки",
-                            $"ВНИМАНИЕ: контрольные суммы не совпадают!\n\nИсточник: {result.SourceHash}\nРезультат: {result.RecombinedHash}");
+                        await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
+                            Strings.Format("Convert_VerifyErrorMessage", result.SourceHash, result.RecombinedHash));
                     }
                 }
                 else
                 {
-                    StatusText = "Готово.";
-                    await DialogService.ShowInfoAsync("Готово", $"Конвертирование завершено.\nСоздано файлов: {result.PartsCreated}");
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), Strings.Format("Convert_DoneMessage", result.PartsCreated));
                 }
 
                 if (DeleteSourceAfter && safeToDeleteSource)
@@ -380,44 +382,44 @@ namespace TweakFirmware.ViewModels
                     try
                     {
                         File.Delete(SourcePath);
-                        AppLogger.Log($"Исходный файл удалён: {SourcePath}");
+                        AppLogger.Log(Strings.Format("Convert_SourceDeletedLog", SourcePath));
                     }
                     catch (Exception ex)
                     {
-                        AppLogger.Log($"Не удалось удалить исходный файл: {ex.Message}");
-                        await DialogService.ShowWarningAsync("Ошибка", $"Не удалось удалить исходный файл:\n{ex.Message}");
+                        AppLogger.Log(Strings.Format("Convert_SourceDeleteFailedLog", ex.Message));
+                        await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Format("Convert_SourceDeleteFailedMessage", ex.Message));
                     }
                 }
                 else if (DeleteSourceAfter && !safeToDeleteSource)
                 {
-                    AppLogger.Log("Исходный файл НЕ удалён — проверка SHA-256 не пройдена.");
+                    AppLogger.Log(Strings.Get("Convert_SourceKeptLog"));
                 }
 
                 if (OpenFolderAfter)
                 {
                     try { Process.Start(new ProcessStartInfo { FileName = outFolder, UseShellExecute = true }); }
-                    catch (Exception ex) { AppLogger.Log($"Не удалось открыть папку: {ex.Message}"); }
+                    catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
                 }
             }
             catch (OperationCanceledException)
             {
-                StatusText = "Отмена — удаление незавершённых файлов...";
-                AppLogger.Log("Конвертирование отменено пользователем");
+                StatusText = Strings.Get("Convert_CancellingStatus");
+                AppLogger.Log(Strings.Get("Convert_CancelledLog"));
                 CleanupCreatedFiles(createdFiles);
-                StatusText = "Отменено. Незавершённые файлы удалены.";
-                await DialogService.ShowInfoAsync("Отменено", $"Конвертирование отменено.\nУдалено незавершённых файлов: {createdFiles.Count}");
+                StatusText = Strings.Get("Convert_CancelledStatus");
+                await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Format("Convert_CancelledMessage", createdFiles.Count));
             }
             catch (Exception ex)
             {
-                AppLogger.Log($"ОШИБКА: {ex.Message}");
+                AppLogger.Log(Strings.Format("Convert_ErrorLog", ex.Message));
                 CleanupCreatedFiles(createdFiles);
-                StatusText = "Ошибка. Незавершённые файлы удалены.";
+                StatusText = Strings.Get("Convert_ErrorStatus");
 
                 string message = IsDiskFullError(ex)
-                    ? $"На диске закончилось свободное место во время записи.\n\nОперация прервана, незавершённые файлы ({createdFiles.Count}) удалены — освободите место и попробуйте снова."
-                    : $"Ошибка при конвертировании:\n{ex.Message}\n\nНезавершённые файлы ({createdFiles.Count}) удалены.";
+                    ? Strings.Format("Convert_DiskFullMessage", createdFiles.Count)
+                    : Strings.Format("Convert_ErrorMessage", ex.Message, createdFiles.Count);
 
-                await DialogService.ShowErrorAsync("Ошибка", message);
+                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), message);
             }
             finally
             {
@@ -436,7 +438,7 @@ namespace TweakFirmware.ViewModels
         {
             _pauseController?.Resume();
             _cts?.Cancel();
-            StatusText = "Отмена...";
+            StatusText = Strings.Get("Common_Cancelling");
         }
 
         [RelayCommand]
@@ -448,24 +450,24 @@ namespace TweakFirmware.ViewModels
             {
                 _pauseController.Resume();
                 IsPaused = false;
-                PauseButtonText = "⏸ Приостановить";
-                StatusText = "Возобновлено.";
-                AppLogger.Log("Операция возобновлена пользователем");
+                PauseButtonText = Strings.Get("Common_PauseButton");
+                StatusText = Strings.Get("Common_Resumed");
+                AppLogger.Log(Strings.Get("Convert_ResumedLog"));
             }
             else
             {
                 _pauseController.Pause();
                 IsPaused = true;
-                PauseButtonText = "▶ Возобновить";
-                StatusText = "На паузе.";
-                AppLogger.Log("Операция приостановлена пользователем");
+                PauseButtonText = Strings.Get("Common_ResumeButton");
+                StatusText = Strings.Get("Common_Paused");
+                AppLogger.Log(Strings.Get("Convert_PausedLog"));
             }
         }
 
         private static void CleanupCreatedFiles(List<string> createdFiles)
         {
             if (createdFiles.Count == 0) return;
-            AppLogger.Log($"Удаление незавершённых файлов ({createdFiles.Count})...");
+            AppLogger.Log(Strings.Format("Convert_DeletingIncompleteLog", createdFiles.Count));
             foreach (var path in createdFiles)
             {
                 try
@@ -473,12 +475,12 @@ namespace TweakFirmware.ViewModels
                     if (File.Exists(path))
                     {
                         File.Delete(path);
-                        AppLogger.Log($"Удалён: {Path.GetFileName(path)}");
+                        AppLogger.Log(Strings.Format("Convert_DeletedLog", Path.GetFileName(path)));
                     }
                 }
                 catch (Exception ex)
                 {
-                    AppLogger.Log($"Не удалось удалить {Path.GetFileName(path)}: {ex.Message}");
+                    AppLogger.Log(Strings.Format("Convert_DeleteFailedLog", Path.GetFileName(path), ex.Message));
                 }
             }
         }

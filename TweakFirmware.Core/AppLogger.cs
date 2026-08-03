@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
 {
@@ -33,7 +34,7 @@ namespace TweakFirmware.Core
         public static void OpenLogFile()
         {
             if (!File.Exists(LogFilePath))
-                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Лог создан{Environment.NewLine}");
+                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {Strings.Get("Log_Created")}{Environment.NewLine}");
 
             Process.Start(new ProcessStartInfo
             {
@@ -47,7 +48,7 @@ namespace TweakFirmware.Core
         {
             lock (_lock)
             {
-                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Лог очищен{Environment.NewLine}");
+                File.WriteAllText(LogFilePath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {Strings.Get("Log_Cleared")}{Environment.NewLine}");
             }
         }
     }

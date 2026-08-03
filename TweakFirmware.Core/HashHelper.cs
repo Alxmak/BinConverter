@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
 {
@@ -91,7 +92,7 @@ namespace TweakFirmware.Core
         {
             var list = new List<string>();
             if (!File.Exists(basePath))
-                throw new FileNotFoundException("Базовый файл цепочки не найден", basePath);
+                throw new FileNotFoundException(Strings.Get("Core_ChainBaseFileNotFound"), basePath);
 
             list.Add(basePath);
             int i = 1;

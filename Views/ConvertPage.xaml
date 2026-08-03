@@ -2,7 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="Конвертирование">
+      xmlns:loc="clr-namespace:TweakFirmware.Services"
+      Title="{loc:Loc Convert_Title}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -92,9 +93,9 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Исходный файл .bin" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Column="1" Text="{Binding SourcePath}" IsReadOnly="True" Margin="0,0,8,0"/>
-                        <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseSourceCommand}"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
                     <Grid Style="{StaticResource RowGrid}">
@@ -103,9 +104,9 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Папка назначения" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Column="1" Text="{Binding OutputFolder}" IsReadOnly="True" Margin="0,0,8,0"/>
-                        <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseOutputCommand}"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
                     <Grid Margin="186,-8,0,14">
@@ -114,7 +115,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{Binding OutputFolder}" FontSize="11" Opacity="0.5" TextTrimming="CharacterEllipsis"/>
-                        <Button Grid.Column="1" Content="📋 Скопировать путь" Command="{Binding CopyOutputPathCommand}" FontSize="11" Padding="8,3"/>
+                        <Button Grid.Column="1" Content="{loc:Loc Common_CopyPathButton}" Command="{Binding CopyOutputPathCommand}" FontSize="11" Padding="8,3"/>
                     </Grid>
 
                     <Grid Style="{StaticResource RowGrid}">
@@ -122,7 +123,7 @@
                             <ColumnDefinition Width="170"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Модель программатора" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_ProgrammerModelLabel}" Style="{StaticResource RowLabel}"/>
                         <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
                                   DisplayMemberPath="Name" HorizontalAlignment="Stretch"/>
                     </Grid>
@@ -132,7 +133,7 @@
                             <ColumnDefinition Width="170"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Лимит на один файл (байт)" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
                         <TextBox x:Name="LimitTextBox" Grid.Column="1"
                                  Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
                                  IsEnabled="{Binding IsCustomPreset}"
@@ -152,7 +153,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="Общая информация" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
                         <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="12" Opacity="0.85" Margin="0,0,0,8"/>
                         <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
@@ -163,16 +164,16 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="Параметры" Style="{StaticResource CardTitle}"/>
-                        <CheckBox Content="Проверить SHA-256 после завершения" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
-                        <CheckBox Content="Открыть папку с результатом после завершения" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
-                        <CheckBox Content="Проверять свободное место на диске назначения" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
-                        <CheckBox Content="Удалить исходный файл после успешного конвертирования" IsChecked="{Binding DeleteSourceAfter}"/>
+                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
+                        <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
+                        <CheckBox Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                        <CheckBox Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
 
                         <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="6"
                                 Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
                                 Visibility="{Binding DeleteSourceAfter, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="⚠ Внимание: исходный файл будет удалён без возможности восстановления после успешного завершения (и успешной проверки SHA-256, если она включена)."
+                            <TextBlock Text="{loc:Loc Convert_DeleteWarning}"
                                        TextWrapping="Wrap" FontSize="11"/>
                         </Border>
                     </StackPanel>
@@ -182,14 +183,14 @@
             <!-- Прогресс: одинаковая ритмика строк (пункт 9), закруглённые бары (пункт 8) -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Прогресс" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
                     <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Прогресс конвертирования" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_OverallProgressLabel}" Style="{StaticResource RowLabel}"/>
                         <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
                             <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
                         </Border>
@@ -200,7 +201,7 @@
                             <ColumnDefinition Width="190"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Прогресс текущего файла" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_CurrentFileProgressLabel}" Style="{StaticResource RowLabel}"/>
                         <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
                             <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}"/>
                         </Border>
@@ -212,7 +213,7 @@
                             <ColumnDefinition Width="190"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Прогресс SHA-256" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_HashProgressLabel}" Style="{StaticResource RowLabel}"/>
                         <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
                             <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100"
                                          Value="{Binding ShaProgress, Mode=OneWay}" IsEnabled="{Binding VerifyHashAfter}"/>
@@ -220,11 +221,11 @@
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="▶ Начать" Command="{Binding StartCommand}"
+                        <Button Content="{loc:Loc Convert_StartButton}" Command="{Binding StartCommand}"
                                 Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,10,0"/>
                         <Button Content="{Binding PauseButtonText}" Command="{Binding TogglePauseCommand}"
                                 Style="{StaticResource PauseButtonStyle}" IsEnabled="{Binding CanPause}" Margin="0,0,10,0"/>
-                        <Button Content="✕ Отмена" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
                                 Style="{StaticResource SolidButtonStyle}" Background="#E5484D"/>
                     </StackPanel>
 
@@ -244,11 +245,11 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Журнал" Style="{StaticResource CardTitle}" Margin="0"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_LogTitle}" Style="{StaticResource CardTitle}" Margin="0"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="Открыть" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="Сохранить" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="Очистить" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
+                            <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
                         </StackPanel>
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="170" BorderThickness="0"

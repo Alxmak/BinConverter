@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
 {
@@ -49,7 +50,7 @@ namespace TweakFirmware.Core
             long totalBytes = 0;
             foreach (var f in chain) totalBytes += new FileInfo(f).Length;
 
-            log($"Найдено частей в цепочке: {chain.Count} (всего {totalBytes:N0} байт)");
+            log(Strings.Format("Log_ChainFound", chain.Count, totalBytes));
 
             string? outDir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(outDir)) Directory.CreateDirectory(outDir);
@@ -68,7 +69,7 @@ namespace TweakFirmware.Core
                     long partSize = new FileInfo(part).Length;
                     long bytesReadInPart = 0;
 
-                    log($"Читаю {Path.GetFileName(part)} (файл {i + 1} из {totalFiles})");
+                    log(Strings.Format("Log_ReadingPart", Path.GetFileName(part), i + 1, totalFiles));
                     using var input = new FileStream(part, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan);
                     int read;
                     while ((read = await input.ReadAsync(buffer.AsMemory(0, buffer.Length), ct)) > 0)
@@ -94,7 +95,7 @@ namespace TweakFirmware.Core
                 }
             }
 
-            log($"Сборка завершена: {Path.GetFileName(outputPath)} ({totalWritten:N0} байт)");
+            log(Strings.Format("Log_MergeFinished", Path.GetFileName(outputPath), totalWritten));
 
             return new MergeResult
             {

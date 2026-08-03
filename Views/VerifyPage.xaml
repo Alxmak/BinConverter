@@ -2,7 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="Проверка SHA-256">
+      xmlns:loc="clr-namespace:TweakFirmware.Services"
+      Title="{loc:Loc Verify_Title}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -79,16 +80,16 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
-                        <TextBlock Text="Файл A" Style="{StaticResource SectionLabel}"/>
+                        <TextBlock Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource SectionLabel}"/>
                         <TextBox Text="{Binding FileAPath}" IsReadOnly="True" Margin="0,0,0,8"/>
-                        <Button Content="📁 Обзор…" Command="{Binding BrowseACommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                        <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding HashAText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" AllowDrop="True" Drop="FileB_Drop" DragOver="Row_DragOver">
-                        <TextBlock Text="Файл B" Style="{StaticResource SectionLabel}"/>
+                        <TextBlock Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource SectionLabel}"/>
                         <TextBox Text="{Binding FileBPath}" IsReadOnly="True" Margin="0,0,0,8"/>
-                        <Button Content="📁 Обзор…" Command="{Binding BrowseBCommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                        <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding HashBText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
                 </Grid>
@@ -115,13 +116,13 @@
             <!-- Прогресс (пункт 3) -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Прогресс" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
                     <Grid Margin="0,0,0,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Прогресс сравнения" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_CompareProgressLabel}" Style="{StaticResource RowLabel}"/>
                         <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
                             <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
                         </Border>
@@ -129,9 +130,9 @@
                     <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Сравнить" Command="{Binding CompareCommand}"
+                        <Button Content="{loc:Loc Verify_CompareButton}" Command="{Binding CompareCommand}"
                                 Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,10,0"/>
-                        <Button Content="✕ Отмена" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
                                 Style="{StaticResource SolidButtonStyle}" Background="#E5484D"/>
                     </StackPanel>
                     <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" Margin="0,10,0,0"/>
@@ -150,11 +151,11 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Журнал" Style="{StaticResource CardTitle}" Margin="0"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_LogTitle}" Style="{StaticResource CardTitle}" Margin="0"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="Открыть" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="Сохранить" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="Очистить" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
+                            <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
+                            <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
                         </StackPanel>
                     </Grid>
                     <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="170" BorderThickness="0"
