@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Windows.Threading;
 using Wpf.Ui.Appearance;
 
 namespace TweakFirmware.Services
@@ -21,24 +22,31 @@ namespace TweakFirmware.Services
         public static void Initialize()
         {
             CurrentMode = LoadSavedMode();
-            ApplicationTheme resolved = Resolve(CurrentMode);
-
-            // Пункт 2: App.xaml статически подключает тёмный словарь ресурсов (Theme="Dark").
-            // Если сохранённая тема тоже тёмная, ApplicationThemeManager считает, что тема
-            // не изменилась, и не проводит применение полностью — часть текста остаётся
-            // нечитаемой (чёрной) до первого ручного переключения темы. Поэтому сначала
-            // "переключаем" на противоположную тему, а затем — на нужную; это то же самое,
-            // что временное ручное переключение, которым пользователи обходили баг вручную.
-            ApplicationThemeManager.Apply(resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
-            ApplicationThemeManager.Apply(resolved);
+            ApplyWithForcedRefresh(Resolve(CurrentMode));
             SaveMode(CurrentMode);
         }
 
         public static void Apply(AppThemeMode mode)
         {
             CurrentMode = mode;
-            ApplicationThemeManager.Apply(Resolve(mode));
+            ApplyWithForcedRefresh(Resolve(mode));
             SaveMode(mode);
+        }
+
+        // Пункт 2: App.xaml статически подключает тёмный словарь ресурсов (Theme="Dark").
+        // Если целевая тема тоже тёмная, ApplicationThemeManager считает, что тема
+        // не изменилась, и не проводит применение полностью — часть текста остаётся
+        // нечитаемой (чёрной) до первого ручного переключения темы. Поэтому сначала
+        // "переключаем" на противоположную тему, а затем — на нужную; это то же самое,
+        // что временное ручное переключение, которым пользователи обходили баг вручную.
+        // Между двумя вызовами прогоняем очередь диспетчера — иначе (особенно на самом
+        // старте приложения, до запуска цикла обработки сообщений) оба применения темы
+        // иногда "схлопываются" в одно, и обход не срабатывает.
+        private static void ApplyWithForcedRefresh(ApplicationTheme resolved)
+        {
+            ApplicationThemeManager.Apply(resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+            ApplicationThemeManager.Apply(resolved);
         }
 
         private static ApplicationTheme Resolve(AppThemeMode mode) => mode switch
