@@ -43,6 +43,18 @@ namespace TweakFirmware.ViewModels
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
+        // Пункт: "Папка назначения" должна показывать путь по умолчанию сразу при запуске
+        // (как в Конвертировании), а не только после выбора файла цепочки. Пока путь не
+        // менялся пользователем явно (набор текста/вставка/"Обзор..."), автоматически
+        // подставляем актуальный путь по умолчанию — сначала общий, потом с именем исходника.
+        private bool _outputPathIsAuto = true;
+        private bool _settingOutputPathInternally;
+
+        public MergeViewModel()
+        {
+            SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), "emmc_merged.bin"));
+        }
+
         public void Detach() { }
 
         partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanStart));
@@ -50,6 +62,18 @@ namespace TweakFirmware.ViewModels
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // цепочка частей должна пересчитываться и при прямом вводе, не только через SetSource.
         partial void OnSourcePathChanged(string value) => TryResolveChain();
+
+        partial void OnOutputPathChanged(string value)
+        {
+            if (!_settingOutputPathInternally) _outputPathIsAuto = false;
+        }
+
+        private void SetOutputPathAuto(string path)
+        {
+            _settingOutputPathInternally = true;
+            OutputPath = path;
+            _settingOutputPathInternally = false;
+        }
 
         [RelayCommand]
         private void BrowseSource()
@@ -80,10 +104,10 @@ namespace TweakFirmware.ViewModels
 
                 ChainInfoText = Strings.Format("Merge_ChainFoundInfo", chain.Count, SizeFormatHelper.Format(total), Path.GetFileName(chain[0]));
 
-                if (string.IsNullOrWhiteSpace(OutputPath))
+                if (_outputPathIsAuto)
                 {
                     string name = Path.GetFileNameWithoutExtension(basePath) + "_merged" + Path.GetExtension(basePath);
-                    OutputPath = Path.Combine(OutputPathSettingsService.GetMergeFolder(), name);
+                    SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), name));
                 }
             }
             catch (Exception ex)
