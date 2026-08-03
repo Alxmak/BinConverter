@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -19,7 +20,7 @@ namespace TweakFirmware.ViewModels
         public ObservableCollection<string> LogLines => LogService.Lines;
 
         [ObservableProperty] private string sourcePath = "";
-        [ObservableProperty] private string chainInfoText = "Перетащите любой файл цепочки сюда, или выберите через «Обзор…»";
+        [ObservableProperty] private string chainInfoText = Strings.Get("Merge_DragHint");
         [ObservableProperty] private string outputPath = "";
         [ObservableProperty] private string expectedHashText = "";
 
@@ -30,12 +31,12 @@ namespace TweakFirmware.ViewModels
         private bool isBusy;
 
         [ObservableProperty] private bool isPaused;
-        [ObservableProperty] private string pauseButtonText = "⏸ Приостановить";
+        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
-        [ObservableProperty] private string statusText = "Готово";
+        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         public bool CanStart => !IsBusy;
 
@@ -49,7 +50,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseSource()
         {
-            var dlg = new OpenFileDialog { Filter = "BIN и части (*.bin;*.part*)|*.bin;*.bin.part*|Все файлы (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Strings.Get("Merge_SourceFileFilter") };
             if (dlg.ShowDialog() == true) SetSource(dlg.FileName);
         }
 
@@ -57,7 +58,7 @@ namespace TweakFirmware.ViewModels
         {
             if (!File.Exists(path))
             {
-                MessageBox.Show("Файл не найден.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(Strings.Get("Common_FileNotFoundMessage"), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -69,7 +70,7 @@ namespace TweakFirmware.ViewModels
                 long total = 0;
                 foreach (var f in chain) total += new FileInfo(f).Length;
 
-                ChainInfoText = $"Найдено частей: {chain.Count} ({SizeFormatHelper.Format(total)}). Первая: {Path.GetFileName(chain[0])}";
+                ChainInfoText = Strings.Format("Merge_ChainFoundInfo", chain.Count, SizeFormatHelper.Format(total), Path.GetFileName(chain[0]));
 
                 if (string.IsNullOrWhiteSpace(OutputPath))
                 {
@@ -79,14 +80,14 @@ namespace TweakFirmware.ViewModels
             }
             catch (Exception ex)
             {
-                ChainInfoText = $"Не удалось определить цепочку: {ex.Message}";
+                ChainInfoText = Strings.Format("Merge_ChainResolveError", ex.Message);
             }
         }
 
         [RelayCommand]
         private void BrowseOutput()
         {
-            var dlg = new SaveFileDialog { Filter = "BIN файлы (*.bin)|*.bin|Все файлы (*.*)|*.*", FileName = "emmc_merged.bin" };
+            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_BinFileFilter"), FileName = "emmc_merged.bin" };
             if (dlg.ShowDialog() == true) OutputPath = dlg.FileName;
         }
 
@@ -98,11 +99,11 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
+            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { MessageBox.Show($"Не удалось сохранить лог:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
+                catch (Exception ex) { MessageBox.Show(Strings.Format("Common_SaveLogFailed", ex.Message), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
 
@@ -112,24 +113,24 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()
         {
-            if (!File.Exists(SourcePath)) { StatusText = "Выберите файл из цепочки частей."; return; }
-            if (string.IsNullOrWhiteSpace(OutputPath)) { StatusText = "Укажите файл результата."; return; }
+            if (!File.Exists(SourcePath)) { StatusText = Strings.Get("Merge_SelectSourceFirst"); return; }
+            if (string.IsNullOrWhiteSpace(OutputPath)) { StatusText = Strings.Get("Merge_SpecifyOutputFile"); return; }
 
             string output = OutputPath;
 
             if (File.Exists(output))
             {
                 var choice = await DialogService.ShowConfirmAsync(
-                    "Файл уже существует",
-                    $"Файл «{Path.GetFileName(output)}» уже существует.",
-                    "Перезаписать", "Новое имя рядом", "Отмена");
+                    Strings.Get("Merge_FileExistsTitle"),
+                    Strings.Format("Merge_FileExistsMessage", Path.GetFileName(output)),
+                    Strings.Get("Common_OverwriteChoice"), Strings.Get("Merge_NewNameNearby"), Strings.Get("Common_CancelChoice"));
 
                 if (choice == DialogChoice.Close) return;
                 if (choice == DialogChoice.Secondary)
                 {
                     output = FileConflictHelper.SuggestAlternativeFilePath(output);
                     OutputPath = output;
-                    AppLogger.Log($"Обнаружен конфликт имени — используется новый файл: {output}");
+                    AppLogger.Log(Strings.Format("Merge_ConflictLog", output));
                 }
             }
 
@@ -144,7 +145,7 @@ namespace TweakFirmware.ViewModels
             }
             catch (Exception ex)
             {
-                await DialogService.ShowErrorAsync("Ошибка", $"Не удалось проверить цепочку частей:\n{ex.Message}");
+                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Merge_ChainCheckErrorMessage", ex.Message));
                 return;
             }
 
@@ -153,11 +154,12 @@ namespace TweakFirmware.ViewModels
             var spaceCheck = DiskSpaceHelper.CheckSpace(outDir, neededBytes);
             if (!spaceCheck.HasEnoughSpace)
             {
-                await DialogService.ShowWarningAsync("Недостаточно места",
-                    $"Размер собираемых данных: {SizeFormatHelper.Format(neededBytes)}\n" +
-                    $"Необходимо (с запасом 5%): {SizeFormatHelper.Format(spaceCheck.RequiredBytes)}\n" +
-                    $"Свободно: {SizeFormatHelper.Format(spaceCheck.AvailableBytes)}\n" +
-                    $"Не хватает: {SizeFormatHelper.Format(spaceCheck.MissingBytes)}");
+                await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                    Strings.Format("Merge_LowSpaceMessage",
+                        SizeFormatHelper.Format(neededBytes),
+                        SizeFormatHelper.Format(spaceCheck.RequiredBytes),
+                        SizeFormatHelper.Format(spaceCheck.AvailableBytes),
+                        SizeFormatHelper.Format(spaceCheck.MissingBytes)));
                 return;
             }
 
@@ -166,10 +168,10 @@ namespace TweakFirmware.ViewModels
             IsBusy = true;
             IsPaused = false;
             OperationLockService.Instance.IsBusy = true;
-            PauseButtonText = "⏸ Приостановить";
+            PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0;
-            StatusText = "Сборка начата...";
-            AppLogger.Log($"Начало сборки: {SourcePath} -> {output}");
+            StatusText = Strings.Get("Merge_Started");
+            AppLogger.Log(Strings.Format("Merge_StartLog", SourcePath, output));
 
             var createdFiles = new List<string>();
 
@@ -179,8 +181,8 @@ namespace TweakFirmware.ViewModels
                 double totalPct = p.TotalBytes > 0 ? (double)p.TotalBytesProcessed / p.TotalBytes * 100.0 : 100.0;
                 CurrentFileProgress = filePct;
                 OverallProgress = totalPct;
-                CurrentFileLabel = $"{p.CurrentFileName} — файл {p.CurrentFileIndex} из {p.TotalFiles}";
-                StatusText = $"{p.TotalBytesProcessed:N0} / {p.TotalBytes:N0} байт  ({totalPct:F1}%)";
+                CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                StatusText = Strings.Format("Merge_ProgressStatus", p.TotalBytesProcessed, p.TotalBytes, totalPct);
             });
 
             using var bgScope = new BackgroundIoScope();
@@ -189,25 +191,25 @@ namespace TweakFirmware.ViewModels
             {
                 var result = await Task.Run(() => FileMerger.MergeAsync(SourcePath, output, progress, AppLogger.Log, _cts.Token, createdFiles, _pauseController));
 
-                AppLogger.Log($"Сборка завершена. Частей: {result.PartsUsed}, байт: {result.TotalBytes:N0}");
-                AppLogger.Log($"SHA-256 результата: {result.MergedHash}");
+                AppLogger.Log(Strings.Format("Merge_FinishedLog", result.PartsUsed, result.TotalBytes));
+                AppLogger.Log(Strings.Format("Merge_ResultHashLog", result.MergedHash));
 
                 string expected = ExpectedHashText.Trim();
                 if (!string.IsNullOrEmpty(expected))
                 {
                     bool match = string.Equals(expected, result.MergedHash, StringComparison.OrdinalIgnoreCase);
-                    AppLogger.Log(match ? "Сверка с указанным хэшем: совпадает ✓" : "Сверка с указанным хэшем: НЕ совпадает!");
-                    StatusText = match ? "Готово." : "Ошибка сверки хэша.";
+                    AppLogger.Log(match ? Strings.Get("Merge_HashMatchLog") : Strings.Get("Merge_HashMismatchLog"));
+                    StatusText = match ? Strings.Get("Common_Done") : Strings.Get("Merge_HashCheckFailedStatus");
 
                     if (match)
-                        await DialogService.ShowInfoAsync("Результат сборки", $"Сборка завершена.\nSHA-256 совпадает с указанным.\n\n{result.MergedHash}");
+                        await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"), Strings.Format("Merge_ResultMatchMessage", result.MergedHash));
                     else
-                        await DialogService.ShowErrorAsync("Результат сборки", $"ВНИМАНИЕ: SHA-256 НЕ совпадает!\n\nОжидался: {expected}\nПолучен: {result.MergedHash}");
+                        await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"), Strings.Format("Merge_ResultMismatchMessage", expected, result.MergedHash));
                 }
                 else
                 {
-                    StatusText = "Готово.";
-                    await DialogService.ShowInfoAsync("Готово", $"Сборка завершена.\nЧастей: {result.PartsUsed}\nРазмер: {result.TotalBytes:N0} байт\n\nSHA-256: {result.MergedHash}");
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), Strings.Format("Merge_DoneMessage", result.PartsUsed, result.TotalBytes, result.MergedHash));
                 }
 
                 if (OpenFolderAfter)
@@ -216,29 +218,29 @@ namespace TweakFirmware.ViewModels
                     if (!string.IsNullOrEmpty(resultDir))
                     {
                         try { Process.Start(new ProcessStartInfo { FileName = resultDir, UseShellExecute = true }); }
-                        catch (Exception ex) { AppLogger.Log($"Не удалось открыть папку: {ex.Message}"); }
+                        catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                StatusText = "Отмена — удаление незавершённого файла...";
-                AppLogger.Log("Сборка отменена пользователем");
+                StatusText = Strings.Get("Merge_CancellingStatus");
+                AppLogger.Log(Strings.Get("Merge_CancelledLog"));
                 CleanupCreatedFiles(createdFiles);
-                StatusText = "Отменено. Незавершённый файл удалён.";
-                await DialogService.ShowInfoAsync("Отменено", "Сборка отменена.\nНезавершённый файл результата удалён.");
+                StatusText = Strings.Get("Merge_CancelledStatus");
+                await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
             }
             catch (Exception ex)
             {
-                AppLogger.Log($"ОШИБКА: {ex.Message}");
+                AppLogger.Log(Strings.Format("Convert_ErrorLog", ex.Message));
                 CleanupCreatedFiles(createdFiles);
-                StatusText = "Ошибка. Незавершённый файл удалён.";
+                StatusText = Strings.Get("Merge_ErrorStatus");
 
                 string message = IsDiskFullError(ex)
-                    ? "На диске закончилось свободное место во время записи.\n\nОперация прервана, незавершённый файл результата удалён — освободите место и попробуйте снова."
-                    : $"Ошибка при сборке:\n{ex.Message}\n\nНезавершённый файл результата удалён.";
+                    ? Strings.Get("Merge_DiskFullMessage")
+                    : Strings.Format("Merge_ErrorMessage", ex.Message);
 
-                await DialogService.ShowErrorAsync("Ошибка", message);
+                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), message);
             }
             finally
             {
@@ -256,7 +258,7 @@ namespace TweakFirmware.ViewModels
         {
             _pauseController?.Resume();
             _cts?.Cancel();
-            StatusText = "Отмена...";
+            StatusText = Strings.Get("Common_Cancelling");
         }
 
         [RelayCommand]
@@ -268,24 +270,24 @@ namespace TweakFirmware.ViewModels
             {
                 _pauseController.Resume();
                 IsPaused = false;
-                PauseButtonText = "⏸ Приостановить";
-                StatusText = "Возобновлено.";
-                AppLogger.Log("Операция возобновлена пользователем");
+                PauseButtonText = Strings.Get("Common_PauseButton");
+                StatusText = Strings.Get("Common_Resumed");
+                AppLogger.Log(Strings.Get("Merge_ResumedLog"));
             }
             else
             {
                 _pauseController.Pause();
                 IsPaused = true;
-                PauseButtonText = "▶ Возобновить";
-                StatusText = "На паузе.";
-                AppLogger.Log("Операция приостановлена пользователем");
+                PauseButtonText = Strings.Get("Common_ResumeButton");
+                StatusText = Strings.Get("Common_Paused");
+                AppLogger.Log(Strings.Get("Merge_PausedLog"));
             }
         }
 
         private static void CleanupCreatedFiles(List<string> createdFiles)
         {
             if (createdFiles.Count == 0) return;
-            AppLogger.Log($"Удаление незавершённых файлов ({createdFiles.Count})...");
+            AppLogger.Log(Strings.Format("Merge_DeletingIncompleteLog", createdFiles.Count));
             foreach (var path in createdFiles)
             {
                 try
@@ -293,12 +295,12 @@ namespace TweakFirmware.ViewModels
                     if (File.Exists(path))
                     {
                         File.Delete(path);
-                        AppLogger.Log($"Удалён: {Path.GetFileName(path)}");
+                        AppLogger.Log(Strings.Format("Merge_DeletedLog", Path.GetFileName(path)));
                     }
                 }
                 catch (Exception ex)
                 {
-                    AppLogger.Log($"Не удалось удалить {Path.GetFileName(path)}: {ex.Message}");
+                    AppLogger.Log(Strings.Format("Merge_DeleteFailedLog", Path.GetFileName(path), ex.Message));
                 }
             }
         }

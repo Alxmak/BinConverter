@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.ViewModels;
 
 namespace TweakFirmware.Views
@@ -98,7 +99,7 @@ namespace TweakFirmware.Views
             if (!e.Text.All(char.IsDigit))
             {
                 e.Handled = true;
-                ShowInvalidInputToast((TextBox)sender, "Разрешены только цифры");
+                ShowInvalidInputToast((TextBox)sender, Strings.Get("Common_DigitsOnly"));
             }
         }
 
@@ -110,7 +111,7 @@ namespace TweakFirmware.Views
                 if (!text.All(char.IsDigit))
                 {
                     e.CancelCommand();
-                    ShowInvalidInputToast((TextBox)sender, "Разрешены только цифры");
+                    ShowInvalidInputToast((TextBox)sender, Strings.Get("Common_DigitsOnly"));
                 }
             }
             else

@@ -4,7 +4,8 @@
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:views="clr-namespace:TweakFirmware.Views"
                  xmlns:services="clr-namespace:TweakFirmware.Services"
-                 Title="Tweak Firmware — UFPI ↔ TNM5000"
+                 xmlns:loc="clr-namespace:TweakFirmware.Services"
+                 Title="{loc:Loc Shell_WindowTitle}"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True">
@@ -51,7 +52,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Tweak Firmware" Icon="{ui:SymbolIcon ArrowSplit24}"/>
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:SymbolIcon ArrowSplit24}"/>
 
         <!-- Баннер автообновления: своя DataContext (UpdateManager), не зависит от
              OperationLockService, который используется остальным окном. -->
@@ -78,9 +79,9 @@
                     </TextBlock.Style>
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Обновить сейчас" Command="{Binding UpdateNowCommand}"
+                    <Button Content="{loc:Loc Shell_UpdateNowButton}" Command="{Binding UpdateNowCommand}"
                             Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"/>
-                    <Button Content="Позже" Command="{Binding DismissCommand}" Padding="14,7"/>
+                    <Button Content="{loc:Loc Shell_LaterButton}" Command="{Binding DismissCommand}" Padding="14,7"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -93,28 +94,28 @@
             <!-- Пункт 5: пока где-то идёт операция (IsNotBusy=false), пункты меню недоступны —
                  переключение раздела больше не может сорвать активный процесс. -->
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="Конвертирование" Icon="{ui:SymbolIcon ArrowSplit24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavConvert}" Icon="{ui:SymbolIcon ArrowSplit24}"
                                         TargetPageType="{x:Type views:ConvertPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="Сборка файла" Icon="{ui:SymbolIcon ArrowJoin20}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:MergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="Проверка SHA-256" Icon="{ui:SymbolIcon CheckmarkCircle24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
                                         TargetPageType="{x:Type views:VerifyPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="Извлечение разделов" Icon="{ui:SymbolIcon Info24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:ExtractPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="Терминал" Icon="{ui:SymbolIcon Info24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:TerminalPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
             </ui:NavigationView.MenuItems>
 
             <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="Настройки" Icon="{ui:SymbolIcon Settings24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
                                         TargetPageType="{x:Type views:SettingsPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="О программе" Icon="{ui:SymbolIcon Info24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavAbout}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:AboutPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
             </ui:NavigationView.FooterMenuItems>

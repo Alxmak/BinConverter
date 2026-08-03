@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Services
 {
@@ -17,7 +18,7 @@ namespace TweakFirmware.Services
             {
                 Title = title,
                 Content = message,
-                CloseButtonText = "ОК"
+                CloseButtonText = Strings.Get("Common_OkButton")
             };
             await box.ShowDialogAsync();
         }

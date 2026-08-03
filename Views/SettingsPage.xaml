@@ -2,7 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="Настройки">
+      xmlns:loc="clr-namespace:TweakFirmware.Services"
+      Title="{loc:Loc Settings_Title}">
 
     <Page.Resources>
         <!-- Пункт 11: голубая рамка вокруг выбранного варианта -->
@@ -18,10 +19,10 @@
 
             <ui:CardControl Margin="0,0,0,12">
                 <ui:CardControl.Header>
-                    <TextBlock Text="Тема оформления" FontWeight="Medium"/>
+                    <TextBlock Text="{loc:Loc Settings_ThemeTitle}" FontWeight="Medium"/>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="Светлая" Command="{Binding SetThemeCommand}" CommandParameter="Light">
+                    <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                 <Style.Triggers>
@@ -32,7 +33,7 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Content="Тёмная" Command="{Binding SetThemeCommand}" CommandParameter="Dark">
+                    <Button Content="{loc:Loc Settings_ThemeDark}" Command="{Binding SetThemeCommand}" CommandParameter="Dark">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                 <Style.Triggers>
@@ -43,7 +44,7 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Content="Как в системе" Command="{Binding SetThemeCommand}" CommandParameter="System">
+                    <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                 <Style.Triggers>
@@ -59,10 +60,10 @@
 
             <ui:CardControl Margin="0,0,0,12">
                 <ui:CardControl.Header>
-                    <TextBlock Text="Язык" FontWeight="Medium"/>
+                    <TextBlock Text="{loc:Loc Settings_LanguageTitle}" FontWeight="Medium"/>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="Русский" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
+                    <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                 <Style.Triggers>
@@ -73,7 +74,7 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Content="English" Command="{Binding SetLanguageCommand}" CommandParameter="en">
+                    <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                 <Style.Triggers>
@@ -89,9 +90,9 @@
 
             <ui:CardControl Margin="0,0,0,12">
                 <ui:CardControl.Header>
-                    <TextBlock Text="Папки по умолчанию" FontWeight="Medium"/>
+                    <TextBlock Text="{loc:Loc Settings_DefaultFoldersTitle}" FontWeight="Medium"/>
                 </ui:CardControl.Header>
-                <CheckBox Content="Использовать папку по умолчанию" IsChecked="{Binding UseDefaultPaths}"/>
+                <CheckBox Content="{loc:Loc Settings_UseDefaultFolderCheckbox}" IsChecked="{Binding UseDefaultPaths}"/>
             </ui:CardControl>
 
             <Grid Margin="0,0,0,10">
@@ -100,9 +101,9 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Конвертирование" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
+                <TextBlock Grid.Column="0" Text="{loc:Loc Convert_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
                 <TextBox Grid.Column="1" Text="{Binding ConvertFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
-                <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseConvertFolderCommand}"
+                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                         IsEnabled="{Binding CanEditCustomPaths}"/>
             </Grid>
 
@@ -112,9 +113,9 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Сборка файла" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
+                <TextBlock Grid.Column="0" Text="{loc:Loc Merge_Title}" VerticalAlignment="Center" FontSize="12" Opacity="0.75"/>
                 <TextBox Grid.Column="1" Text="{Binding MergeFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"/>
-                <Button Grid.Column="2" Content="📁 Обзор…" Command="{Binding BrowseMergeFolderCommand}"
+                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                         IsEnabled="{Binding CanEditCustomPaths}"/>
             </Grid>
 
@@ -123,11 +124,11 @@
                     <ui:SymbolIcon Symbol="Delete24"/>
                 </ui:CardControl.Icon>
                 <ui:CardControl.Header>
-                    <TextBlock Text="Очистить кэш" FontWeight="Medium"/>
+                    <TextBlock Text="{loc:Loc Settings_ClearCacheTitle}" FontWeight="Medium"/>
                 </ui:CardControl.Header>
-                <ui:Button Content="Очистить" Command="{Binding ClearCacheCommand}"/>
+                <ui:Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearCacheCommand}"/>
             </ui:CardControl>
-            <TextBlock Text="Используйте эту функцию при нестабильности программы. Будут удалены временные файлы и журналы."
+            <TextBlock Text="{loc:Loc Settings_ClearCacheHint}"
                        Opacity="0.6" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
         </StackPanel>
     </ScrollViewer>

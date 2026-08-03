@@ -2,12 +2,13 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-      Title="Извлечение разделов">
+      xmlns:loc="clr-namespace:TweakFirmware.Services"
+      Title="{loc:Loc Placeholder_ExtractTitle}">
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
             <ui:SymbolIcon Symbol="Info24" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
-            <TextBlock Text="Извлечение разделов" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-            <TextBlock Text="В разработке" TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7" Margin="0,8,0,0"/>
+            <TextBlock Text="{loc:Loc Placeholder_ExtractTitle}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <TextBlock Text="{loc:Loc Shell_Placeholder_InDevelopment}" TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7" Margin="0,8,0,0"/>
         </StackPanel>
     </Grid>
 </Page>

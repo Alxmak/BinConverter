@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Services
 {
@@ -77,7 +78,7 @@ namespace TweakFirmware.Services
                     return new UpdateCheckResult
                     {
                         CurrentVersion = current,
-                        ErrorMessage = $"GitHub ответил: {(int)response.StatusCode} {response.ReasonPhrase}"
+                        ErrorMessage = Strings.Format("Update_GitHubRespondedError", (int)response.StatusCode, response.ReasonPhrase)
                     };
                 }
 
@@ -125,7 +126,7 @@ namespace TweakFirmware.Services
                 return new UpdateCheckResult
                 {
                     CurrentVersion = current,
-                    ErrorMessage = $"Не удалось проверить обновления: {ex.Message}"
+                    ErrorMessage = Strings.Format("Update_CheckFailedError", ex.Message)
                 };
             }
         }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -18,7 +19,7 @@ namespace TweakFirmware.ViewModels
 
         public AboutViewModel()
         {
-            versionText = $"Версия {UpdateService.GetCurrentVersion()}";
+            versionText = Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
         }
 
         // Пункт 5: та же логика, что и фоновая ежедневная проверка — если обновление
@@ -28,7 +29,7 @@ namespace TweakFirmware.ViewModels
         private async System.Threading.Tasks.Task CheckForUpdatesAsync()
         {
             IsChecking = true;
-            UpdateStatusText = "Проверка...";
+            UpdateStatusText = Strings.Get("About_Checking");
 
             var result = await UpdateManager.Instance.CheckNowAsync();
 
@@ -39,13 +40,13 @@ namespace TweakFirmware.ViewModels
             if (result.ErrorMessage != null)
             {
                 UpdateStatusText = "";
-                await DialogService.ShowWarningAsync("Проверка обновлений", result.ErrorMessage);
+                await DialogService.ShowWarningAsync(Strings.Get("About_CheckUpdatesTitle"), result.ErrorMessage);
                 return;
             }
 
             UpdateStatusText = result.UpdateAvailable
-                ? $"Доступна новая версия: {result.LatestVersion} (см. уведомление сверху)"
-                : "У вас последняя версия.";
+                ? Strings.Format("About_UpdateAvailable", result.LatestVersion)
+                : Strings.Get("About_UpToDate");
         }
     }
 }

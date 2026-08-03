@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -26,7 +27,7 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
-        [ObservableProperty] private string statusText = "Готово";
+        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         [ObservableProperty] private bool hasResult;
         [ObservableProperty] private bool isMatch;
@@ -41,14 +42,14 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseA()
         {
-            var dlg = new OpenFileDialog { Filter = "Все файлы (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Strings.Get("Common_AllFilesFilter") };
             if (dlg.ShowDialog() == true) FileAPath = dlg.FileName;
         }
 
         [RelayCommand]
         private void BrowseB()
         {
-            var dlg = new OpenFileDialog { Filter = "Все файлы (*.*)|*.*" };
+            var dlg = new OpenFileDialog { Filter = Strings.Get("Common_AllFilesFilter") };
             if (dlg.ShowDialog() == true) FileBPath = dlg.FileName;
         }
 
@@ -70,11 +71,11 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void SaveLog()
         {
-            var dlg = new SaveFileDialog { Filter = "Текстовый файл (*.txt)|*.txt", FileName = "TweakFirmware.log.txt" };
+            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
             if (dlg.ShowDialog() == true)
             {
                 try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { _ = DialogService.ShowErrorAsync("Ошибка", $"Не удалось сохранить лог:\n{ex.Message}"); }
+                catch (Exception ex) { _ = DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Common_SaveLogFailed", ex.Message)); }
             }
         }
 
@@ -86,7 +87,7 @@ namespace TweakFirmware.ViewModels
         {
             if (!File.Exists(FileAPath) || !File.Exists(FileBPath))
             {
-                await DialogService.ShowWarningAsync("Ошибка", "Выберите оба файла.");
+                await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Verify_SelectBothFiles"));
                 return;
             }
 
@@ -94,7 +95,7 @@ namespace TweakFirmware.ViewModels
             IsBusy = true;
             HasResult = false;
             OverallProgress = 0;
-            AppLogger.Log($"Сравнение хэшей: {FileAPath}  vs  {FileBPath}");
+            AppLogger.Log(Strings.Format("Verify_CompareLog", FileAPath, FileBPath));
 
             try
             {
@@ -102,14 +103,14 @@ namespace TweakFirmware.ViewModels
                 long sizeB = new FileInfo(FileBPath).Length;
                 long totalWork = sizeA + sizeB;
 
-                CurrentFileLabel = $"Файл A — {Path.GetFileName(FileAPath)}";
+                CurrentFileLabel = Strings.Format("Verify_FileALabelProgress", Path.GetFileName(FileAPath));
                 var progressA = new Progress<(long done, long total)>(p =>
                 {
                     OverallProgress = totalWork > 0 ? (double)p.done / totalWork * 100.0 : 0;
                 });
                 HashAText = await Task.Run(() => HashHelper.ComputeFileHashAsync(FileAPath, _cts.Token, progressA));
 
-                CurrentFileLabel = $"Файл B — {Path.GetFileName(FileBPath)}";
+                CurrentFileLabel = Strings.Format("Verify_FileBLabelProgress", Path.GetFileName(FileBPath));
                 var progressB = new Progress<(long done, long total)>(p =>
                 {
                     OverallProgress = totalWork > 0 ? (double)(sizeA + p.done) / totalWork * 100.0 : 0;
@@ -117,21 +118,21 @@ namespace TweakFirmware.ViewModels
                 HashBText = await Task.Run(() => HashHelper.ComputeFileHashAsync(FileBPath, _cts.Token, progressB));
 
                 bool match = string.Equals(HashAText, HashBText, StringComparison.OrdinalIgnoreCase);
-                AppLogger.Log(match ? "Хэши совпадают ✓" : "Хэши НЕ совпадают");
+                AppLogger.Log(match ? Strings.Get("Verify_HashesMatchLog") : Strings.Get("Verify_HashesMismatchLog"));
 
                 IsMatch = match;
-                ResultText = match ? "✓ Хэши совпадают — данные идентичны" : "✕ Хэши НЕ совпадают — файлы различаются";
+                ResultText = match ? Strings.Get("Verify_MatchResult") : Strings.Get("Verify_MismatchResult");
                 HasResult = true;
-                StatusText = "Готово.";
+                StatusText = Strings.Get("Common_Done");
             }
             catch (OperationCanceledException)
             {
-                StatusText = "Отменено.";
+                StatusText = Strings.Get("Verify_Cancelled");
             }
             catch (Exception ex)
             {
-                StatusText = "Ошибка.";
-                await DialogService.ShowErrorAsync("Ошибка", $"Ошибка при вычислении хэша:\n{ex.Message}");
+                StatusText = Strings.Get("Verify_ErrorStatus");
+                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Verify_HashErrorMessage", ex.Message));
             }
             finally
             {

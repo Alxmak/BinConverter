@@ -8,6 +8,7 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Services
 {
@@ -40,7 +41,7 @@ namespace TweakFirmware.Services
         [ObservableProperty] private string statusText = "";
 
         public bool CanInteract => !IsBusy;
-        public string BannerText => $"Доступна новая версия {LatestVersion}";
+        public string BannerText => Strings.Format("Shell_UpdateBanner", LatestVersion);
 
         private UpdateCheckResult? _pending;
 
@@ -87,7 +88,7 @@ namespace TweakFirmware.Services
                 _pending = result;
                 LatestVersion = result.LatestVersion ?? "";
                 ShowUpdateBanner = true;
-                AppLogger.Log($"Найдено обновление: версия {result.LatestVersion} (текущая {result.CurrentVersion})");
+                AppLogger.Log(Strings.Format("Shell_UpdateFoundLog", result.LatestVersion, result.CurrentVersion));
             }
 
             return result;
@@ -104,10 +105,10 @@ namespace TweakFirmware.Services
             IsBusy = true;
             try
             {
-                AppLogger.Log($"Начата загрузка обновления {LatestVersion}: {_pending.InstallerAssetName}");
+                AppLogger.Log(Strings.Format("Shell_UpdateDownloadStartLog", LatestVersion, _pending.InstallerAssetName));
 
-                var progress = new Progress<double>(p => StatusText = $"Загрузка обновления... {p:F0}%");
-                StatusText = "Загрузка обновления...";
+                var progress = new Progress<double>(p => StatusText = Strings.Format("Shell_DownloadingUpdate", p));
+                StatusText = Strings.Format("Shell_DownloadingUpdate", 0.0);
 
                 string installerPath = await UpdateService.DownloadInstallerAsync(
                     _pending.InstallerAssetUrl,
@@ -115,8 +116,8 @@ namespace TweakFirmware.Services
                     progress,
                     CancellationToken.None);
 
-                StatusText = "Установка...";
-                AppLogger.Log("Обновление скачано, запуск тихой установки — приложение перезапустится автоматически");
+                StatusText = Strings.Get("Shell_Installing");
+                AppLogger.Log(Strings.Get("Shell_UpdateDownloadedLog"));
 
                 // /VERYSILENT + /SUPPRESSMSGBOXES — без единого окна установщика.
                 // /CLOSEAPPLICATIONS — подстраховка от Inno Setup, если наше приложение
@@ -135,8 +136,8 @@ namespace TweakFirmware.Services
             {
                 IsBusy = false;
                 StatusText = "";
-                AppLogger.Log($"Ошибка автообновления: {ex.Message}");
-                await DialogService.ShowErrorAsync("Ошибка обновления", $"Не удалось скачать или установить обновление:\n{ex.Message}");
+                AppLogger.Log(Strings.Format("Shell_UpdateErrorLog", ex.Message));
+                await DialogService.ShowErrorAsync(Strings.Get("Shell_UpdateErrorTitle"), Strings.Format("Shell_UpdateErrorMessage", ex.Message));
             }
         }
     }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
 {
@@ -67,7 +68,7 @@ namespace TweakFirmware.Core
             PauseController? pauseController = null)
         {
             if (!File.Exists(sourcePath))
-                throw new FileNotFoundException("Исходный файл не найден", sourcePath);
+                throw new FileNotFoundException(Strings.Get("Core_SourceFileNotFound"), sourcePath);
             if (maxPartSizeBytes <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxPartSizeBytes));
 
@@ -99,7 +100,7 @@ namespace TweakFirmware.Core
             {
                 var output = new FileStream(currentPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
                 createdFilePaths?.Add(currentPath);
-                log($"Создан {Path.GetFileName(currentPath)} (файл {partIndex + 1} из {totalFiles})");
+                log(Strings.Format("Log_PartCreated", Path.GetFileName(currentPath), partIndex + 1, totalFiles));
 
                 try
                 {
@@ -120,13 +121,13 @@ namespace TweakFirmware.Core
                             {
                                 output.Flush();
                                 output.Dispose();
-                                log($"Файл {Path.GetFileName(currentPath)} заполнен ({writtenInCurrent:N0} байт)");
+                                log(Strings.Format("Log_PartFilled", Path.GetFileName(currentPath), writtenInCurrent));
 
                                 partIndex++;
                                 currentPath = $"{basePath}.part{partIndex}";
                                 output = new FileStream(currentPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
                                 createdFilePaths?.Add(currentPath);
-                                log($"Создан {Path.GetFileName(currentPath)} (файл {partIndex + 1} из {totalFiles})");
+                                log(Strings.Format("Log_PartCreated", Path.GetFileName(currentPath), partIndex + 1, totalFiles));
                                 writtenInCurrent = 0;
                                 remaining = maxPartSizeBytes;
                             }
@@ -157,19 +158,19 @@ namespace TweakFirmware.Core
                 }
             }
 
-            log($"Файл {Path.GetFileName(currentPath)} завершён ({writtenInCurrent:N0} байт)");
+            log(Strings.Format("Log_PartFinished", Path.GetFileName(currentPath), writtenInCurrent));
 
             result.SourceHash = Convert.ToHexString(sha256Source.GetHashAndReset());
             result.PartsCreated = partIndex + 1;
 
             if (verifyHash)
             {
-                log("Проверка SHA-256: повторное чтение всех частей подряд...");
+                log(Strings.Get("Log_VerifyingHash"));
                 result.RecombinedHash = await HashHelper.ComputePartsHashAsync(basePath, partIndex, ct, hashVerifyProgress);
                 result.VerifyPerformed = true;
                 log(result.HashesMatch
-                    ? "SHA-256 совпадает — байты не потеряны ✓"
-                    : "ОШИБКА: SHA-256 НЕ совпадает! Проверьте результат.");
+                    ? Strings.Get("Log_HashMatches")
+                    : Strings.Get("Log_HashMismatchError"));
             }
 
             return result;
