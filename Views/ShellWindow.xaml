@@ -6,6 +6,7 @@
                  xmlns:services="clr-namespace:TweakFirmware.Services"
                  xmlns:loc="clr-namespace:TweakFirmware.Services"
                  Title="{loc:Loc Shell_WindowTitle}"
+                 Icon="pack://application:,,,/Assets/AppIcon-64.png"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True">
@@ -52,7 +53,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:SymbolIcon ArrowSplit24}"/>
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-64.png'}"/>
 
         <!-- Баннер автообновления: своя DataContext (UpdateManager), не зависит от
              OperationLockService, который используется остальным окном. -->

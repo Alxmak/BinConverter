@@ -33,6 +33,7 @@ WizardStyle=modern
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
+SetupIconFile=..\Assets\AppIcon.ico
 ; Программа не подписана цифровой подписью — это ожидаемо для небольшой
 ; программы для личного использования (см. README/"О программе").
 

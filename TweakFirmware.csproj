@@ -10,6 +10,7 @@
     <RootNamespace>TweakFirmware</RootNamespace>
     <LangVersion>latest</LangVersion>
     <ApplicationTitle>Tweak Firmware</ApplicationTitle>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <Version>2.4.3</Version>
     <AssemblyVersion>2.4.3.0</AssemblyVersion>
     <FileVersion>2.4.3.0</FileVersion>
@@ -33,6 +34,11 @@
 
   <ItemGroup>
     <ProjectReference Include="TweakFirmware.Core\TweakFirmware.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\AppIcon-256.png" />
+    <Resource Include="Assets\AppIcon-64.png" />
   </ItemGroup>
 
   <ItemGroup>
