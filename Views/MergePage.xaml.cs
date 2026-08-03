@@ -30,6 +30,18 @@ namespace TweakFirmware.Views
             e.Handled = true;
         }
 
+        private void SourcePathTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            string? path = ClipboardPathHelper.TryGetPath();
+            if (path != null) _viewModel.SetSource(path);
+        }
+
+        private void OutputPathTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            string? path = ClipboardPathHelper.TryGetPath();
+            if (path != null) _viewModel.OutputPath = path;
+        }
+
         private void SourceRow_DragOver(object sender, DragEventArgs e)
         {
             e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;

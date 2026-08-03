@@ -142,11 +142,14 @@ namespace TweakFirmware.ViewModels
         private void BrowseOutput()
         {
             var dlg = new OpenFolderDialog { Title = Strings.Get("Convert_ChooseOutputFolderTitle") };
-            if (dlg.ShowDialog() == true)
-            {
-                OutputFolder = dlg.FolderName;
-                UpdatePreview();
-            }
+            if (dlg.ShowDialog() == true) SetOutputFolder(dlg.FolderName);
+        }
+
+        /// <summary>Используется и кнопкой "Обзор...", и вставкой пути из буфера обмена.</summary>
+        public void SetOutputFolder(string path)
+        {
+            OutputFolder = path;
+            UpdatePreview();
         }
 
         [RelayCommand]

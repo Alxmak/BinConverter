@@ -78,22 +78,27 @@ namespace TweakFirmware.ViewModels
         private void BrowseConvertFolder()
         {
             var dlg = new OpenFolderDialog { Title = Strings.Get("Settings_ChooseConvertFolderTitle") };
-            if (dlg.ShowDialog() == true)
-            {
-                OutputPathSettingsService.SetCustomConvertFolder(dlg.FolderName);
-                RefreshFolderDisplays();
-            }
+            if (dlg.ShowDialog() == true) SetCustomConvertFolder(dlg.FolderName);
         }
 
         [RelayCommand]
         private void BrowseMergeFolder()
         {
             var dlg = new OpenFolderDialog { Title = Strings.Get("Settings_ChooseMergeFolderTitle") };
-            if (dlg.ShowDialog() == true)
-            {
-                OutputPathSettingsService.SetCustomMergeFolder(dlg.FolderName);
-                RefreshFolderDisplays();
-            }
+            if (dlg.ShowDialog() == true) SetCustomMergeFolder(dlg.FolderName);
+        }
+
+        /// <summary>Используется и кнопкой "Обзор...", и вставкой пути из буфера обмена.</summary>
+        public void SetCustomConvertFolder(string path)
+        {
+            OutputPathSettingsService.SetCustomConvertFolder(path);
+            RefreshFolderDisplays();
+        }
+
+        public void SetCustomMergeFolder(string path)
+        {
+            OutputPathSettingsService.SetCustomMergeFolder(path);
+            RefreshFolderDisplays();
         }
 
         [RelayCommand]

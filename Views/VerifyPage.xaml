@@ -82,14 +82,22 @@
 
                     <StackPanel Grid.Column="0" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
                         <TextBlock Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource SectionLabel}"/>
-                        <TextBox Text="{Binding FileAPath}" IsReadOnly="True" Margin="0,0,0,8"/>
+                        <TextBox Text="{Binding FileAPath}" IsReadOnly="True" Margin="0,0,0,8">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="FileAPathTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding HashAText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" AllowDrop="True" Drop="FileB_Drop" DragOver="Row_DragOver">
                         <TextBlock Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource SectionLabel}"/>
-                        <TextBox Text="{Binding FileBPath}" IsReadOnly="True" Margin="0,0,0,8"/>
+                        <TextBox Text="{Binding FileBPath}" IsReadOnly="True" Margin="0,0,0,8">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="FileBPathTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding HashBText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>

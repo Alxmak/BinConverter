@@ -108,7 +108,11 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding ConvertFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditConvertPath}"/>
+                                 IsEnabled="{Binding CanEditConvertPath}">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="ConvertFolderTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Grid.Column="1" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                                 IsEnabled="{Binding CanEditConvertPath}"/>
                     </Grid>
@@ -127,7 +131,11 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" Text="{Binding MergeFolder, Mode=OneWay}" IsReadOnly="True" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditMergePath}"/>
+                                 IsEnabled="{Binding CanEditMergePath}">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="MergeFolderTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Grid.Column="1" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                                 IsEnabled="{Binding CanEditMergePath}"/>
                     </Grid>

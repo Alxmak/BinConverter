@@ -29,6 +29,18 @@ namespace TweakFirmware.Views
             e.Handled = true;
         }
 
+        private void FileAPathTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            string? path = ClipboardPathHelper.TryGetPath();
+            if (path != null) _viewModel.SetFileA(path);
+        }
+
+        private void FileBPathTextBox_PasteExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            string? path = ClipboardPathHelper.TryGetPath();
+            if (path != null) _viewModel.SetFileB(path);
+        }
+
         private void Row_DragOver(object sender, DragEventArgs e)
         {
             e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;

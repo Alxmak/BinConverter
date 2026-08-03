@@ -86,7 +86,11 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_AnyChainPartLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding SourcePath}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Text="{Binding SourcePath}" IsReadOnly="True" Margin="0,0,8,0">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="SourcePathTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
@@ -97,7 +101,11 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding OutputPath}" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Text="{Binding OutputPath}" IsReadOnly="True" Margin="0,0,8,0">
+                            <TextBox.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Paste" Executed="OutputPathTextBox_PasteExecuted"/>
+                            </TextBox.CommandBindings>
+                        </TextBox>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
