@@ -112,7 +112,7 @@
                  переключение раздела больше не может сорвать активный процесс.
                  Сгруппировано по образцу дизайна Claude: заголовки групп + разделитель. -->
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItemHeader Content="{loc:Loc Shell_ToolsGroupHeader}"/>
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_ToolsGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavConvert}" Icon="{ui:SymbolIcon ArrowSplit24}"
                                         TargetPageType="{x:Type views:ConvertPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
@@ -129,7 +129,7 @@
                                         TargetPageType="{x:Type views:TerminalPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItemSeparator/>
-                <ui:NavigationViewItemHeader Content="{loc:Loc Shell_SystemGroupHeader}"/>
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_SystemGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
                                         TargetPageType="{x:Type views:SettingsPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
