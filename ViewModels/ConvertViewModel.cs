@@ -194,7 +194,7 @@ namespace TweakFirmware.ViewModels
                     Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder);
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
                 return;
             }
 
@@ -207,7 +207,7 @@ namespace TweakFirmware.ViewModels
                     Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder) + Strings.Get("Convert_InvalidLimitSuffix");
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
                 return;
             }
 
@@ -220,7 +220,7 @@ namespace TweakFirmware.ViewModels
                     Strings.Format("Convert_ExpectedCountLine", count.ToString("N0")) + Strings.Get("Convert_TooManyFilesSuffix");
                 _expectedFileCount = count;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder;
+                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
                 return;
             }
 
@@ -239,7 +239,7 @@ namespace TweakFirmware.ViewModels
 
         private void RebuildFilesText()
         {
-            if (_expectedFileCount == 0) { DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + "\n" + NoValuePlaceholder; return; }
+            if (_expectedFileCount == 0) { DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder; return; }
 
             int toShow = ShowAllFiles ? _expectedFileCount : Math.Min(CollapsedFileListCount, _expectedFileCount);
 

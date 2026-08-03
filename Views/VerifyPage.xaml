@@ -124,8 +124,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Verify_CompareProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}" Foreground="#2F6FED"/>
                         </Border>
                     </Grid>
                     <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>

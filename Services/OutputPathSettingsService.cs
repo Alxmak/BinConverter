@@ -14,7 +14,10 @@ namespace TweakFirmware.Services
         private static readonly string SettingsPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tweak Firmware", "paths.txt");
 
-        public static bool UseDefaultPaths { get; private set; } = true;
+        // Пункт 5: раздельные флаги — «Путь по умолчанию» для Конвертирования и для
+        // Сборки файла переключаются независимо друг от друга.
+        public static bool UseDefaultConvertPath { get; private set; } = true;
+        public static bool UseDefaultMergePath { get; private set; } = true;
         public static string CustomConvertFolder { get; private set; } = "";
         public static string CustomMergeFolder { get; private set; } = "";
 
@@ -28,15 +31,21 @@ namespace TweakFirmware.Services
 
         /// <summary>Папка, которую сейчас нужно использовать по умолчанию для конвертирования.</summary>
         public static string GetConvertFolder() =>
-            UseDefaultPaths || string.IsNullOrWhiteSpace(CustomConvertFolder) ? DefaultConvertFolder : CustomConvertFolder;
+            UseDefaultConvertPath || string.IsNullOrWhiteSpace(CustomConvertFolder) ? DefaultConvertFolder : CustomConvertFolder;
 
         /// <summary>Папка, которую сейчас нужно использовать по умолчанию для сборки.</summary>
         public static string GetMergeFolder() =>
-            UseDefaultPaths || string.IsNullOrWhiteSpace(CustomMergeFolder) ? DefaultMergeFolder : CustomMergeFolder;
+            UseDefaultMergePath || string.IsNullOrWhiteSpace(CustomMergeFolder) ? DefaultMergeFolder : CustomMergeFolder;
 
-        public static void SetUseDefaultPaths(bool value)
+        public static void SetUseDefaultConvertPath(bool value)
         {
-            UseDefaultPaths = value;
+            UseDefaultConvertPath = value;
+            Save();
+        }
+
+        public static void SetUseDefaultMergePath(bool value)
+        {
+            UseDefaultMergePath = value;
             Save();
         }
 
@@ -58,6 +67,10 @@ namespace TweakFirmware.Services
             {
                 if (!File.Exists(SettingsPath)) return;
 
+                // "UseDefault" — старый, единый на оба раздела ключ (до разделения флагов);
+                // если найден, применяем его значение к обоим новым, иначе не трогаем.
+                bool? legacyUseDefault = null;
+
                 foreach (string line in File.ReadAllLines(SettingsPath))
                 {
                     int idx = line.IndexOf('=');
@@ -68,10 +81,18 @@ namespace TweakFirmware.Services
 
                     switch (key)
                     {
-                        case "UseDefault": UseDefaultPaths = value == "True"; break;
+                        case "UseDefault": legacyUseDefault = value == "True"; break;
+                        case "UseDefaultConvert": UseDefaultConvertPath = value == "True"; break;
+                        case "UseDefaultMerge": UseDefaultMergePath = value == "True"; break;
                         case "ConvertFolder": CustomConvertFolder = value; break;
                         case "MergeFolder": CustomMergeFolder = value; break;
                     }
+                }
+
+                if (legacyUseDefault.HasValue)
+                {
+                    UseDefaultConvertPath = legacyUseDefault.Value;
+                    UseDefaultMergePath = legacyUseDefault.Value;
                 }
             }
             catch { /* используем значения по умолчанию, если не удалось прочитать */ }
@@ -86,7 +107,8 @@ namespace TweakFirmware.Services
 
                 File.WriteAllLines(SettingsPath, new[]
                 {
-                    $"UseDefault={UseDefaultPaths}",
+                    $"UseDefaultConvert={UseDefaultConvertPath}",
+                    $"UseDefaultMerge={UseDefaultMergePath}",
                     $"ConvertFolder={CustomConvertFolder}",
                     $"MergeFolder={CustomMergeFolder}"
                 });

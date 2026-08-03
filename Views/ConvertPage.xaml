@@ -156,7 +156,7 @@
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
                         <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
-                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="12" Opacity="0.85" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
                         <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
                                 HorizontalAlignment="Left" FontSize="11" Padding="10,4"
                                 Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
@@ -192,8 +192,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_OverallProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}" Foreground="#2F6FED"/>
                         </Border>
                     </Grid>
 
@@ -203,8 +203,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_CurrentFileProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}"/>
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}" Foreground="#16A34A"/>
                         </Border>
                     </Grid>
                     <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-8,0,14"/>
@@ -215,9 +215,9 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_HashProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
                             <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100"
-                                         Value="{Binding ShaProgress, Mode=OneWay}" IsEnabled="{Binding VerifyHashAfter}"/>
+                                         Value="{Binding ShaProgress, Mode=OneWay}" IsEnabled="{Binding VerifyHashAfter}" Foreground="#8B5CF6"/>
                         </Border>
                     </Grid>
 

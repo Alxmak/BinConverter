@@ -90,8 +90,6 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
-                    <TextBlock Text="{Binding ChainInfoText}" FontSize="11" Opacity="0.6" TextWrapping="Wrap" Margin="190,-8,0,14"/>
-
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190"/>
@@ -103,7 +101,7 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
-                    <Grid Style="{StaticResource RowGrid}">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="190"/>
                             <ColumnDefinition Width="*"/>
@@ -112,10 +110,30 @@
                         <TextBox Grid.Column="1" Text="{Binding ExpectedHashText, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas"
                                  ToolTip="{loc:Loc Merge_ExpectedHashTooltip}"/>
                     </Grid>
-
-                    <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
                 </StackPanel>
             </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
@@ -127,8 +145,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_OverallProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}"/>
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}" Foreground="#2F6FED"/>
                         </Border>
                     </Grid>
 
@@ -138,8 +156,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_CurrentFileProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="6" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}"/>
+                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
+                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}" Foreground="#16A34A"/>
                         </Border>
                     </Grid>
                     <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>

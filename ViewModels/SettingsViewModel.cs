@@ -17,27 +17,37 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty]
         private string selectedLanguage;
 
-        // Пункт 7: папки по умолчанию для «Конвертирования» и «Сборки файла».
-        [ObservableProperty]
-        private bool useDefaultPaths;
+        // Пункт 5/7: «Путь по умолчанию» переключается отдельно для «Конвертирования»
+        // и для «Сборки файла».
+        [ObservableProperty] private bool useDefaultConvertPath;
+        [ObservableProperty] private bool useDefaultMergePath;
 
         [ObservableProperty] private string convertFolder = "";
         [ObservableProperty] private string mergeFolder = "";
 
-        public bool CanEditCustomPaths => !UseDefaultPaths;
+        public bool CanEditConvertPath => !UseDefaultConvertPath;
+        public bool CanEditMergePath => !UseDefaultMergePath;
 
         public SettingsViewModel()
         {
             currentTheme = ThemeService.CurrentMode;
             selectedLanguage = LocalizationService.Instance.CurrentLanguage;
-            useDefaultPaths = OutputPathSettingsService.UseDefaultPaths;
+            useDefaultConvertPath = OutputPathSettingsService.UseDefaultConvertPath;
+            useDefaultMergePath = OutputPathSettingsService.UseDefaultMergePath;
             RefreshFolderDisplays();
         }
 
-        partial void OnUseDefaultPathsChanged(bool value)
+        partial void OnUseDefaultConvertPathChanged(bool value)
         {
-            OutputPathSettingsService.SetUseDefaultPaths(value);
-            OnPropertyChanged(nameof(CanEditCustomPaths));
+            OutputPathSettingsService.SetUseDefaultConvertPath(value);
+            OnPropertyChanged(nameof(CanEditConvertPath));
+            RefreshFolderDisplays();
+        }
+
+        partial void OnUseDefaultMergePathChanged(bool value)
+        {
+            OutputPathSettingsService.SetUseDefaultMergePath(value);
+            OnPropertyChanged(nameof(CanEditMergePath));
             RefreshFolderDisplays();
         }
 
