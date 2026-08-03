@@ -3,7 +3,8 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
-      Title="{loc:Loc Placeholder_TerminalTitle}">
+      Title="{loc:Loc Placeholder_TerminalTitle}"
+      ScrollViewer.CanContentScroll="False">
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
             <ui:SymbolIcon Symbol="Info24" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
