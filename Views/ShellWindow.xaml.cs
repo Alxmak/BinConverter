@@ -24,10 +24,5 @@ namespace TweakFirmware.Views
             Loaded += (_, _) => RootNavigation.Navigate(typeof(ConvertPage));
             Closing += (_, _) => WindowPlacementService.Save(this);
         }
-
-        private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
-        {
-            RootNavigation.IsPaneOpen = !RootNavigation.IsPaneOpen;
-        }
     }
 }
