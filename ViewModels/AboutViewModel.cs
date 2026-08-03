@@ -45,7 +45,7 @@ namespace TweakFirmware.ViewModels
             }
 
             UpdateStatusText = result.UpdateAvailable
-                ? Strings.Format("About_UpdateAvailable", result.LatestVersion)
+                ? Strings.Format("About_UpdateAvailable", result.LatestVersion ?? "")
                 : Strings.Get("About_UpToDate");
         }
     }

@@ -88,7 +88,7 @@ namespace TweakFirmware.Services
                 _pending = result;
                 LatestVersion = result.LatestVersion ?? "";
                 ShowUpdateBanner = true;
-                AppLogger.Log(Strings.Format("Shell_UpdateFoundLog", result.LatestVersion, result.CurrentVersion));
+                AppLogger.Log(Strings.Format("Shell_UpdateFoundLog", result.LatestVersion ?? "", result.CurrentVersion));
             }
 
             return result;
@@ -105,7 +105,7 @@ namespace TweakFirmware.Services
             IsBusy = true;
             try
             {
-                AppLogger.Log(Strings.Format("Shell_UpdateDownloadStartLog", LatestVersion, _pending.InstallerAssetName));
+                AppLogger.Log(Strings.Format("Shell_UpdateDownloadStartLog", LatestVersion, _pending.InstallerAssetName ?? ""));
 
                 var progress = new Progress<double>(p => StatusText = Strings.Format("Shell_DownloadingUpdate", p));
                 StatusText = Strings.Format("Shell_DownloadingUpdate", 0.0);

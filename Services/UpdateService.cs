@@ -78,7 +78,7 @@ namespace TweakFirmware.Services
                     return new UpdateCheckResult
                     {
                         CurrentVersion = current,
-                        ErrorMessage = Strings.Format("Update_GitHubRespondedError", (int)response.StatusCode, response.ReasonPhrase)
+                        ErrorMessage = Strings.Format("Update_GitHubRespondedError", (int)response.StatusCode, response.ReasonPhrase ?? "")
                     };
                 }
 
