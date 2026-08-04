@@ -1,0 +1,40 @@
+name: Проверка сборки
+
+# Релизный workflow срабатывает только на тег, поэтому до него ошибка компиляции
+# всплывала уже во время публикации релиза. Этот прогон собирает проект и гоняет
+# тесты на каждый пуш в main, чтобы к моменту релиза сборка была заведомо рабочей.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # позволяет запустить проверку вручную из вкладки Actions
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout кода
+        uses: actions/checkout@v4
+
+      - name: Установить .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Восстановить зависимости
+        run: |
+          dotnet restore TweakFirmware.csproj
+          dotnet restore TweakFirmware.Tests/TweakFirmware.Tests.csproj
+
+      # Основная цель: XAML компилируется в BAML именно на этом шаге, поэтому
+      # опечатки в разметке и несуществующие имена иконок ловятся здесь.
+      - name: Собрать приложение (Release)
+        run: dotnet build TweakFirmware.csproj -c Release --no-restore
+
+      - name: Прогнать тесты Core
+        run: dotnet test TweakFirmware.Tests/TweakFirmware.Tests.csproj -c Release --no-restore --verbosity normal
