@@ -3,74 +3,10 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
       Title="{loc:Loc Merge_Title}"
       ScrollViewer.CanContentScroll="False">
 
-    <Page.Resources>
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="18"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
-        </Style>
-        <Style x:Key="RowLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,0,16,0"/>
-        </Style>
-        <Style x:Key="CardTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-        </Style>
-        <Style x:Key="RowGrid" TargetType="Grid">
-            <Setter Property="Margin" Value="0,0,0,14"/>
-        </Style>
-        <!-- Пункт 2: свой шаблон кнопки — при наведении/нажатии меняется только
-             прозрачность, а не фон (иначе в светлой теме белый текст пропадает
-             на светлом фоне hover-состояния из стандартного стиля WPF-UI). -->
-        <Style x:Key="SolidButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="18,9"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.75"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PauseButtonStyle" TargetType="Button" BasedOn="{StaticResource SolidButtonStyle}">
-            <Setter Property="Background" Value="#F2A93B"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsPaused}" Value="True">
-                    <Setter Property="Background" Value="#16A34A"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="ProgressBarRounded" TargetType="ProgressBar">
-            <Setter Property="Height" Value="10"/>
-        </Style>
-    </Page.Resources>
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel HorizontalAlignment="Stretch">
@@ -112,65 +48,64 @@
                 </StackPanel>
             </Border>
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="14"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,6"/>
+                    <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13" Opacity="0.7"/>
+                </StackPanel>
+            </Border>
 
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
-                    <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                        <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                    <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
-                        <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                    <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
+                </StackPanel>
+            </Border>
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <Grid Margin="0,0,0,14">
+                    <c:ProgressRow Label="{loc:Loc Merge_OverallProgressLabel}"
+                                   Value="{Binding OverallProgress}" Fill="#2F6FED"/>
+
+                    <c:ProgressRow Label="{loc:Loc Convert_CurrentFileProgressLabel}"
+                                   Value="{Binding CurrentFileProgress}" Fill="#16A34A"
+                                   Caption="{Binding CurrentFileLabel}"/>
+
+                    <Grid Margin="0,4,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Merge_OverallProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}" Foreground="#2F6FED"/>
-                        </Border>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Button Command="{Binding StartCommand}" Style="{StaticResource SolidButtonStyle}"
+                                    Background="#2F6FED" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,7,0"/>
+                                    <TextBlock Text="{loc:Loc Merge_StartButton}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding TogglePauseCommand}" Style="{StaticResource PauseButtonStyle}"
+                                    IsEnabled="{Binding IsBusy}" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Pause24" FontSize="14" Margin="0,0,7,0"/>
+                                    <TextBlock Text="{Binding PauseButtonText}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+                                    Style="{StaticResource SolidButtonStyle}" Background="#E5484D">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Margin="0,0,7,0"/>
+                                    <TextBlock Text="{loc:Loc Common_CancelButton}"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Opacity="0.7"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   TextTrimming="CharacterEllipsis"/>
                     </Grid>
-
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_CurrentFileProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding CurrentFileProgress, Mode=OneWay}" Foreground="#16A34A"/>
-                        </Border>
-                    </Grid>
-                    <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="{loc:Loc Merge_StartButton}" Command="{Binding StartCommand}"
-                                Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,10,0"/>
-                        <Button Content="{Binding PauseButtonText}" Command="{Binding TogglePauseCommand}"
-                                Style="{StaticResource PauseButtonStyle}" IsEnabled="{Binding IsBusy}" Margin="0,0,10,0"/>
-                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
-                                Style="{StaticResource SolidButtonStyle}" Background="#E5484D"/>
-                    </StackPanel>
-
-                    <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" Margin="0,10,0,0"/>
                 </StackPanel>
             </Border>
 

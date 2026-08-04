@@ -12,37 +12,10 @@
                  ExtendsContentIntoTitleBar="True">
 
     <ui:FluentWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <!-- Тот же приём, что и на страницах Конвертирования/Сборки/Проверки: у стандартного
-             стиля кнопки WPF-UI фон при наведении переопределяется цветом темы (в светлой
-             теме — почти белым), из-за чего белый текст становится не виден. -->
-        <Style x:Key="SolidButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+        <!-- Общий стиль кнопки лежит в Styles/AppStyles.xaml; здесь только уменьшаем
+             отступы — кнопки баннера обновления компактнее, чем на рабочих вкладках. -->
+        <Style x:Key="BannerButtonStyle" TargetType="Button" BasedOn="{StaticResource SolidButtonStyle}">
             <Setter Property="Padding" Value="14,7"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.75"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
     </ui:FluentWindow.Resources>
 
@@ -81,7 +54,7 @@
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="{loc:Loc Shell_UpdateNowButton}" Command="{Binding UpdateNowCommand}"
-                            Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"/>
+                            Style="{StaticResource BannerButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"/>
                     <Button Content="{loc:Loc Shell_LaterButton}" Command="{Binding DismissCommand}" Padding="14,7"/>
                 </StackPanel>
             </Grid>

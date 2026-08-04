@@ -16,7 +16,7 @@
     </Page.Resources>
 
     <ScrollViewer x:Name="RootScroll" Padding="24,20" VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+        <StackPanel HorizontalAlignment="Stretch">
 
             <ui:CardControl Margin="0,0,0,12">
                 <ui:CardControl.Header>

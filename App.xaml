@@ -10,6 +10,9 @@
                      явно указывать конкретную тему тут не нужно. -->
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
+                <!-- Общие стили страниц (карточки, кнопки, прогресс-бары). Идёт после
+                     словарей WPF-UI, чтобы наши стили перекрывали стандартные. -->
+                <ResourceDictionary Source="pack://application:,,,/Styles/AppStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

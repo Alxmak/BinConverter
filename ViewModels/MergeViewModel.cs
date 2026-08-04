@@ -19,8 +19,14 @@ namespace TweakFirmware.ViewModels
     {
         public ObservableCollection<string> LogLines => LogService.Lines;
 
+        private const string NoValuePlaceholder = "—";
+
         [ObservableProperty] private string sourcePath = "";
         [ObservableProperty] private string chainInfoText = Strings.Get("Merge_DragHint");
+
+        // Карточка "Общая информация" из макета: размер файла, который получится после
+        // склейки. Считается по уже найденной цепочке, отдельного прохода по диску не нужно.
+        [ObservableProperty] private string resultSizeText = Strings.Format("Merge_ResultSizeLine", NoValuePlaceholder);
         [ObservableProperty] private string outputPath = "";
         [ObservableProperty] private string expectedHashText = "";
 
@@ -103,6 +109,7 @@ namespace TweakFirmware.ViewModels
                 foreach (var f in chain) total += new FileInfo(f).Length;
 
                 ChainInfoText = Strings.Format("Merge_ChainFoundInfo", chain.Count, SizeFormatHelper.Format(total), Path.GetFileName(chain[0]));
+                ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(total));
 
                 if (_outputPathIsAuto)
                 {
@@ -113,6 +120,7 @@ namespace TweakFirmware.ViewModels
             catch (Exception ex)
             {
                 ChainInfoText = Strings.Format("Merge_ChainResolveError", ex.Message);
+                ResultSizeText = Strings.Format("Merge_ResultSizeLine", NoValuePlaceholder);
             }
         }
 

@@ -18,8 +18,12 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private string fileAPath = "";
         [ObservableProperty] private string fileBPath = "";
-        [ObservableProperty] private string hashAText = "";
-        [ObservableProperty] private string hashBText = "";
+        // Карточка "Результат" видна всегда, поэтому до первого сравнения в ней стоят
+        // прочерки и пояснение, а не пустые строки.
+        private const string NoValuePlaceholder = "—";
+
+        [ObservableProperty] private string hashAText = NoValuePlaceholder;
+        [ObservableProperty] private string hashBText = NoValuePlaceholder;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(CompareCommand))]
@@ -31,7 +35,7 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private bool hasResult;
         [ObservableProperty] private bool isMatch;
-        [ObservableProperty] private string resultText = "";
+        [ObservableProperty] private string resultText = Strings.Get("Verify_NoResultYet");
 
         public bool CanCompare => !IsBusy;
 
@@ -94,6 +98,9 @@ namespace TweakFirmware.ViewModels
             _cts = new CancellationTokenSource();
             IsBusy = true;
             HasResult = false;
+            ResultText = Strings.Get("Verify_NoResultYet");
+            HashAText = NoValuePlaceholder;
+            HashBText = NoValuePlaceholder;
             OverallProgress = 0;
             AppLogger.Log(Strings.Format("Verify_CompareLog", FileAPath, FileBPath));
 

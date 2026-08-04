@@ -3,139 +3,120 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
       Title="{loc:Loc Verify_Title}"
       ScrollViewer.CanContentScroll="False">
 
-    <Page.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="18"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
-        </Style>
-        <Style x:Key="RowLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,0,16,0"/>
-        </Style>
-        <Style x:Key="SectionLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Opacity" Value="0.7"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-        </Style>
-        <Style x:Key="CardTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-        </Style>
-        <Style x:Key="ProgressBarRounded" TargetType="ProgressBar">
-            <Setter Property="Height" Value="10"/>
-        </Style>
-
-        <!-- Пункт 2: свой шаблон кнопки — при наведении/нажатии меняется только
-             прозрачность, а не фон (иначе в светлой теме белый текст пропадает
-             на светлом фоне hover-состояния из стандартного стиля WPF-UI). -->
-        <Style x:Key="SolidButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="18,9"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="6" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.75"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Page.Resources>
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel HorizontalAlignment="Stretch">
 
             <Border Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding FileAPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}"/>
+                    </Grid>
 
-                    <StackPanel Grid.Column="0" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
-                        <TextBlock Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource SectionLabel}"/>
-                        <TextBox Text="{Binding FileAPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                        <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
-                        <TextBlock Text="{Binding HashAText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2" AllowDrop="True" Drop="FileB_Drop" DragOver="Row_DragOver">
-                        <TextBlock Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource SectionLabel}"/>
-                        <TextBox Text="{Binding FileBPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                        <Button Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
-                        <TextBlock Text="{Binding HashBText}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Opacity="0.8"/>
-                    </StackPanel>
-                </Grid>
+                    <Grid AllowDrop="True" Drop="FileB_Drop" DragOver="Row_DragOver">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding FileBPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}"/>
+                    </Grid>
+                </StackPanel>
             </Border>
 
-            <Border Padding="14" CornerRadius="8" Margin="0,0,0,14"
-                    Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="#1A16A34A"/>
-                        <Setter Property="BorderBrush" Value="#16A34A"/>
-                        <Setter Property="BorderThickness" Value="1"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMatch}" Value="False">
-                                <Setter Property="Background" Value="#1AE5484D"/>
-                                <Setter Property="BorderBrush" Value="#E5484D"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding ResultText}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-            </Border>
-
-            <!-- Прогресс (пункт 3) -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
-                    <Grid Margin="0,0,0,14">
+
+                    <c:ProgressRow Label="{loc:Loc Verify_CompareProgressLabel}"
+                                   Value="{Binding OverallProgress}" Fill="#2F6FED"
+                                   Caption="{Binding CurrentFileLabel}"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <Button Command="{Binding CompareCommand}" Style="{StaticResource SolidButtonStyle}"
+                                Background="#2F6FED" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,7,0"/>
+                                <TextBlock Text="{loc:Loc Verify_CompareButton}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+                                Style="{StaticResource SolidButtonStyle}" Background="#E5484D">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Margin="0,0,7,0"/>
+                                <TextBlock Text="{loc:Loc Common_CancelButton}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Результат виден всегда: до первого сравнения показывает прочерки и
+                 пояснение. Совпадение/расхождение передаётся цветом текста, а не
+                 цветной заливкой карточки и не значком. -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Verify_ResultTitle}" Style="{StaticResource CardTitle}"/>
+
+                    <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_CompareProgressLabel}" Style="{StaticResource RowLabel}"/>
-                        <Border Grid.Column="1" CornerRadius="5" ClipToBounds="True">
-                            <ProgressBar Style="{StaticResource ProgressBarRounded}" Minimum="0" Maximum="100" Value="{Binding OverallProgress, Mode=OneWay}" Foreground="#2F6FED"/>
-                        </Border>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_HashALine}" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="11" Opacity="0.75" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding HashAText}" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="11" Opacity="0.75" TextWrapping="Wrap"/>
                     </Grid>
-                    <TextBlock Text="{Binding CurrentFileLabel}" FontSize="10" Opacity="0.55" Margin="190,-12,0,16"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_HashBLine}" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="11" Opacity="0.75" Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding HashBText}" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="11" Opacity="0.75" TextWrapping="Wrap"/>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="{loc:Loc Verify_CompareButton}" Command="{Binding CompareCommand}"
-                                Style="{StaticResource SolidButtonStyle}" Background="#2F6FED" Margin="0,0,10,0"/>
-                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
-                                Style="{StaticResource SolidButtonStyle}" Background="#E5484D"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding StatusText}" FontSize="12" Opacity="0.7" Margin="0,10,0,0"/>
+                    <TextBlock Text="{Binding ResultText}" FontSize="13" TextWrapping="Wrap" Margin="0,10,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Opacity" Value="0.5"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding HasResult}" Value="True"/>
+                                            <Condition Binding="{Binding IsMatch}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding HasResult}" Value="True"/>
+                                            <Condition Binding="{Binding IsMatch}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Foreground" Value="#E5484D"/>
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
