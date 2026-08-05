@@ -1,6 +1,7 @@
 <Page x:Class="TweakFirmware.Views.SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
       Title="{loc:Loc Settings_Title}"
       ScrollViewer.CanContentScroll="False">
@@ -106,8 +107,9 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditConvertPath}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    IsEnabled="{Binding CanEditConvertPath}"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                                 IsEnabled="{Binding CanEditConvertPath}"/>
                     </Grid>
@@ -126,8 +128,9 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                 IsEnabled="{Binding CanEditMergePath}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    IsEnabled="{Binding CanEditMergePath}"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                                 IsEnabled="{Binding CanEditMergePath}"/>
                     </Grid>

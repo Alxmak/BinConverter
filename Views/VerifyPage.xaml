@@ -21,7 +21,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding FileAPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding FileAPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}"/>
                     </Grid>
 
@@ -32,7 +33,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding FileBPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding FileBPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}"/>
                     </Grid>
                 </StackPanel>
