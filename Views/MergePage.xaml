@@ -144,7 +144,7 @@
                             <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
                         </StackPanel>
                     </Grid>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="170" BorderThickness="0"
+                    <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
                              FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
                 </Grid>
             </Border>
