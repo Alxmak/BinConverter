@@ -1,16 +1,34 @@
 using System;
 using System.IO;
+using System.Windows;
 using System.Windows.Threading;
 using Wpf.Ui.Appearance;
+using Wpf.Ui.Controls;
 
 namespace TweakFirmware.Services
 {
     public enum AppThemeMode { Light, Dark, System }
 
     /// <summary>
-    /// Тонкая обёртка над Wpf.Ui.Appearance.ApplicationThemeManager (сама переключает
-    /// тему всех WPF-UI контролов мгновенно) — добавляет только сохранение выбора
-    /// пользователя между запусками программы.
+    /// Обёртка над Wpf.Ui.Appearance.ApplicationThemeManager: сохраняет выбор темы между
+    /// запусками и — что важнее — доводит применение темы до самого окна.
+    ///
+    /// Тема состоит из двух независимых частей:
+    ///   1) словарь ресурсов (цвета кистей) — общий для приложения;
+    ///   2) оформление самого окна — тёмный режим DWM и подложка (Mica/Acrylic).
+    ///
+    /// ApplicationThemeManager.Apply делает вторую часть только для
+    /// UiApplication.Current.MainWindow и только если окно уже существует:
+    ///
+    ///     if (UiApplication.Current.MainWindow is Window mainWindow)
+    ///         WindowBackgroundManager.UpdateBackground(mainWindow, applicationTheme, backgroundEffect);
+    ///
+    /// Тему мы применяем на старте, ДО создания окна (иначе видно мигание светлой темы),
+    /// поэтому MainWindow там ещё null и вторая часть молча пропускалась. На светлой теме
+    /// это незаметно, а на тёмной окно оставалось без тёмного режима DWM: кисти текста
+    /// уже почти белые, а подложка — светло-серая, отсюда нечитаемый текст после
+    /// перезапуска с сохранённой тёмной темой. Поэтому вторую часть вызываем сами —
+    /// см. <see cref="ApplyToWindow"/>.
     /// </summary>
     public static class ThemeService
     {
@@ -19,34 +37,67 @@ namespace TweakFirmware.Services
 
         public static AppThemeMode CurrentMode { get; private set; } = AppThemeMode.System;
 
+        /// <summary>
+        /// Подложка окна: Mica — эффект DWM из Windows 11, на более старых системах
+        /// (включая Windows 10) используем Acrylic. Единственное место, где это решается, —
+        /// раньше значение дублировалось в ShellWindow, а ApplicationThemeManager.Apply
+        /// вообще перебивал его своим значением по умолчанию (Mica) при каждом
+        /// переключении темы, даже на Windows 10, где Mica не поддерживается.
+        /// </summary>
+        public static WindowBackdropType PreferredBackdrop =>
+            Environment.OSVersion.Version.Build >= 22000
+                ? WindowBackdropType.Mica
+                : WindowBackdropType.Acrylic;
+
         public static void Initialize()
         {
             CurrentMode = LoadSavedMode();
-            ApplyWithForcedRefresh(Resolve(CurrentMode));
+            ApplyResources(Resolve(CurrentMode));
             SaveMode(CurrentMode);
         }
 
         public static void Apply(AppThemeMode mode)
         {
             CurrentMode = mode;
-            ApplyWithForcedRefresh(Resolve(mode));
+            ApplicationTheme resolved = Resolve(mode);
+
+            ApplyResources(resolved);
+            ApplyToWindow(Application.Current?.MainWindow, resolved);
+
             SaveMode(mode);
         }
 
-        // Пункт 2: App.xaml статически подключает тёмный словарь ресурсов (Theme="Dark").
-        // Если целевая тема тоже тёмная, ApplicationThemeManager считает, что тема
-        // не изменилась, и не проводит применение полностью — часть текста остаётся
-        // нечитаемой (чёрной) до первого ручного переключения темы. Поэтому сначала
-        // "переключаем" на противоположную тему, а затем — на нужную; это то же самое,
-        // что временное ручное переключение, которым пользователи обходили баг вручную.
-        // Между двумя вызовами прогоняем очередь диспетчера — иначе (особенно на самом
-        // старте приложения, до запуска цикла обработки сообщений) оба применения темы
-        // иногда "схлопываются" в одно, и обход не срабатывает.
-        private static void ApplyWithForcedRefresh(ApplicationTheme resolved)
+        /// <summary>
+        /// Оформление окна под текущую тему: тёмный режим DWM (заголовок и рамка) и
+        /// подложка. Вызывается из ShellWindow, когда у окна уже есть дескриптор, —
+        /// на старте ApplicationThemeManager этот шаг пропускает, потому что окна ещё нет.
+        /// </summary>
+        public static void ApplyToWindow(Window? window) => ApplyToWindow(window, Resolve(CurrentMode));
+
+        private static void ApplyToWindow(Window? window, ApplicationTheme resolved)
         {
-            ApplicationThemeManager.Apply(resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
-            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
-            ApplicationThemeManager.Apply(resolved);
+            if (window is null) return;
+            WindowBackgroundManager.UpdateBackground(window, resolved, PreferredBackdrop);
+        }
+
+        // App.xaml статически подключает тёмный словарь (Theme="Dark"). Если целевая тема
+        // тоже тёмная, ApplicationThemeManager видит, что словарь менять не нужно, и выходит
+        // раньше времени, не обновив свой внутренний кеш темы и не разослав событие Changed.
+        // Поэтому сначала "переключаемся" на противоположную тему, затем на нужную. Между
+        // вызовами прогоняем очередь диспетчера: на самом старте, до запуска цикла обработки
+        // сообщений, два применения иногда схлопываются в одно.
+        private static void ApplyResources(ApplicationTheme resolved)
+        {
+            ApplicationThemeManager.Apply(
+                resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark,
+                PreferredBackdrop);
+
+            // Прогон очереди нужен только на старте, пока цикл сообщений не запущен. На живом
+            // окне он, наоборот, вреден: успевает отрисоваться кадр с промежуточной темой.
+            if (Application.Current?.MainWindow is null)
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+            ApplicationThemeManager.Apply(resolved, PreferredBackdrop);
         }
 
         private static ApplicationTheme Resolve(AppThemeMode mode) => mode switch
