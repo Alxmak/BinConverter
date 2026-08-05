@@ -22,7 +22,9 @@ namespace TweakFirmware.ViewModels
         private const string NoValuePlaceholder = "—";
 
         [ObservableProperty] private string sourcePath = "";
-        [ObservableProperty] private string chainInfoText = Strings.Get("Merge_DragHint");
+        // Пусто до выбора файла: подсказку про перетаскивание убрали из карточки
+        // "Общая информация" — там место для сведений о цепочке, а не для инструкции.
+        [ObservableProperty] private string chainInfoText = "";
 
         // Карточка "Общая информация" из макета: размер файла, который получится после
         // склейки. Считается по уже найденной цепочке, отдельного прохода по диску не нужно.
