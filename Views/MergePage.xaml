@@ -55,11 +55,11 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13"/>
+                    <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                     <!-- Сведения о цепочке появляются только после выбора файла; пустой
                          TextBlock всё равно занимал бы высоту строки, поэтому сворачиваем. -->
                     <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13"
-                               Opacity="0.7" Margin="0,6,0,0">
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
@@ -119,7 +119,7 @@
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Opacity="0.7"
+                        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0"
                                    TextTrimming="CharacterEllipsis"/>
                     </Grid>

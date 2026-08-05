@@ -141,7 +141,7 @@
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_ClearCacheTitle}" Style="{StaticResource CardTitle}"/>
                     <TextBlock Text="{loc:Loc Settings_ClearCacheDescription}" TextWrapping="Wrap"
-                               FontSize="13" Opacity="0.7" Margin="0,0,0,12"/>
+                               FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,12"/>
                     <Button Content="{loc:Loc Settings_ClearCacheTitle}" Command="{Binding ClearCacheCommand}"
                             HorizontalAlignment="Left"/>
                 </StackPanel>

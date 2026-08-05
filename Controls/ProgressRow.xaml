@@ -21,12 +21,12 @@
                          Foreground="{Binding Fill, ElementName=Root}"/>
 
             <TextBlock Grid.Column="2" Width="40" Margin="10,0,0,0" TextAlignment="Right"
-                       VerticalAlignment="Center" Opacity="0.55"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        FontFamily="Cascadia Code, Consolas" FontSize="10"
                        Text="{Binding Value, ElementName=Root, StringFormat={}{0:F0}%}"/>
         </Grid>
 
-        <TextBlock Margin="200,3,0,0" FontSize="10" Opacity="0.55"
+        <TextBlock Margin="200,3,0,0" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                    Text="{Binding Caption, ElementName=Root}"
                    TextTrimming="CharacterEllipsis">
             <TextBlock.Style>

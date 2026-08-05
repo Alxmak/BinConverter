@@ -40,7 +40,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap">
+                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Text" Value="{Binding BannerText}"/>

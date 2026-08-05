@@ -17,19 +17,28 @@
         <Setter Property="Margin" Value="0,0,0,14"/>
     </Style>
 
+    <!-- Цвет текста задаём явно во всех текстовых стилях. WPF-UI объявляет неявный стиль
+         TextBlock пустым (<Style TargetType="{x:Type TextBlock}" />) и рассчитывает, что
+         Foreground доедет по наследованию от окна. В нашем дереве (FluentWindow ->
+         NavigationView -> Frame -> Page) это наследование доходит не до всех элементов:
+         часть текста оставалась чёрной по умолчанию TextBlock.Foreground. На светлой теме
+         чёрный совпадал с нужным цветом и баг был не виден, на тёмной — текст пропадал.
+         DynamicResource, чтобы кисть менялась вместе с темой. -->
     <Style x:Key="RowLabel" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Margin" Value="0,0,16,0"/>
     </Style>
 
     <Style x:Key="SectionLabel" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Opacity" Value="0.7"/>
         <Setter Property="Margin" Value="0,0,0,6"/>
     </Style>
 
     <Style x:Key="CardTitle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Margin" Value="0,0,0,12"/>

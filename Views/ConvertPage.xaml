@@ -73,8 +73,8 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
-                    <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,10"/>
+                    <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
                     <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
                             HorizontalAlignment="Left" FontSize="11" Padding="10,4"
                             Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
@@ -93,7 +93,7 @@
                             Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
                             Visibility="{Binding DeleteSourceAfter, Converter={StaticResource BoolToVis}}">
                         <TextBlock Text="{loc:Loc Convert_DeleteWarning}"
-                                   TextWrapping="Wrap" FontSize="11"/>
+                                   TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                     </Border>
                 </StackPanel>
             </Border>
@@ -142,7 +142,7 @@
                                 </StackPanel>
                             </Button>
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Opacity="0.7"
+                        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0"
                                    TextTrimming="CharacterEllipsis"/>
                     </Grid>
