@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Windows;
-using System.Windows.Threading;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
@@ -52,52 +51,34 @@ namespace TweakFirmware.Services
         public static void Initialize()
         {
             CurrentMode = LoadSavedMode();
-            ApplyResources(Resolve(CurrentMode));
+            ApplicationThemeManager.Apply(Resolve(CurrentMode), PreferredBackdrop);
             SaveMode(CurrentMode);
         }
 
+        // Одно применение на переключение — и ничего лишнего. Раньше здесь стоял обход:
+        // тема сначала применялась противоположная, потом нужная, потому что при совпадении
+        // словаря ApplicationThemeManager выходит раньше времени и не доводил оформление до
+        // окна. Само оформление окна мы теперь делаем сами (см. ApplyToWindow), так что обход
+        // стал не нужен — а платой за него было мерцание: на каждый клик выходили две полные
+        // смены словаря (одна в чужую тему) и три снятия/наложения подложки окна.
+        // Побочный плюс: повторный выбор уже активной темы теперь ничего не перерисовывает.
         public static void Apply(AppThemeMode mode)
         {
             CurrentMode = mode;
-            ApplicationTheme resolved = Resolve(mode);
-
-            ApplyResources(resolved);
-            ApplyToWindow(Application.Current?.MainWindow, resolved);
-
+            ApplicationThemeManager.Apply(Resolve(mode), PreferredBackdrop);
             SaveMode(mode);
         }
 
         /// <summary>
-        /// Оформление окна под текущую тему: тёмный режим DWM (заголовок и рамка) и
-        /// подложка. Вызывается из ShellWindow, когда у окна уже есть дескриптор, —
-        /// на старте ApplicationThemeManager этот шаг пропускает, потому что окна ещё нет.
+        /// Оформление окна под текущую тему: тёмный режим DWM (заголовок и рамка) и подложка.
+        /// Нужно только на старте: тему выставляем до создания окна, и ApplicationThemeManager
+        /// этот шаг пропускает, потому что окна ещё нет. При переключении темы на живом окне
+        /// он делает его сам — здесь второй раз вызывать не надо, иначе окно мигнёт.
         /// </summary>
-        public static void ApplyToWindow(Window? window) => ApplyToWindow(window, Resolve(CurrentMode));
-
-        private static void ApplyToWindow(Window? window, ApplicationTheme resolved)
+        public static void ApplyToWindow(Window? window)
         {
             if (window is null) return;
-            WindowBackgroundManager.UpdateBackground(window, resolved, PreferredBackdrop);
-        }
-
-        // App.xaml статически подключает тёмный словарь (Theme="Dark"). Если целевая тема
-        // тоже тёмная, ApplicationThemeManager видит, что словарь менять не нужно, и выходит
-        // раньше времени, не обновив свой внутренний кеш темы и не разослав событие Changed.
-        // Поэтому сначала "переключаемся" на противоположную тему, затем на нужную. Между
-        // вызовами прогоняем очередь диспетчера: на самом старте, до запуска цикла обработки
-        // сообщений, два применения иногда схлопываются в одно.
-        private static void ApplyResources(ApplicationTheme resolved)
-        {
-            ApplicationThemeManager.Apply(
-                resolved == ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark,
-                PreferredBackdrop);
-
-            // Прогон очереди нужен только на старте, пока цикл сообщений не запущен. На живом
-            // окне он, наоборот, вреден: успевает отрисоваться кадр с промежуточной темой.
-            if (Application.Current?.MainWindow is null)
-                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
-
-            ApplicationThemeManager.Apply(resolved, PreferredBackdrop);
+            WindowBackgroundManager.UpdateBackground(window, Resolve(CurrentMode), PreferredBackdrop);
         }
 
         private static ApplicationTheme Resolve(AppThemeMode mode) => mode switch
