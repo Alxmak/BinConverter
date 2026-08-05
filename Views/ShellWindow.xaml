@@ -40,22 +40,29 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Text" Value="{Binding BannerText}"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                    <Setter Property="Text" Value="{Binding StatusText}"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="{loc:Loc Shell_UpdateNowButton}" Command="{Binding UpdateNowCommand}"
-                            Style="{StaticResource BannerButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"/>
-                    <Button Content="{loc:Loc Shell_LaterButton}" Command="{Binding DismissCommand}" Padding="14,7"/>
+                <!-- Баннер проходит три состояния: «доступна версия» → «загрузка N%» →
+                     «загружено, установить». Полоса не модальная и работать не мешает,
+                     установка запускается только по явному нажатию. -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding BannerText}" FontSize="13" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <!-- Пока идёт конвертирование/сборка/проверка, кнопка установки неактивна —
+                         объясняем, почему, чтобы это не выглядело поломкой. -->
+                    <TextBlock Text="{loc:Loc Shell_UpdateWaitingForOperation}" FontSize="12" Margin="0,2,0,0"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Visibility="{Binding IsWaitingForOperation, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="{loc:Loc Shell_UpdateDownloadButton}" Command="{Binding DownloadCommand}"
+                            Style="{StaticResource BannerButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"
+                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelDownloadCommand}"
+                            Padding="14,7" Margin="0,0,8,0"
+                            Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="{loc:Loc Shell_UpdateInstallButton}" Command="{Binding InstallCommand}"
+                            Style="{StaticResource BannerButtonStyle}" Background="#2F6FED" Margin="0,0,8,0"
+                            Visibility="{Binding IsReadyToInstall, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="{loc:Loc Shell_LaterButton}" Command="{Binding PostponeCommand}" Padding="14,7"/>
                 </StackPanel>
             </Grid>
         </Border>
