@@ -140,7 +140,12 @@
                             <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
                         </StackPanel>
                     </Grid>
+                    <!-- У ListBoxItem в WPF-UI Padding="12", а заголовок карточки стоит на 18 —
+                         из-за этих 6px строки журнала выпирали левее заголовка. Добираем
+                         разницу отступом самого списка, чтобы текст встал на те же 18px,
+                         что и содержимое всех остальных карточек. -->
                     <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
+                             Margin="6,0,6,0"
                              FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
                 </Grid>
             </Border>

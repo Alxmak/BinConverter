@@ -84,10 +84,10 @@
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
-                    <CheckBox Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
-                    <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
-                    <CheckBox Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
 
                     <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="10"
                             Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
@@ -168,7 +168,12 @@
                             <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
                         </StackPanel>
                     </Grid>
+                    <!-- У ListBoxItem в WPF-UI Padding="12", а заголовок карточки стоит на 18 —
+                         из-за этих 6px строки журнала выпирали левее заголовка. Добираем
+                         разницу отступом самого списка, чтобы текст встал на те же 18px,
+                         что и содержимое всех остальных карточек. -->
                     <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
+                             Margin="6,0,6,0"
                              FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
                 </Grid>
             </Border>

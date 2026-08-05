@@ -98,7 +98,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_ConvertFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"
                               Margin="0,0,0,14"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -119,7 +119,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_MergeFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"
+                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"
                               Margin="0,0,0,14"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
