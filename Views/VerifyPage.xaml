@@ -9,9 +9,10 @@
 
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
-        <StackPanel HorizontalAlignment="Stretch">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Center">
 
-            <Border Style="{StaticResource CardStyle}">
+            <!-- Пока идёт сравнение, поля ввода недоступны — см. тот же приём в Конвертировании. -->
+            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
                     <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
                         <Grid.ColumnDefinitions>

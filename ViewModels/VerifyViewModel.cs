@@ -39,9 +39,16 @@ namespace TweakFirmware.ViewModels
 
         public bool CanCompare => !IsBusy;
 
+        /// <summary>Пока идёт сравнение, поля вкладки недоступны.</summary>
+        public bool IsNotBusy => !IsBusy;
+
         private CancellationTokenSource? _cts;
 
-        partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanCompare));
+        partial void OnIsBusyChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanCompare));
+            OnPropertyChanged(nameof(IsNotBusy));
+        }
 
         [RelayCommand]
         private void BrowseA()
@@ -97,6 +104,9 @@ namespace TweakFirmware.ViewModels
 
             _cts = new CancellationTokenSource();
             IsBusy = true;
+            // Как в Конвертировании и Сборке: пока считаем хэши, переключение разделов
+            // в меню заблокировано — иначе можно уйти со вкладки и потерять процесс из виду.
+            OperationLockService.Instance.IsBusy = true;
             HasResult = false;
             ResultText = Strings.Get("Verify_NoResultYet");
             HashAText = NoValuePlaceholder;
@@ -146,6 +156,7 @@ namespace TweakFirmware.ViewModels
                 OverallProgress = 0;
                 CurrentFileLabel = "";
                 IsBusy = false;
+                OperationLockService.Instance.IsBusy = false;
                 _cts = null;
             }
         }

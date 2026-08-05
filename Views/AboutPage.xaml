@@ -8,7 +8,7 @@
 
 
     <ScrollViewer x:Name="RootScroll" Padding="24,20" VerticalScrollBarVisibility="Auto">
-        <StackPanel HorizontalAlignment="Stretch">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Center">
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                 <Image Source="pack://application:,,,/Assets/AppIcon-256.png" Width="44" Height="44" Margin="0,0,14,0" Stretch="Uniform"/>

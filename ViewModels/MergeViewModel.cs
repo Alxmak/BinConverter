@@ -46,6 +46,9 @@ namespace TweakFirmware.ViewModels
 
         public bool CanStart => !IsBusy;
 
+        /// <summary>Пока идёт сборка, поля и параметры вкладки недоступны.</summary>
+        public bool IsNotBusy => !IsBusy;
+
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
@@ -63,7 +66,11 @@ namespace TweakFirmware.ViewModels
 
         public void Detach() { }
 
-        partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanStart));
+        partial void OnIsBusyChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanStart));
+            OnPropertyChanged(nameof(IsNotBusy));
+        }
 
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // цепочка частей должна пересчитываться и при прямом вводе, не только через SetSource.

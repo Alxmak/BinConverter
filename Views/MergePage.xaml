@@ -9,9 +9,10 @@
 
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
-        <StackPanel HorizontalAlignment="Stretch">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Center">
 
-            <Border Style="{StaticResource CardStyle}">
+            <!-- Пока идёт сборка, поля ввода недоступны — см. тот же приём в Конвертировании. -->
+            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
 
                     <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
@@ -56,7 +57,7 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}">
+            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
                     <CheckBox Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>

@@ -41,14 +41,20 @@ namespace TweakFirmware.Views
 
         // Пункт 15: drag&drop работает только над строкой выбора исходного файла,
         // а не над всей страницей.
+        // IsEnabled="False" на карточке блокирует мышь и клавиатуру, но события
+        // перетаскивания в WPF доходят и до отключённых элементов, — поэтому во время
+        // операции перетаскивание отсекаем здесь явно.
         private void SourceRow_DragOver(object sender, DragEventArgs e)
         {
-            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Effects = !_viewModel.IsBusy && e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
             e.Handled = true;
         }
 
         private void SourceRow_Drop(object sender, DragEventArgs e)
         {
+            if (_viewModel.IsBusy) return;
             if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
                 _viewModel.SetSource(files[0]);
         }

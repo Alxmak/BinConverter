@@ -67,6 +67,10 @@ namespace TweakFirmware.ViewModels
 
         public bool CanStart => !IsBusy;
         public bool CanPause => IsBusy && !IsVerifying;
+
+        /// <summary>Пока идёт операция, поля и параметры вкладки недоступны — менять их
+        /// на ходу нельзя, иначе настройки разойдутся с уже запущенным процессом.</summary>
+        public bool IsNotBusy => !IsBusy;
         public bool IsCustomPreset => SelectedPreset?.IsCustom == true;
 
         private CancellationTokenSource? _cts;
@@ -119,6 +123,7 @@ namespace TweakFirmware.ViewModels
         {
             OnPropertyChanged(nameof(CanStart));
             OnPropertyChanged(nameof(CanPause));
+            OnPropertyChanged(nameof(IsNotBusy));
         }
         partial void OnIsVerifyingChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
