@@ -7,7 +7,7 @@
 
 
     <ScrollViewer x:Name="RootScroll" Padding="24,20" VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="960" HorizontalAlignment="Center">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
             <!-- Шапка тоже карточка: раньше она висела «в воздухе» над остальными
                  и выбивалась из ряда. -->

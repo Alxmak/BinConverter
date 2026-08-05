@@ -8,7 +8,7 @@
       ScrollViewer.CanContentScroll="False">
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="960" HorizontalAlignment="Center">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
             <!-- Пока идёт конвертирование, поля ввода недоступны: менять исходник, папку
                  назначения или пресет на ходу нельзя — параметры разойдутся с уже
