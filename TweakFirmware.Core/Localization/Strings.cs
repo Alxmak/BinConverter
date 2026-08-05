@@ -266,7 +266,10 @@ namespace TweakFirmware.Core.Localization
             ["Settings_UseDefaultPathCheckbox"] = "Путь по умолчанию",
             ["Settings_ChooseConvertFolderTitle"] = "Папка по умолчанию для конвертирования",
             ["Settings_ChooseMergeFolderTitle"] = "Папка по умолчанию для сборки файла",
+            ["Settings_ConvertFolderTitle"] = "Папка для конвертирования",
+            ["Settings_MergeFolderTitle"] = "Папка для сборки файла",
             ["Settings_ClearCacheTitle"] = "Очистить кеш",
+            ["Settings_ClearCacheDescription"] = "Удаляет временные файлы и журнал приложения.",
             ["Settings_CacheClearedTitle"] = "Готово",
             ["Settings_CacheClearedMessage"] = "Временные файлы и журналы очищены.",
 
@@ -515,7 +518,10 @@ namespace TweakFirmware.Core.Localization
             ["Settings_UseDefaultPathCheckbox"] = "Default path",
             ["Settings_ChooseConvertFolderTitle"] = "Default folder for conversion",
             ["Settings_ChooseMergeFolderTitle"] = "Default folder for merging",
+            ["Settings_ConvertFolderTitle"] = "Convert folder",
+            ["Settings_MergeFolderTitle"] = "Merge folder",
             ["Settings_ClearCacheTitle"] = "Clear cache",
+            ["Settings_ClearCacheDescription"] = "Removes temporary files and the application log.",
             ["Settings_CacheClearedTitle"] = "Done",
             ["Settings_CacheClearedMessage"] = "Temporary files and logs have been cleared.",
 
