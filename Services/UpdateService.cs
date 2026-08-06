@@ -41,6 +41,12 @@ namespace TweakFirmware.Services
         // с OutputBaseFilename в installer/Setup.iss.
         private const string InstallerAssetPrefix = "TweakFirmwareSetup";
 
+        // Размер буфера при скачивании установщика. В Core такие значения давно вынесены
+        // в именованные константы (HashHelper.BufferSize, FileMerger.BufferSize) — здесь
+        // 81920 был просто продублирован дважды. Значение то же, что по умолчанию
+        // использует Stream.CopyTo, для файла на несколько десятков МБ его достаточно.
+        private const int DownloadBufferSize = 81920;
+
         private static readonly HttpClient _http = CreateClient();
 
         private static HttpClient CreateClient()
@@ -143,9 +149,9 @@ namespace TweakFirmware.Services
             long totalBytes = response.Content.Headers.ContentLength ?? -1;
 
             await using var httpStream = await response.Content.ReadAsStreamAsync(ct);
-            await using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+            await using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, DownloadBufferSize, useAsync: true);
 
-            byte[] buffer = new byte[81920];
+            byte[] buffer = new byte[DownloadBufferSize];
             long totalRead = 0;
             int read;
             while ((read = await httpStream.ReadAsync(buffer.AsMemory(0, buffer.Length), ct)) > 0)

@@ -31,12 +31,6 @@
         <Setter Property="Margin" Value="0,0,16,0"/>
     </Style>
 
-    <Style x:Key="SectionLabel" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Margin" Value="0,0,0,6"/>
-    </Style>
-
     <Style x:Key="CardTitle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Setter Property="FontSize" Value="13"/>
