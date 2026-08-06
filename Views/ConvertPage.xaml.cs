@@ -24,19 +24,7 @@ namespace TweakFirmware.Views
             DataContext = _viewModel;
             Unloaded += (_, _) => _viewModel.Detach();
 
-            // Пункт 10: подписываемся с handledEventsToo=true — иначе колесо мыши работает
-            // только тогда, когда родительский NavigationView/Frame ещё не пометил событие
-            // обработанным (на практике это давало скролл только над самим скроллбаром).
-            AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler(Page_PreviewMouseWheel), true);
-        }
-
-        private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            // Пункт 13/доп.: журнал скроллится изолированно от страницы — см. LogScrollHelper.
-            if (LogScrollHelper.TryHandleListBoxWheel(e)) return;
-
-            RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
-            e.Handled = true;
+            PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }
 
         // Пункт 15: drag&drop работает только над строкой выбора исходного файла,

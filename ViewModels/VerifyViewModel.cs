@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,15 +11,12 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class VerifyViewModel : ObservableObject
+    public partial class VerifyViewModel : LogHostViewModel
     {
-        public ObservableCollection<string> LogLines => LogService.Lines;
-
         [ObservableProperty] private string fileAPath = "";
         [ObservableProperty] private string fileBPath = "";
         // Карточка "Результат" видна всегда, поэтому до первого сравнения в ней стоят
-        // прочерки и пояснение, а не пустые строки.
-        private const string NoValuePlaceholder = "—";
+        // прочерки и пояснение, а не пустые строки (NoValuePlaceholder — из LogHostViewModel).
 
         [ObservableProperty] private string hashAText = NoValuePlaceholder;
         [ObservableProperty] private string hashBText = NoValuePlaceholder;
@@ -73,25 +69,6 @@ namespace TweakFirmware.ViewModels
         {
             if (File.Exists(path)) FileBPath = path;
         }
-
-        // ============================= Журнал =============================
-
-        [RelayCommand]
-        private void OpenLog() => AppLogger.OpenLogFile();
-
-        [RelayCommand]
-        private void SaveLog()
-        {
-            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
-            if (dlg.ShowDialog() == true)
-            {
-                try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { _ = DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Common_SaveLogFailed", ex.Message)); }
-            }
-        }
-
-        [RelayCommand]
-        private void ClearLog() => LogService.Clear();
 
         [RelayCommand(CanExecute = nameof(CanCompare))]
         private async Task CompareAsync()

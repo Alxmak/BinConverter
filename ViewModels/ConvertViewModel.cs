@@ -17,7 +17,7 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class ConvertViewModel : ObservableObject
+    public partial class ConvertViewModel : LogHostViewModel
     {
         private const int CollapsedFileListCount = 4;
         private const int MaxFilesToEnumerate = 2000;
@@ -28,9 +28,6 @@ namespace TweakFirmware.ViewModels
             new ProgrammerPreset("RT809H", FileSplitter.DefaultMaxPartSizeBytes),
             new ProgrammerPreset(Strings.Get("Convert_CustomPresetName"), null)
         };
-
-        // Пункт 4/14: журнал общий на всё приложение — просто проброс, не своя коллекция.
-        public ObservableCollection<string> LogLines => LogService.Lines;
 
         [ObservableProperty] private ProgrammerPreset selectedPreset = null!;
 
@@ -153,29 +150,10 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void ToggleExpand() => ShowAllFiles = !ShowAllFiles;
 
-        // ============================= Журнал =============================
-
-        [RelayCommand]
-        private void OpenLog() => AppLogger.OpenLogFile();
-
-        [RelayCommand]
-        private void SaveLog()
-        {
-            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
-            if (dlg.ShowDialog() == true)
-            {
-                try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { MessageBox.Show(Strings.Format("Common_SaveLogFailed", ex.Message), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error); }
-            }
-        }
-
-        [RelayCommand]
-        private void ClearLog() => LogService.Clear();
-
         // ============================= Предпросмотр =============================
 
-        // Пункт 5: строки всегда на экране — до выбора файла напротив них прочерк.
-        private const string NoValuePlaceholder = "—";
+        // Пункт 5: строки всегда на экране — до выбора файла напротив них прочерк
+        // (NoValuePlaceholder — из LogHostViewModel, он общий для всех вкладок).
 
         private void UpdatePreview()
         {

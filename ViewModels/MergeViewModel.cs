@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -15,12 +14,8 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class MergeViewModel : ObservableObject
+    public partial class MergeViewModel : LogHostViewModel
     {
-        public ObservableCollection<string> LogLines => LogService.Lines;
-
-        private const string NoValuePlaceholder = "—";
-
         [ObservableProperty] private string sourcePath = "";
         // Пусто до выбора файла: подсказку про перетаскивание убрали из карточки
         // "Общая информация" — там место для сведений о цепочке, а не для инструкции.
@@ -48,6 +43,10 @@ namespace TweakFirmware.ViewModels
 
         public bool CanStart => !IsBusy;
 
+        /// <summary>Сборку можно ставить на паузу всё время, пока она идёт: отдельной
+        /// фазы проверки хэша, как в Конвертировании, здесь нет.</summary>
+        public bool CanPause => IsBusy;
+
         /// <summary>Пока идёт сборка, поля и параметры вкладки недоступны.</summary>
         public bool IsNotBusy => !IsBusy;
 
@@ -71,6 +70,7 @@ namespace TweakFirmware.ViewModels
         partial void OnIsBusyChanged(bool value)
         {
             OnPropertyChanged(nameof(CanStart));
+            OnPropertyChanged(nameof(CanPause));
             OnPropertyChanged(nameof(IsNotBusy));
         }
 
@@ -139,25 +139,6 @@ namespace TweakFirmware.ViewModels
             var dlg = new SaveFileDialog { Filter = Strings.Get("Common_BinFileFilter"), FileName = "emmc_merged.bin" };
             if (dlg.ShowDialog() == true) OutputPath = dlg.FileName;
         }
-
-        // ============================= Журнал =============================
-
-        [RelayCommand]
-        private void OpenLog() => AppLogger.OpenLogFile();
-
-        [RelayCommand]
-        private void SaveLog()
-        {
-            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
-            if (dlg.ShowDialog() == true)
-            {
-                try { LogService.SaveAs(dlg.FileName); }
-                catch (Exception ex) { MessageBox.Show(Strings.Format("Common_SaveLogFailed", ex.Message), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Error); }
-            }
-        }
-
-        [RelayCommand]
-        private void ClearLog() => LogService.Clear();
 
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()

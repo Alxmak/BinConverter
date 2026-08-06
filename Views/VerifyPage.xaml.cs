@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using TweakFirmware.Services;
 using TweakFirmware.ViewModels;
 
@@ -15,18 +14,7 @@ namespace TweakFirmware.Views
             InitializeComponent();
             DataContext = _viewModel;
 
-            // Пункт 10: handledEventsToo=true — иначе колесо мыши работает только
-            // тогда, когда родительский NavigationView/Frame не пометил событие обработанным.
-            AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler(Page_PreviewMouseWheel), true);
-        }
-
-        private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            // Пункт 13/доп.: журнал скроллится изолированно от страницы — см. LogScrollHelper.
-            if (LogScrollHelper.TryHandleListBoxWheel(e)) return;
-
-            RootScroll.ScrollToVerticalOffset(RootScroll.VerticalOffset - e.Delta);
-            e.Handled = true;
+            PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }
 
         // IsEnabled="False" на карточке блокирует мышь и клавиатуру, но события

@@ -121,34 +121,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- Журнал (пункты 3,4,5) -->
-            <Border Style="{StaticResource CardStyle}" Padding="0" Margin="0,0,0,20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Margin="18,16,18,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_LogTitle}" Style="{StaticResource CardTitle}" Margin="0"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}" FontSize="11" Padding="8,4" Margin="0,0,6,0"/>
-                            <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" FontSize="11" Padding="8,4"/>
-                        </StackPanel>
-                    </Grid>
-                    <!-- У ListBoxItem в WPF-UI Padding="12", а заголовок карточки стоит на 18 —
-                         из-за этих 6px строки журнала выпирали левее заголовка. Добираем
-                         разницу отступом самого списка, чтобы текст встал на те же 18px,
-                         что и содержимое всех остальных карточек. -->
-                    <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
-                             Margin="6,0,6,0"
-                             FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
-                </Grid>
-            </Border>
+            <c:LogCard/>
 
         </StackPanel>
     </ScrollViewer>
