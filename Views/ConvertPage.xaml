@@ -92,15 +92,7 @@
                         <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
                         <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
                         <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
-                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
-                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
-
-                        <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="10"
-                                Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
-                                Visibility="{Binding DeleteSourceAfter, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{loc:Loc Convert_DeleteWarning}"
-                                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        </Border>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
                     </StackPanel>
                 </Border>
             </Grid>

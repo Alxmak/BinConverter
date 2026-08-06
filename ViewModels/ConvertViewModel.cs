@@ -45,7 +45,6 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private bool verifyHashAfter = true;
         [ObservableProperty] private bool openFolderAfter = true;
-        [ObservableProperty] private bool deleteSourceAfter;
         [ObservableProperty] private bool checkDiskSpace = true;
 
         [ObservableProperty]
@@ -326,8 +325,6 @@ namespace TweakFirmware.ViewModels
 
                 AppLogger.Log(Strings.Format("Convert_FinishedLog", result.PartsCreated, result.TotalBytes));
 
-                bool safeToDeleteSource = !result.VerifyPerformed || result.HashesMatch;
-
                 if (result.VerifyPerformed)
                 {
                     // Пункт 1: статус-строку не дублируем текстом успеха — итог и так виден в диалоге ниже.
@@ -347,24 +344,6 @@ namespace TweakFirmware.ViewModels
                 {
                     StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), Strings.Format("Convert_DoneMessage", result.PartsCreated));
-                }
-
-                if (DeleteSourceAfter && safeToDeleteSource)
-                {
-                    try
-                    {
-                        File.Delete(SourcePath);
-                        AppLogger.Log(Strings.Format("Convert_SourceDeletedLog", SourcePath));
-                    }
-                    catch (Exception ex)
-                    {
-                        AppLogger.Log(Strings.Format("Convert_SourceDeleteFailedLog", ex.Message));
-                        await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Format("Convert_SourceDeleteFailedMessage", ex.Message));
-                    }
-                }
-                else if (DeleteSourceAfter && !safeToDeleteSource)
-                {
-                    AppLogger.Log(Strings.Get("Convert_SourceKeptLog"));
                 }
 
                 if (OpenFolderAfter)
