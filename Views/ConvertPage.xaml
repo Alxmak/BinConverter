@@ -41,28 +41,25 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
+                    <!-- Модель и лимит — в одной строке: лимит виден всегда, но правится
+                         только на пользовательском пресете. У готовых моделей он фиксирован,
+                         поэтому поле недоступно и просто показывает заданный лимит в байтах
+                         (значение подставляет OnSelectedPresetChanged во ViewModel). -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_ProgrammerModelLabel}" Style="{StaticResource RowLabel}"/>
                         <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
                                   DisplayMemberPath="Name" HorizontalAlignment="Stretch"/>
-                    </Grid>
-
-                    <!-- Лимит показываем только для пользовательского пресета: у готовых
-                         моделей программаторов он фиксирован и менять его нельзя.
-                         Отступ сверху, а не снизу у строки модели, — иначе при скрытом
-                         лимите внизу карточки оставался бы лишний зазор. -->
-                    <Grid Margin="0,14,0,0" Visibility="{Binding IsCustomPreset, Converter={StaticResource BoolToVis}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox x:Name="LimitTextBox" Grid.Column="1"
+                        <TextBlock Grid.Column="3" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
+                        <TextBox x:Name="LimitTextBox" Grid.Column="4"
                                  Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding IsCustomPreset}"
                                  PreviewTextInput="LimitTextBox_PreviewTextInput"
                                  DataObject.Pasting="LimitTextBox_Pasting"
                                  TextChanged="LimitTextBox_TextChanged"/>
@@ -70,33 +67,43 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,10"/>
-                    <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
-                    <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
-                            HorizontalAlignment="Left" FontSize="11" Padding="10,4"
-                            Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
-                </StackPanel>
-            </Border>
+            <!-- Общая информация и Параметры — рядом, а не друг под другом: так страница
+                 не растёт вниз и на небольших мониторах её меньше приходится листать. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
+                        <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
+                                HorizontalAlignment="Left" FontSize="11" Padding="10,4"
+                                Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </Border>
 
-                    <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="10"
-                            Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
-                            Visibility="{Binding DeleteSourceAfter, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="{loc:Loc Convert_DeleteWarning}"
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    </Border>
-                </StackPanel>
-            </Border>
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_DeleteSourceCheckbox}" IsChecked="{Binding DeleteSourceAfter}"/>
+
+                        <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="10"
+                                Background="#1AE5484D" BorderBrush="#E5484D" BorderThickness="1"
+                                Visibility="{Binding DeleteSourceAfter, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{loc:Loc Convert_DeleteWarning}"
+                                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>

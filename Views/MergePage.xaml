@@ -52,33 +52,43 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <!-- Сведения о цепочке появляются только после выбора файла; пустой
-                         TextBlock всё равно занимал бы высоту строки, поэтому сворачиваем. -->
-                    <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ChainInfoText}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+            <!-- Рядом, а не друг под другом — как в Конвертировании, чтобы страница
+                 не растягивалась вниз на небольших мониторах. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
-                </StackPanel>
-            </Border>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <!-- Сведения о цепочке появляются только после выбора файла; пустой
+                             TextBlock всё равно занимал бы высоту строки, поэтому сворачиваем. -->
+                        <TextBlock Text="{Binding ChainInfoText}" TextWrapping="Wrap" FontSize="13"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ChainInfoText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
