@@ -92,19 +92,10 @@ namespace TweakFirmware.ViewModels
 
         private static string GetDefaultOutputFolder() => OutputPathSettingsService.GetConvertFolder();
 
+        // Разбор лимита — в PartSizeLimit из Core: от этого числа зависит, на сколько частей
+        // разрежется прошивка, поэтому граничные случаи проверяются тестами.
         private long CurrentLimitBytes =>
-            SelectedPreset?.MaxPartSizeBytes
-            ?? (long.TryParse(DigitsOnly(CustomLimitBytesText), out var bytes) && bytes > 0 ? bytes : 0);
-
-        // Пункт 3: поле лимита показывает разряды с разделителем (как в "Общая информация"),
-        // поэтому для разбора значения сначала убираем всё, кроме цифр.
-        private static string DigitsOnly(string text)
-        {
-            var sb = new StringBuilder(text.Length);
-            foreach (char c in text)
-                if (char.IsDigit(c)) sb.Append(c);
-            return sb.ToString();
-        }
+            PartSizeLimit.Resolve(SelectedPreset?.MaxPartSizeBytes, CustomLimitBytesText);
 
         partial void OnSelectedPresetChanged(ProgrammerPreset value)
         {

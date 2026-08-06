@@ -277,7 +277,7 @@ namespace TweakFirmware.Services
 
                 // Файл мог быть вычищен из %TEMP%, а версия — уже установлена другим путём.
                 // В обоих случаях запись бесполезна.
-                if (!File.Exists(installerPath) || !IsNewerThanCurrent(version))
+                if (!File.Exists(installerPath) || !VersionHelper.IsNewer(version, UpdateService.GetCurrentVersion()))
                 {
                     ForgetDownloadedInstaller();
                     return;
@@ -288,21 +288,5 @@ namespace TweakFirmware.Services
             catch { ForgetDownloadedInstaller(); }
         }
 
-        private static bool IsNewerThanCurrent(string version)
-        {
-            var current = new Version(NormalizeVersion(UpdateService.GetCurrentVersion()));
-            return Version.TryParse(NormalizeVersion(version), out var candidate) && candidate > current;
-        }
-
-        private static string NormalizeVersion(string text)
-        {
-            var parts = text.Split('.');
-            return parts.Length switch
-            {
-                1 => $"{text}.0.0",
-                2 => $"{text}.0",
-                _ => text
-            };
-        }
     }
 }

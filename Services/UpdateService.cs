@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Services
@@ -96,9 +97,7 @@ namespace TweakFirmware.Services
                 string htmlUrl = root.TryGetProperty("html_url", out var urlProp) ? urlProp.GetString() ?? "" : "";
                 string latest = tagName.TrimStart('v', 'V');
 
-                bool isNewer = TryParseVersion(latest, out var latestVer) &&
-                               TryParseVersion(current, out var currentVer) &&
-                               latestVer > currentVer;
+                bool isNewer = VersionHelper.IsNewer(latest, current);
 
                 string? installerUrl = null;
                 string? installerName = null;
@@ -163,19 +162,6 @@ namespace TweakFirmware.Services
             }
 
             return tempPath;
-        }
-
-        private static bool TryParseVersion(string text, out Version version)
-        {
-            // Version.TryParse требует хотя бы Major.Minor — подстрахуемся для "2" или "2.1".
-            var parts = text.Split('.');
-            string normalized = parts.Length switch
-            {
-                1 => $"{text}.0.0",
-                2 => $"{text}.0",
-                _ => text
-            };
-            return Version.TryParse(normalized, out version!);
         }
     }
 }

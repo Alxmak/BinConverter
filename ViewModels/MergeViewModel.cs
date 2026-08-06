@@ -122,7 +122,7 @@ namespace TweakFirmware.ViewModels
 
                 if (_outputPathIsAuto)
                 {
-                    string name = Path.GetFileNameWithoutExtension(basePath) + "_merged" + Path.GetExtension(basePath);
+                    string name = MergeOutputNaming.SuggestFileName(basePath);
                     SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), name));
                 }
             }
