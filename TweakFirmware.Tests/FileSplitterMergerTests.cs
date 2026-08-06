@@ -334,7 +334,9 @@ namespace TweakFirmware.Tests
             var createdFiles = new List<string>();
             var cts = new CancellationTokenSource();
 
-            var progress = new Progress<SplitProgress>(p =>
+            // Именно SyncProgress, а не System.Progress: последний доставляет колбэк через
+            // пул потоков, из-за чего Cancel() может сработать уже после конца операции.
+            var progress = new SyncProgress<SplitProgress>(p =>
             {
                 if (p.CurrentFileIndex >= 3) cts.Cancel();
             });
@@ -642,7 +644,11 @@ namespace TweakFirmware.Tests
             var createdFiles = new List<string>();
             var cts = new CancellationTokenSource();
 
-            var progress = new Progress<MergeProgress>(p =>
+            // System.Progress здесь делал тест нестабильным: колбэк уходил в пул потоков,
+            // и на быстрой машине отмена доходила до цикла уже после записи всех частей —
+            // исключение вылетало из ReadAsync, но файл успевал стать полным. SyncProgress
+            // вызывает Cancel() строго внутри цикла, поэтому сборка рвётся на середине.
+            var progress = new SyncProgress<MergeProgress>(p =>
             {
                 if (p.CurrentFileIndex >= 3) cts.Cancel();
             });
