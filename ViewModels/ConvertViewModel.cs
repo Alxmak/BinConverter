@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
+using TweakFirmware.Core.Operations;
 using TweakFirmware.Models;
 using TweakFirmware.Services;
 
@@ -235,62 +236,22 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()
         {
-            if (!File.Exists(SourcePath)) { StatusText = Strings.Get("Convert_SelectSourceFirst"); return; }
-            if (string.IsNullOrWhiteSpace(OutputFolder)) { StatusText = Strings.Get("Convert_SpecifyOutputFolder"); return; }
-
-            long limit = CurrentLimitBytes;
-            if (limit <= 0) { StatusText = Strings.Get("Convert_InvalidPartSize"); return; }
-
-            string baseName = string.IsNullOrWhiteSpace(BaseFileName) ? "emmc.bin" : BaseFileName.Trim();
-            var sourceInfo = new FileInfo(SourcePath);
-            string outFolder = OutputFolder;
-
-            if (FileConflictHelper.AnyConflict(outFolder, baseName))
+            var request = new ConvertRequest
             {
-                var choice = await DialogService.ShowConfirmAsync(
-                    Strings.Get("Convert_ConflictTitle"),
-                    Strings.Format("Convert_ConflictMessage", baseName),
-                    Strings.Get("Common_OverwriteChoice"), Strings.Get("Convert_NewFolderNearby"), Strings.Get("Common_CancelChoice"));
-
-                if (choice == DialogChoice.Close) return;
-                if (choice == DialogChoice.Secondary)
-                {
-                    outFolder = FileConflictHelper.SuggestAlternativeFolder(outFolder);
-                    OutputFolder = outFolder;
-                    AppLogger.Log(Strings.Format("Convert_ConflictLog", outFolder));
-                }
-            }
-
-            Directory.CreateDirectory(outFolder);
-
-            if (CheckDiskSpace)
-            {
-                var spaceCheck = DiskSpaceHelper.CheckSpace(outFolder, sourceInfo.Length);
-                if (!spaceCheck.HasEnoughSpace)
-                {
-                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
-                        Strings.Format("Convert_LowSpaceMessage",
-                            SizeFormatHelper.Format(sourceInfo.Length),
-                            SizeFormatHelper.Format(spaceCheck.RequiredBytes),
-                            SizeFormatHelper.Format(spaceCheck.AvailableBytes),
-                            SizeFormatHelper.Format(spaceCheck.MissingBytes)));
-                    return;
-                }
-            }
+                SourcePath = SourcePath,
+                OutputFolder = OutputFolder,
+                BaseFileName = BaseFileName,
+                MaxPartSizeBytes = CurrentLimitBytes,
+                VerifyHash = VerifyHashAfter,
+                CheckDiskSpace = CheckDiskSpace
+            };
 
             _cts = new CancellationTokenSource();
             _pauseController = new PauseController();
-            IsBusy = true;
-            IsPaused = false;
-            IsVerifying = false;
-            OperationLockService.Instance.IsBusy = true;
-            PauseButtonText = Strings.Get("Common_PauseButton");
-            OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
-            StatusText = Strings.Get("Convert_Started");
-            AppLogger.Log(Strings.Format("Convert_StartLog", SourcePath, outFolder, baseName, limit));
 
-            var createdFiles = new List<string>();
-            long totalWorkBytes = sourceInfo.Length * (VerifyHashAfter ? 2 : 1);
+            // Общая работа: при проверке хэша файл читается ещё раз, поэтому байт вдвое больше.
+            long sourceSize = File.Exists(SourcePath) ? new FileInfo(SourcePath).Length : 0;
+            long totalWorkBytes = sourceSize * (VerifyHashAfter ? 2 : 1);
 
             var splitProgress = new Progress<SplitProgress>(p =>
             {
@@ -307,70 +268,26 @@ namespace TweakFirmware.ViewModels
                 if (!IsVerifying)
                 {
                     IsVerifying = true;
+                    // Фаза проверки хэша паузу не поддерживает, и оставленная пауза выглядела бы
+                    // как зависший бар — снимаем её сами.
                     if (IsPaused) { _pauseController?.Resume(); IsPaused = false; PauseButtonText = Strings.Get("Common_PauseButton"); }
                     StatusText = Strings.Get("Common_VerifyingHash");
                 }
                 ShaProgress = p.total > 0 ? (double)p.done / p.total * 100.0 : 100.0;
-                double overallPct = totalWorkBytes > 0 ? (double)(sourceInfo.Length + p.done) / totalWorkBytes * 100.0 : 100.0;
+                double overallPct = totalWorkBytes > 0 ? (double)(sourceSize + p.done) / totalWorkBytes * 100.0 : 100.0;
                 OverallProgress = Math.Min(100.0, overallPct);
             });
 
-            using var bgScope = new BackgroundIoScope();
-
             try
             {
-                var result = await Task.Run(() => FileSplitter.SplitAsync(
-                    SourcePath, outFolder, baseName, limit, VerifyHashAfter,
-                    splitProgress, AppLogger.Log, _cts.Token, createdFiles, hashProgress, _pauseController));
+                var outcome = await ConvertOperation.RunAsync(
+                    request, new DialogConflictResolver(), splitProgress, hashProgress,
+                    AppLogger.Log, _pauseController, _cts.Token, MarkOperationStarted);
 
-                AppLogger.Log(Strings.Format("Convert_FinishedLog", result.PartsCreated, result.TotalBytes));
+                // При конфликте операция могла уйти в соседнюю папку — показываем, куда именно.
+                if (outcome.OutputFolderChanged) OutputFolder = outcome.OutputFolder;
 
-                if (result.VerifyPerformed)
-                {
-                    // Пункт 1: статус-строку не дублируем текстом успеха — итог и так виден в диалоге ниже.
-                    StatusText = result.HashesMatch ? Strings.Get("Common_Done") : Strings.Get("Convert_HashCheckFailed");
-                    if (result.HashesMatch)
-                    {
-                        await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
-                            Strings.Format("Convert_DoneVerifiedMessage", result.PartsCreated, result.SourceHash));
-                    }
-                    else
-                    {
-                        await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
-                            Strings.Format("Convert_VerifyErrorMessage", result.SourceHash, result.RecombinedHash));
-                    }
-                }
-                else
-                {
-                    StatusText = Strings.Get("Common_Done");
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), Strings.Format("Convert_DoneMessage", result.PartsCreated));
-                }
-
-                if (OpenFolderAfter)
-                {
-                    try { Process.Start(new ProcessStartInfo { FileName = outFolder, UseShellExecute = true }); }
-                    catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                StatusText = Strings.Get("Convert_CancellingStatus");
-                AppLogger.Log(Strings.Get("Convert_CancelledLog"));
-                CleanupCreatedFiles(createdFiles);
-                StatusText = Strings.Get("Convert_CancelledStatus");
-                await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Format("Convert_CancelledMessage", createdFiles.Count));
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Log(Strings.Format("Convert_ErrorLog", ex.Message));
-                CleanupCreatedFiles(createdFiles);
-                StatusText = Strings.Get("Convert_ErrorStatus");
-
-                string message = IsDiskFullError(ex)
-                    ? Strings.Format("Convert_DiskFullMessage", createdFiles.Count)
-                    : Strings.Format("Convert_ErrorMessage", ex.Message, createdFiles.Count);
-
-                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), message);
+                await ShowOutcomeAsync(outcome);
             }
             finally
             {
@@ -382,6 +299,96 @@ namespace TweakFirmware.ViewModels
                 _cts = null;
                 _pauseController = null;
             }
+        }
+
+        /// <summary>Вызывается операцией, когда все проверки прошли и работа началась.</summary>
+        private void MarkOperationStarted()
+        {
+            IsBusy = true;
+            IsPaused = false;
+            IsVerifying = false;
+            OperationLockService.Instance.IsBusy = true;
+            PauseButtonText = Strings.Get("Common_PauseButton");
+            OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
+            StatusText = Strings.Get("Convert_Started");
+        }
+
+        /// <summary>
+        /// Единственное место, где итог операции превращается в текст и диалоги.
+        /// Сама операция про интерфейс ничего не знает.
+        /// </summary>
+        private async Task ShowOutcomeAsync(ConvertOutcome outcome)
+        {
+            switch (outcome.Status)
+            {
+                case ConvertStatus.SourceNotFound:
+                    StatusText = Strings.Get("Convert_SelectSourceFirst");
+                    break;
+
+                case ConvertStatus.OutputFolderNotSpecified:
+                    StatusText = Strings.Get("Convert_SpecifyOutputFolder");
+                    break;
+
+                case ConvertStatus.InvalidPartSize:
+                    StatusText = Strings.Get("Convert_InvalidPartSize");
+                    break;
+
+                case ConvertStatus.CancelledBeforeStart:
+                    // Пользователь сам отказался в диалоге конфликта — статус не трогаем.
+                    break;
+
+                case ConvertStatus.NotEnoughSpace:
+                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                        Strings.Format("Convert_LowSpaceMessage",
+                            SizeFormatHelper.Format(outcome.SourceSizeBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.RequiredBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.AvailableBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.MissingBytes)));
+                    break;
+
+                case ConvertStatus.CompletedVerified:
+                    // Пункт 1: статус-строку не дублируем текстом успеха — итог виден в диалоге.
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                        Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, outcome.SourceHash));
+                    OpenResultFolder(outcome.OutputFolder);
+                    break;
+
+                case ConvertStatus.HashMismatch:
+                    StatusText = Strings.Get("Convert_HashCheckFailed");
+                    await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
+                        Strings.Format("Convert_VerifyErrorMessage", outcome.SourceHash, outcome.RecombinedHash));
+                    OpenResultFolder(outcome.OutputFolder);
+                    break;
+
+                case ConvertStatus.Completed:
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                        Strings.Format("Convert_DoneMessage", outcome.PartsCreated));
+                    OpenResultFolder(outcome.OutputFolder);
+                    break;
+
+                case ConvertStatus.Cancelled:
+                    StatusText = Strings.Get("Convert_CancelledStatus");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"),
+                        Strings.Format("Convert_CancelledMessage", outcome.CreatedFileCount));
+                    break;
+
+                case ConvertStatus.Failed:
+                    StatusText = Strings.Get("Convert_ErrorStatus");
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), outcome.DiskFull
+                        ? Strings.Format("Convert_DiskFullMessage", outcome.CreatedFileCount)
+                        : Strings.Format("Convert_ErrorMessage", outcome.ErrorMessage, outcome.CreatedFileCount));
+                    break;
+            }
+        }
+
+        private void OpenResultFolder(string folder)
+        {
+            if (!OpenFolderAfter) return;
+
+            try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
+            catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
         }
 
         [RelayCommand]
@@ -415,31 +422,5 @@ namespace TweakFirmware.ViewModels
             }
         }
 
-        private static void CleanupCreatedFiles(List<string> createdFiles)
-        {
-            if (createdFiles.Count == 0) return;
-            AppLogger.Log(Strings.Format("Convert_DeletingIncompleteLog", createdFiles.Count));
-            foreach (var path in createdFiles)
-            {
-                try
-                {
-                    if (File.Exists(path))
-                    {
-                        File.Delete(path);
-                        AppLogger.Log(Strings.Format("Convert_DeletedLog", Path.GetFileName(path)));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Log(Strings.Format("Convert_DeleteFailedLog", Path.GetFileName(path), ex.Message));
-                }
-            }
-        }
-
-        private static bool IsDiskFullError(Exception ex)
-        {
-            int code = ex.HResult & 0xFFFF;
-            return ex is IOException && (code == 0x27 || code == 0x70);
-        }
     }
 }

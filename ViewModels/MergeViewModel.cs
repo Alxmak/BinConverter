@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
+using TweakFirmware.Core.Operations;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -112,17 +113,16 @@ namespace TweakFirmware.ViewModels
         {
             try
             {
-                string basePath = HashHelper.ResolveBasePath(SourcePath);
-                var chain = HashHelper.FindPartChain(basePath);
-                long total = 0;
-                foreach (var f in chain) total += new FileInfo(f).Length;
+                // Тот же расчёт, что делает сама сборка перед проверкой места, —
+                // считаем его один раз и в одном месте.
+                long total = MergeOperation.GetChainSize(SourcePath, out var chain);
 
                 ChainInfoText = Strings.Format("Merge_ChainFoundInfo", chain.Count, SizeFormatHelper.Format(total), Path.GetFileName(chain[0]));
                 ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(total));
 
                 if (_outputPathIsAuto)
                 {
-                    string name = MergeOutputNaming.SuggestFileName(basePath);
+                    string name = MergeOutputNaming.SuggestFileName(HashHelper.ResolveBasePath(SourcePath));
                     SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), name));
                 }
             }
@@ -143,67 +143,15 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()
         {
-            if (!File.Exists(SourcePath)) { StatusText = Strings.Get("Merge_SelectSourceFirst"); return; }
-            if (string.IsNullOrWhiteSpace(OutputPath)) { StatusText = Strings.Get("Merge_SpecifyOutputFile"); return; }
-
-            string output = OutputPath;
-
-            if (File.Exists(output))
+            var request = new MergeRequest
             {
-                var choice = await DialogService.ShowConfirmAsync(
-                    Strings.Get("Merge_FileExistsTitle"),
-                    Strings.Format("Merge_FileExistsMessage", Path.GetFileName(output)),
-                    Strings.Get("Common_OverwriteChoice"), Strings.Get("Merge_NewNameNearby"), Strings.Get("Common_CancelChoice"));
-
-                if (choice == DialogChoice.Close) return;
-                if (choice == DialogChoice.Secondary)
-                {
-                    output = FileConflictHelper.SuggestAlternativeFilePath(output);
-                    OutputPath = output;
-                    AppLogger.Log(Strings.Format("Merge_ConflictLog", output));
-                }
-            }
-
-            List<string> chainForSpace;
-            long neededBytes;
-            try
-            {
-                string basePathForSpace = HashHelper.ResolveBasePath(SourcePath);
-                chainForSpace = HashHelper.FindPartChain(basePathForSpace);
-                neededBytes = 0;
-                foreach (var f in chainForSpace) neededBytes += new FileInfo(f).Length;
-            }
-            catch (Exception ex)
-            {
-                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Merge_ChainCheckErrorMessage", ex.Message));
-                return;
-            }
-
-            string outDir = Path.GetDirectoryName(output) ?? ".";
-            Directory.CreateDirectory(outDir);
-            var spaceCheck = DiskSpaceHelper.CheckSpace(outDir, neededBytes);
-            if (!spaceCheck.HasEnoughSpace)
-            {
-                await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
-                    Strings.Format("Merge_LowSpaceMessage",
-                        SizeFormatHelper.Format(neededBytes),
-                        SizeFormatHelper.Format(spaceCheck.RequiredBytes),
-                        SizeFormatHelper.Format(spaceCheck.AvailableBytes),
-                        SizeFormatHelper.Format(spaceCheck.MissingBytes)));
-                return;
-            }
+                AnyChainFilePath = SourcePath,
+                OutputPath = OutputPath,
+                ExpectedHash = ExpectedHashText
+            };
 
             _cts = new CancellationTokenSource();
             _pauseController = new PauseController();
-            IsBusy = true;
-            IsPaused = false;
-            OperationLockService.Instance.IsBusy = true;
-            PauseButtonText = Strings.Get("Common_PauseButton");
-            OverallProgress = 0; CurrentFileProgress = 0;
-            StatusText = Strings.Get("Merge_Started");
-            AppLogger.Log(Strings.Format("Merge_StartLog", SourcePath, output));
-
-            var createdFiles = new List<string>();
 
             var progress = new Progress<MergeProgress>(p =>
             {
@@ -215,62 +163,16 @@ namespace TweakFirmware.ViewModels
                 StatusText = Strings.Format("Merge_ProgressStatus", p.TotalBytesProcessed, p.TotalBytes, totalPct);
             });
 
-            using var bgScope = new BackgroundIoScope();
-
             try
             {
-                var result = await Task.Run(() => FileMerger.MergeAsync(SourcePath, output, progress, AppLogger.Log, _cts.Token, createdFiles, _pauseController));
+                var outcome = await MergeOperation.RunAsync(
+                    request, new DialogConflictResolver(), progress,
+                    AppLogger.Log, _pauseController, _cts.Token, MarkOperationStarted);
 
-                AppLogger.Log(Strings.Format("Merge_FinishedLog", result.PartsUsed, result.TotalBytes));
-                AppLogger.Log(Strings.Format("Merge_ResultHashLog", result.MergedHash));
+                // При конфликте операция могла уйти в соседнее имя — показываем, куда именно.
+                if (outcome.OutputPathChanged) OutputPath = outcome.OutputPath;
 
-                string expected = ExpectedHashText.Trim();
-                if (!string.IsNullOrEmpty(expected))
-                {
-                    bool match = string.Equals(expected, result.MergedHash, StringComparison.OrdinalIgnoreCase);
-                    AppLogger.Log(match ? Strings.Get("Merge_HashMatchLog") : Strings.Get("Merge_HashMismatchLog"));
-                    StatusText = match ? Strings.Get("Common_Done") : Strings.Get("Merge_HashCheckFailedStatus");
-
-                    if (match)
-                        await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"), Strings.Format("Merge_ResultMatchMessage", result.MergedHash));
-                    else
-                        await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"), Strings.Format("Merge_ResultMismatchMessage", expected, result.MergedHash));
-                }
-                else
-                {
-                    StatusText = Strings.Get("Common_Done");
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), Strings.Format("Merge_DoneMessage", result.PartsUsed, result.TotalBytes, result.MergedHash));
-                }
-
-                if (OpenFolderAfter)
-                {
-                    string? resultDir = Path.GetDirectoryName(result.OutputPath);
-                    if (!string.IsNullOrEmpty(resultDir))
-                    {
-                        try { Process.Start(new ProcessStartInfo { FileName = resultDir, UseShellExecute = true }); }
-                        catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                StatusText = Strings.Get("Merge_CancellingStatus");
-                AppLogger.Log(Strings.Get("Merge_CancelledLog"));
-                CleanupCreatedFiles(createdFiles);
-                StatusText = Strings.Get("Merge_CancelledStatus");
-                await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Log(Strings.Format("Convert_ErrorLog", ex.Message));
-                CleanupCreatedFiles(createdFiles);
-                StatusText = Strings.Get("Merge_ErrorStatus");
-
-                string message = IsDiskFullError(ex)
-                    ? Strings.Get("Merge_DiskFullMessage")
-                    : Strings.Format("Merge_ErrorMessage", ex.Message);
-
-                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), message);
+                await ShowOutcomeAsync(outcome);
             }
             finally
             {
@@ -283,6 +185,92 @@ namespace TweakFirmware.ViewModels
             }
         }
 
+        /// <summary>Вызывается операцией, когда все проверки прошли и работа началась.</summary>
+        private void MarkOperationStarted()
+        {
+            IsBusy = true;
+            IsPaused = false;
+            OperationLockService.Instance.IsBusy = true;
+            PauseButtonText = Strings.Get("Common_PauseButton");
+            OverallProgress = 0; CurrentFileProgress = 0;
+            StatusText = Strings.Get("Merge_Started");
+        }
+
+        private async Task ShowOutcomeAsync(MergeOutcome outcome)
+        {
+            switch (outcome.Status)
+            {
+                case MergeStatus.SourceNotFound:
+                    StatusText = Strings.Get("Merge_SelectSourceFirst");
+                    break;
+
+                case MergeStatus.OutputPathNotSpecified:
+                    StatusText = Strings.Get("Merge_SpecifyOutputFile");
+                    break;
+
+                case MergeStatus.CancelledBeforeStart:
+                    // Пользователь сам отказался перезаписывать файл — статус не трогаем.
+                    break;
+
+                case MergeStatus.ChainResolveFailed:
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_Error"),
+                        Strings.Format("Merge_ChainCheckErrorMessage", outcome.ErrorMessage));
+                    break;
+
+                case MergeStatus.NotEnoughSpace:
+                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                        Strings.Format("Merge_LowSpaceMessage",
+                            SizeFormatHelper.Format(outcome.ChainSizeBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.RequiredBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.AvailableBytes),
+                            SizeFormatHelper.Format(outcome.SpaceCheck.MissingBytes)));
+                    break;
+
+                case MergeStatus.HashMatch:
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"),
+                        Strings.Format("Merge_ResultMatchMessage", outcome.MergedHash));
+                    OpenResultFolder(outcome.OutputPath);
+                    break;
+
+                case MergeStatus.HashMismatch:
+                    StatusText = Strings.Get("Merge_HashCheckFailedStatus");
+                    await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"),
+                        Strings.Format("Merge_ResultMismatchMessage", ExpectedHashText.Trim(), outcome.MergedHash));
+                    OpenResultFolder(outcome.OutputPath);
+                    break;
+
+                case MergeStatus.Completed:
+                    StatusText = Strings.Get("Common_Done");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                        Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, outcome.MergedHash));
+                    OpenResultFolder(outcome.OutputPath);
+                    break;
+
+                case MergeStatus.Cancelled:
+                    StatusText = Strings.Get("Merge_CancelledStatus");
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
+                    break;
+
+                case MergeStatus.Failed:
+                    StatusText = Strings.Get("Merge_ErrorStatus");
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), outcome.DiskFull
+                        ? Strings.Get("Merge_DiskFullMessage")
+                        : Strings.Format("Merge_ErrorMessage", outcome.ErrorMessage));
+                    break;
+            }
+        }
+
+        private void OpenResultFolder(string outputPath)
+        {
+            if (!OpenFolderAfter) return;
+
+            string? folder = Path.GetDirectoryName(outputPath);
+            if (string.IsNullOrEmpty(folder)) return;
+
+            try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
+            catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
+        }
         [RelayCommand]
         private void Cancel()
         {
@@ -314,31 +302,5 @@ namespace TweakFirmware.ViewModels
             }
         }
 
-        private static void CleanupCreatedFiles(List<string> createdFiles)
-        {
-            if (createdFiles.Count == 0) return;
-            AppLogger.Log(Strings.Format("Merge_DeletingIncompleteLog", createdFiles.Count));
-            foreach (var path in createdFiles)
-            {
-                try
-                {
-                    if (File.Exists(path))
-                    {
-                        File.Delete(path);
-                        AppLogger.Log(Strings.Format("Merge_DeletedLog", Path.GetFileName(path)));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Log(Strings.Format("Merge_DeleteFailedLog", Path.GetFileName(path), ex.Message));
-                }
-            }
-        }
-
-        private static bool IsDiskFullError(Exception ex)
-        {
-            int code = ex.HResult & 0xFFFF;
-            return ex is IOException && (code == 0x27 || code == 0x70);
-        }
     }
 }

@@ -148,18 +148,6 @@ namespace TweakFirmware.Tests
             Assert.Equal(1, new FileInfo(Path.Combine(outFolder, "emmc.bin.part1")).Length);
         }
 
-        /// <summary>
-        /// System.Progress&lt;T&gt; может вызывать колбэк асинхронно (через SynchronizationContext
-        /// или ThreadPool), что делает тесты нестабильными — здесь Report() выполняется
-        /// строго синхронно, в момент вызова.
-        /// </summary>
-        private sealed class SyncProgress<T> : IProgress<T>
-        {
-            private readonly Action<T> _callback;
-            public SyncProgress(Action<T> callback) => _callback = callback;
-            public void Report(T value) => _callback(value);
-        }
-
         [Fact]
         public async Task HashHelper_ComputePartsHashAsync_ReportsProgressUpToTotal()
         {

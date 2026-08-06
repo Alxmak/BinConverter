@@ -1,0 +1,236 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using TweakFirmware.Core.Localization;
+
+namespace TweakFirmware.Core.Operations
+{
+    /// <summary>Что собирать, куда и с чем сверить результат.</summary>
+    public sealed class MergeRequest
+    {
+        /// <summary>Любой файл цепочки — остальные находятся по нему.</summary>
+        public string AnyChainFilePath { get; init; } = "";
+
+        public string OutputPath { get; init; } = "";
+
+        /// <summary>Необязательный ожидаемый SHA-256 собранного файла.</summary>
+        public string ExpectedHash { get; init; } = "";
+
+        public bool HasExpectedHash => !string.IsNullOrWhiteSpace(ExpectedHash);
+    }
+
+    public enum MergeStatus
+    {
+        /// <summary>Указанного файла цепочки нет.</summary>
+        SourceNotFound,
+
+        /// <summary>Не задан файл результата.</summary>
+        OutputPathNotSpecified,
+
+        /// <summary>Цепочку частей собрать не удалось — пропуск, нечитаемый файл и подобное.</summary>
+        ChainResolveFailed,
+
+        /// <summary>Места на диске назначения не хватает.</summary>
+        NotEnoughSpace,
+
+        /// <summary>Пользователь отказался перезаписывать существующий файл.</summary>
+        CancelledBeforeStart,
+
+        /// <summary>Собрано, ожидаемый хэш не задавался — сверять было не с чем.</summary>
+        Completed,
+
+        /// <summary>Собрано, SHA-256 совпал с ожидаемым.</summary>
+        HashMatch,
+
+        /// <summary>Собрано, но SHA-256 не совпал с ожидаемым.</summary>
+        HashMismatch,
+
+        /// <summary>Отменено во время работы, недописанный файл удалён.</summary>
+        Cancelled,
+
+        /// <summary>Упало с ошибкой, недописанный файл удалён.</summary>
+        Failed
+    }
+
+    public sealed class MergeOutcome
+    {
+        public MergeStatus Status { get; init; }
+
+        /// <summary>Путь, по которому фактически писали: при конфликте мог стать соседним.</summary>
+        public string OutputPath { get; init; } = "";
+
+        /// <summary>Путь пришлось сменить из-за существующего файла.</summary>
+        public bool OutputPathChanged { get; init; }
+
+        public int PartsUsed { get; init; }
+        public long TotalBytes { get; init; }
+        public string MergedHash { get; init; } = "";
+
+        /// <summary>Суммарный размер цепочки — нужен для сообщения о нехватке места.</summary>
+        public long ChainSizeBytes { get; init; }
+        public SpaceCheckResult SpaceCheck { get; init; }
+
+        public string ErrorMessage { get; init; } = "";
+        public bool DiskFull { get; init; }
+        public int CreatedFileCount { get; init; }
+
+        public bool Succeeded => Status is MergeStatus.Completed or MergeStatus.HashMatch;
+    }
+
+    /// <summary>
+    /// Сборка цепочки частей в один файл. Раньше жила в MergeViewModel вместе с диалогами.
+    /// </summary>
+    public static class MergeOperation
+    {
+        /// <summary>
+        /// Суммарный размер цепочки по любому её файлу. Отдельно от самой сборки, потому что
+        /// это же число нужно интерфейсу до запуска — показать, какой файл получится.
+        /// </summary>
+        public static long GetChainSize(string anyChainFilePath, out List<string> chain)
+        {
+            string basePath = HashHelper.ResolveBasePath(anyChainFilePath);
+            chain = HashHelper.FindPartChain(basePath);
+
+            long total = 0;
+            foreach (string part in chain) total += new FileInfo(part).Length;
+            return total;
+        }
+
+        public static async Task<MergeOutcome> RunAsync(
+            MergeRequest request,
+            IConflictResolver conflicts,
+            IProgress<MergeProgress>? progress,
+            Action<string> log,
+            PauseController? pauseController,
+            CancellationToken ct,
+            Action? onStarted = null,
+            // Подменяемая проверка места — см. пояснение в ConvertOperation.
+            Func<string, long, SpaceCheckResult>? spaceCheck = null)
+        {
+            if (!File.Exists(request.AnyChainFilePath))
+                return new MergeOutcome { Status = MergeStatus.SourceNotFound };
+
+            if (string.IsNullOrWhiteSpace(request.OutputPath))
+                return new MergeOutcome { Status = MergeStatus.OutputPathNotSpecified };
+
+            string outputPath = request.OutputPath;
+            bool pathChanged = false;
+
+            if (File.Exists(outputPath))
+            {
+                var decision = await conflicts.ResolveOutputFileConflictAsync(outputPath);
+
+                if (decision == ConflictDecision.Cancel)
+                    return new MergeOutcome { Status = MergeStatus.CancelledBeforeStart, OutputPath = outputPath };
+
+                if (decision == ConflictDecision.UseAlternative)
+                {
+                    outputPath = FileConflictHelper.SuggestAlternativeFilePath(outputPath);
+                    pathChanged = true;
+                    log(Strings.Format("Merge_ConflictLog", outputPath));
+                }
+            }
+
+            // Размер цепочки нужен, чтобы заранее понять, хватит ли места. Здесь же
+            // выясняется, что цепочка вообще читаемая и в ней нет пропусков.
+            long chainSize;
+            try
+            {
+                chainSize = GetChainSize(request.AnyChainFilePath, out _);
+            }
+            catch (Exception ex)
+            {
+                return new MergeOutcome
+                {
+                    Status = MergeStatus.ChainResolveFailed,
+                    OutputPath = outputPath,
+                    OutputPathChanged = pathChanged,
+                    ErrorMessage = ex.Message
+                };
+            }
+
+            string outputFolder = Path.GetDirectoryName(outputPath) ?? ".";
+            Directory.CreateDirectory(outputFolder);
+
+            var check = (spaceCheck ?? DiskSpaceHelper.CheckSpace)(outputFolder, chainSize);
+            if (!check.HasEnoughSpace)
+            {
+                return new MergeOutcome
+                {
+                    Status = MergeStatus.NotEnoughSpace,
+                    OutputPath = outputPath,
+                    OutputPathChanged = pathChanged,
+                    ChainSizeBytes = chainSize,
+                    SpaceCheck = check
+                };
+            }
+
+            // Проверки пройдены — см. пояснение к тому же сигналу в ConvertOperation.
+            onStarted?.Invoke();
+
+            log(Strings.Format("Merge_StartLog", request.AnyChainFilePath, outputPath));
+
+            var createdFiles = new List<string>();
+            using var backgroundIo = new BackgroundIoScope();
+
+            try
+            {
+                var result = await Task.Run(() => FileMerger.MergeAsync(
+                    request.AnyChainFilePath, outputPath, progress, log, ct, createdFiles, pauseController));
+
+                log(Strings.Format("Merge_FinishedLog", result.PartsUsed, result.TotalBytes));
+                log(Strings.Format("Merge_ResultHashLog", result.MergedHash));
+
+                MergeStatus status = MergeStatus.Completed;
+                if (request.HasExpectedHash)
+                {
+                    bool match = string.Equals(request.ExpectedHash.Trim(), result.MergedHash, StringComparison.OrdinalIgnoreCase);
+                    log(match ? Strings.Get("Merge_HashMatchLog") : Strings.Get("Merge_HashMismatchLog"));
+                    status = match ? MergeStatus.HashMatch : MergeStatus.HashMismatch;
+                }
+
+                return new MergeOutcome
+                {
+                    Status = status,
+                    OutputPath = result.OutputPath,
+                    OutputPathChanged = pathChanged,
+                    PartsUsed = result.PartsUsed,
+                    TotalBytes = result.TotalBytes,
+                    MergedHash = result.MergedHash,
+                    ChainSizeBytes = chainSize,
+                    CreatedFileCount = createdFiles.Count
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                log(Strings.Get("Merge_CancelledLog"));
+                IncompleteOutput.Remove(createdFiles, log);
+
+                return new MergeOutcome
+                {
+                    Status = MergeStatus.Cancelled,
+                    OutputPath = outputPath,
+                    OutputPathChanged = pathChanged,
+                    CreatedFileCount = createdFiles.Count
+                };
+            }
+            catch (Exception ex)
+            {
+                log(Strings.Format("Convert_ErrorLog", ex.Message));
+                IncompleteOutput.Remove(createdFiles, log);
+
+                return new MergeOutcome
+                {
+                    Status = MergeStatus.Failed,
+                    OutputPath = outputPath,
+                    OutputPathChanged = pathChanged,
+                    ErrorMessage = ex.Message,
+                    DiskFull = IncompleteOutput.IsDiskFull(ex),
+                    CreatedFileCount = createdFiles.Count
+                };
+            }
+        }
+    }
+}

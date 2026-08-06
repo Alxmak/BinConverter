@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
+using TweakFirmware.Core.Operations;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -73,13 +74,41 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanCompare))]
         private async Task CompareAsync()
         {
-            if (!File.Exists(FileAPath) || !File.Exists(FileBPath))
-            {
-                await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Verify_SelectBothFiles"));
-                return;
-            }
+            var request = new VerifyRequest { FileAPath = FileAPath, FileBPath = FileBPath };
 
             _cts = new CancellationTokenSource();
+
+            var progress = new Progress<VerifyProgress>(p =>
+            {
+                OverallProgress = p.TotalBytes > 0 ? (double)p.TotalBytesProcessed / p.TotalBytes * 100.0 : 0;
+                CurrentFileLabel = Strings.Format(
+                    p.FileIndex == 1 ? "Verify_FileALabelProgress" : "Verify_FileBLabelProgress", p.FileName);
+            });
+
+            try
+            {
+                var outcome = await VerifyOperation.RunAsync(
+                    request, progress, AppLogger.Log, _cts.Token, MarkOperationStarted);
+
+                // Хэши показываем и при отмене: посчитанное на экране пропадать не должно.
+                if (outcome.HashA.Length > 0) HashAText = outcome.HashA;
+                if (outcome.HashB.Length > 0) HashBText = outcome.HashB;
+
+                await ShowOutcomeAsync(outcome);
+            }
+            finally
+            {
+                OverallProgress = 0;
+                CurrentFileLabel = "";
+                IsBusy = false;
+                OperationLockService.Instance.IsBusy = false;
+                _cts = null;
+            }
+        }
+
+        /// <summary>Вызывается операцией, когда файлы найдены и сравнение началось.</summary>
+        private void MarkOperationStarted()
+        {
             IsBusy = true;
             // Как в Конвертировании и Сборке: пока считаем хэши, переключение разделов
             // в меню заблокировано — иначе можно уйти со вкладки и потерять процесс из виду.
@@ -89,52 +118,33 @@ namespace TweakFirmware.ViewModels
             HashAText = NoValuePlaceholder;
             HashBText = NoValuePlaceholder;
             OverallProgress = 0;
-            AppLogger.Log(Strings.Format("Verify_CompareLog", FileAPath, FileBPath));
+        }
 
-            try
+        private async Task ShowOutcomeAsync(VerifyOutcome outcome)
+        {
+            switch (outcome.Status)
             {
-                long sizeA = new FileInfo(FileAPath).Length;
-                long sizeB = new FileInfo(FileBPath).Length;
-                long totalWork = sizeA + sizeB;
+                case VerifyStatus.FileMissing:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Verify_SelectBothFiles"));
+                    break;
 
-                CurrentFileLabel = Strings.Format("Verify_FileALabelProgress", Path.GetFileName(FileAPath));
-                var progressA = new Progress<(long done, long total)>(p =>
-                {
-                    OverallProgress = totalWork > 0 ? (double)p.done / totalWork * 100.0 : 0;
-                });
-                HashAText = await Task.Run(() => HashHelper.ComputeFileHashAsync(FileAPath, _cts.Token, progressA));
+                case VerifyStatus.Match:
+                case VerifyStatus.Mismatch:
+                    IsMatch = outcome.Status == VerifyStatus.Match;
+                    ResultText = Strings.Get(IsMatch ? "Verify_MatchResult" : "Verify_MismatchResult");
+                    HasResult = true;
+                    StatusText = Strings.Get("Common_Done");
+                    break;
 
-                CurrentFileLabel = Strings.Format("Verify_FileBLabelProgress", Path.GetFileName(FileBPath));
-                var progressB = new Progress<(long done, long total)>(p =>
-                {
-                    OverallProgress = totalWork > 0 ? (double)(sizeA + p.done) / totalWork * 100.0 : 0;
-                });
-                HashBText = await Task.Run(() => HashHelper.ComputeFileHashAsync(FileBPath, _cts.Token, progressB));
+                case VerifyStatus.Cancelled:
+                    StatusText = Strings.Get("Verify_Cancelled");
+                    break;
 
-                bool match = string.Equals(HashAText, HashBText, StringComparison.OrdinalIgnoreCase);
-                AppLogger.Log(match ? Strings.Get("Verify_HashesMatchLog") : Strings.Get("Verify_HashesMismatchLog"));
-
-                IsMatch = match;
-                ResultText = match ? Strings.Get("Verify_MatchResult") : Strings.Get("Verify_MismatchResult");
-                HasResult = true;
-                StatusText = Strings.Get("Common_Done");
-            }
-            catch (OperationCanceledException)
-            {
-                StatusText = Strings.Get("Verify_Cancelled");
-            }
-            catch (Exception ex)
-            {
-                StatusText = Strings.Get("Verify_ErrorStatus");
-                await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Verify_HashErrorMessage", ex.Message));
-            }
-            finally
-            {
-                OverallProgress = 0;
-                CurrentFileLabel = "";
-                IsBusy = false;
-                OperationLockService.Instance.IsBusy = false;
-                _cts = null;
+                case VerifyStatus.Failed:
+                    StatusText = Strings.Get("Verify_ErrorStatus");
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_Error"),
+                        Strings.Format("Verify_HashErrorMessage", outcome.ErrorMessage));
+                    break;
             }
         }
 
