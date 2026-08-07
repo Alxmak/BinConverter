@@ -13,6 +13,16 @@ namespace TweakFirmware.Controls
     /// </summary>
     public partial class LogCard : UserControl
     {
+        /// <summary>Допуск на округление при сравнении позиции прокрутки с её концом.</summary>
+        private const double BottomTolerance = 1.0;
+
+        /// <summary>
+        /// «Липкий низ»: журнал догоняет последнюю запись, только пока пользователь и так
+        /// смотрит на конец списка. Стоит отлистать вверх — прокрутка перестаёт вмешиваться,
+        /// иначе каждая новая строка возвращала бы вниз прямо во время чтения.
+        /// </summary>
+        private bool _stickToBottom = true;
+
         public LogCard()
         {
             InitializeComponent();
@@ -21,7 +31,11 @@ namespace TweakFirmware.Controls
             // этому списку, поэтому отписываться не нужно — иначе три карточки (по одной
             // на раздел) держали бы статическую коллекцию LogService и текли при
             // переключении разделов.
-            ((INotifyCollectionChanged)LogList.Items).CollectionChanged += (_, _) => ScrollToLastEntry();
+            ((INotifyCollectionChanged)LogList.Items).CollectionChanged += OnLogChanged;
+
+            // ScrollChanged всплывает от ScrollViewer'а внутри шаблона списка, поэтому
+            // сам ScrollViewer искать в дереве не нужно.
+            LogList.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnScrollChanged));
 
             // Журнал общий и к моменту открытия раздела уже может быть непустым —
             // показываем его конец, а не начало.
@@ -33,6 +47,28 @@ namespace TweakFirmware.Controls
             {
                 if (!(bool)e.NewValue) LogList.SelectedIndex = -1;
             };
+        }
+
+        private void OnLogChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            // Журнал очистили — начинаем заново, снова следуя за новыми строками.
+            if (LogList.Items.Count == 0)
+            {
+                _stickToBottom = true;
+                return;
+            }
+
+            if (_stickToBottom) ScrollToLastEntry();
+        }
+
+        private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            // Реагируем только на перемещение по списку. Рост содержимого — это добавление
+            // строки, а не действие пользователя, и решение «липнуть или нет» менять
+            // не должен: иначе первая же новая строка сама себя и разлипала бы.
+            if (e.ExtentHeightChange != 0) return;
+
+            _stickToBottom = e.VerticalOffset + e.ViewportHeight >= e.ExtentHeight - BottomTolerance;
         }
 
         /// <summary>
