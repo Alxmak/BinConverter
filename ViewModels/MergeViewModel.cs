@@ -40,7 +40,6 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
-        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         public bool CanStart => !IsBusy;
 
@@ -192,7 +191,6 @@ namespace TweakFirmware.ViewModels
             OperationLockService.Instance.IsBusy = true;
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0;
-            StatusText = Strings.Get("Merge_Started");
         }
 
         private async Task ShowOutcomeAsync(MergeOutcome outcome)
@@ -200,15 +198,15 @@ namespace TweakFirmware.ViewModels
             switch (outcome.Status)
             {
                 case MergeStatus.SourceNotFound:
-                    StatusText = Strings.Get("Merge_SelectSourceFirst");
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Merge_SelectSourceFirst"));
                     break;
 
                 case MergeStatus.OutputPathNotSpecified:
-                    StatusText = Strings.Get("Merge_SpecifyOutputFile");
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Merge_SpecifyOutputFile"));
                     break;
 
                 case MergeStatus.CancelledBeforeStart:
-                    // Пользователь сам отказался перезаписывать файл — статус не трогаем.
+                    // Пользователь сам отказался перезаписывать файл — сообщать ему об этом нечего.
                     break;
 
                 case MergeStatus.ChainResolveFailed:
@@ -226,33 +224,28 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.HashMatch:
-                    StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"),
                         Strings.Format("Merge_ResultMatchMessage", HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.HashMismatch:
-                    StatusText = Strings.Get("Merge_HashCheckFailedStatus");
                     await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"),
                         Strings.Format("Merge_ResultMismatchMessage", HashDisplay.Wrap(ExpectedHashText.Trim()), HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.Completed:
-                    StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
                         Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.Cancelled:
-                    StatusText = Strings.Get("Merge_CancelledStatus");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
                     break;
 
                 case MergeStatus.Failed:
-                    StatusText = Strings.Get("Merge_ErrorStatus");
                     await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), outcome.DiskFull
                         ? Strings.Get("Merge_DiskFullMessage")
                         : Strings.Format("Merge_ErrorMessage", outcome.ErrorMessage));
@@ -275,7 +268,6 @@ namespace TweakFirmware.ViewModels
         {
             _pauseController?.Resume();
             _cts?.Cancel();
-            StatusText = Strings.Get("Common_Cancelling");
         }
 
         [RelayCommand]
@@ -288,7 +280,6 @@ namespace TweakFirmware.ViewModels
                 _pauseController.Resume();
                 IsPaused = false;
                 PauseButtonText = Strings.Get("Common_PauseButton");
-                StatusText = Strings.Get("Common_Resumed");
                 AppLogger.Log(Strings.Get("Merge_ResumedLog"));
             }
             else
@@ -296,7 +287,6 @@ namespace TweakFirmware.ViewModels
                 _pauseController.Pause();
                 IsPaused = true;
                 PauseButtonText = Strings.Get("Common_ResumeButton");
-                StatusText = Strings.Get("Common_Paused");
                 AppLogger.Log(Strings.Get("Merge_PausedLog"));
             }
         }

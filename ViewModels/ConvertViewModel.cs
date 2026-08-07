@@ -60,7 +60,6 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
         [ObservableProperty] private double shaProgress;
-        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         public bool CanStart => !IsBusy;
         public bool CanPause => IsBusy && !IsVerifying;
@@ -270,7 +269,6 @@ namespace TweakFirmware.ViewModels
                     // Фаза проверки хэша паузу не поддерживает, и оставленная пауза выглядела бы
                     // как зависший бар — снимаем её сами.
                     if (IsPaused) { _pauseController?.Resume(); IsPaused = false; PauseButtonText = Strings.Get("Common_PauseButton"); }
-                    StatusText = Strings.Get("Common_VerifyingHash");
                 }
                 ShaProgress = p.total > 0 ? (double)p.done / p.total * 100.0 : 100.0;
                 double overallPct = totalWorkBytes > 0 ? (double)(sourceSize + p.done) / totalWorkBytes * 100.0 : 100.0;
@@ -309,7 +307,6 @@ namespace TweakFirmware.ViewModels
             OperationLockService.Instance.IsBusy = true;
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
-            StatusText = Strings.Get("Convert_Started");
         }
 
         /// <summary>
@@ -321,19 +318,19 @@ namespace TweakFirmware.ViewModels
             switch (outcome.Status)
             {
                 case ConvertStatus.SourceNotFound:
-                    StatusText = Strings.Get("Convert_SelectSourceFirst");
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_SelectSourceFirst"));
                     break;
 
                 case ConvertStatus.OutputFolderNotSpecified:
-                    StatusText = Strings.Get("Convert_SpecifyOutputFolder");
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_SpecifyOutputFolder"));
                     break;
 
                 case ConvertStatus.InvalidPartSize:
-                    StatusText = Strings.Get("Convert_InvalidPartSize");
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_InvalidPartSize"));
                     break;
 
                 case ConvertStatus.CancelledBeforeStart:
-                    // Пользователь сам отказался в диалоге конфликта — статус не трогаем.
+                    // Пользователь сам отказался в диалоге конфликта — сообщать ему об этом нечего.
                     break;
 
                 case ConvertStatus.NotEnoughSpace:
@@ -346,35 +343,29 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.CompletedVerified:
-                    // Пункт 1: статус-строку не дублируем текстом успеха — итог виден в диалоге.
-                    StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
                         Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, HashDisplay.Wrap(outcome.SourceHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.HashMismatch:
-                    StatusText = Strings.Get("Convert_HashCheckFailed");
                     await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
                         Strings.Format("Convert_VerifyErrorMessage", HashDisplay.Wrap(outcome.SourceHash), HashDisplay.Wrap(outcome.RecombinedHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.Completed:
-                    StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
                         Strings.Format("Convert_DoneMessage", outcome.PartsCreated));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.Cancelled:
-                    StatusText = Strings.Get("Convert_CancelledStatus");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"),
                         Strings.Format("Convert_CancelledMessage", outcome.CreatedFileCount));
                     break;
 
                 case ConvertStatus.Failed:
-                    StatusText = Strings.Get("Convert_ErrorStatus");
                     await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), outcome.DiskFull
                         ? Strings.Format("Convert_DiskFullMessage", outcome.CreatedFileCount)
                         : Strings.Format("Convert_ErrorMessage", outcome.ErrorMessage, outcome.CreatedFileCount));
@@ -395,7 +386,6 @@ namespace TweakFirmware.ViewModels
         {
             _pauseController?.Resume();
             _cts?.Cancel();
-            StatusText = Strings.Get("Common_Cancelling");
         }
 
         [RelayCommand]
@@ -408,7 +398,6 @@ namespace TweakFirmware.ViewModels
                 _pauseController.Resume();
                 IsPaused = false;
                 PauseButtonText = Strings.Get("Common_PauseButton");
-                StatusText = Strings.Get("Common_Resumed");
                 AppLogger.Log(Strings.Get("Convert_ResumedLog"));
             }
             else
@@ -416,7 +405,6 @@ namespace TweakFirmware.ViewModels
                 _pauseController.Pause();
                 IsPaused = true;
                 PauseButtonText = Strings.Get("Common_ResumeButton");
-                StatusText = Strings.Get("Common_Paused");
                 AppLogger.Log(Strings.Get("Convert_PausedLog"));
             }
         }

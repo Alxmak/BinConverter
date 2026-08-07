@@ -8,7 +8,7 @@ namespace TweakFirmware.Controls
     /// Стоит в «Конвертировании» и «Сборке файла»; из всей строки различается только
     /// подпись первой кнопки, поэтому она и вынесена в свойство. Команды и остальные
     /// привязки берутся у ViewModel страницы: StartCommand, TogglePauseCommand,
-    /// CancelCommand, CanPause, IsBusy, PauseButtonText, StatusText.
+    /// CancelCommand, CanPause, IsBusy, PauseButtonText.
     ///
     /// В «Проверке SHA-256» строка другая (две кнопки, без паузы и без статуса) —
     /// подгонять её под общий контрол значило бы добавить больше параметров,

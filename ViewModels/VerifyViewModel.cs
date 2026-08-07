@@ -28,7 +28,6 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
-        [ObservableProperty] private string statusText = Strings.Get("Common_Ready");
 
         [ObservableProperty] private bool hasResult;
         [ObservableProperty] private bool isMatch;
@@ -133,15 +132,13 @@ namespace TweakFirmware.ViewModels
                     IsMatch = outcome.Status == VerifyStatus.Match;
                     ResultText = Strings.Get(IsMatch ? "Verify_MatchResult" : "Verify_MismatchResult");
                     HasResult = true;
-                    StatusText = Strings.Get("Common_Done");
                     break;
 
                 case VerifyStatus.Cancelled:
-                    StatusText = Strings.Get("Verify_Cancelled");
+                    // Отмену человек запросил сам — окно с сообщением об этом только мешало бы.
                     break;
 
                 case VerifyStatus.Failed:
-                    StatusText = Strings.Get("Verify_ErrorStatus");
                     await DialogService.ShowErrorAsync(Strings.Get("Common_Error"),
                         Strings.Format("Verify_HashErrorMessage", outcome.ErrorMessage));
                     break;
