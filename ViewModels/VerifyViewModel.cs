@@ -243,7 +243,7 @@ namespace TweakFirmware.ViewModels
                     HasResult = true;
                     // Итог сообщается окном, как в Конвертировании и Сборке: операция может
                     // идти долго, и человек к этому моменту уже мог отойти от компьютера.
-                    await DialogService.ShowInfoAsync(Strings.Get("Verify_ResultTitle"), BuildResultMessage());
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Different:
@@ -254,11 +254,11 @@ namespace TweakFirmware.ViewModels
                         ? Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount)
                         : Strings.Format("Verify_AllDifferentSubline", outcome.FileCount);
                     HasResult = true;
-                    await DialogService.ShowErrorAsync(Strings.Get("Verify_ResultTitle"), BuildResultMessage());
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Cancelled:
-                    // Отмену человек запросил сам — окно с сообщением об этом только мешало бы.
+                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Verify_CancelledMessage"));
                     break;
 
                 case VerifyStatus.Failed:
