@@ -3,6 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:TweakFirmware.Services">
 
+    <UserControl.Resources>
+        <!-- Своя подсветка строки вместо стандартной. У WPF-UI выделенная строка
+             заливается акцентным синим на всю ширину — для журнала, который только
+             читают, это слишком громко. Здесь еле заметная серая подложка: серый
+             с малой прозрачностью одинаково уместен и на светлой теме, и на тёмной,
+             поэтому взят цветом, а не темовой кистью.
+
+             BasedOn обязателен: явный стиль иначе полностью заменяет неявный стиль
+             библиотеки, и вместе с ним пропадёт Padding="12" — а на нём держится
+             выравнивание строк журнала по заголовку карточки (6 у списка + 12 = 18). -->
+        <Style x:Key="LogLine" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Background="Transparent" CornerRadius="4"
+                                Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="#14808080"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="#24808080"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <!-- Журнал общий на всё приложение, поэтому и карточка одна на все разделы.
          Своего DataContext контрол не ставит — привязки берут его у страницы,
          на которой стоит контрол (LogLines и три команды журнала). -->
@@ -28,8 +61,8 @@
                  из-за этих 6px строки журнала выпирали левее заголовка. Добираем
                  разницу отступом самого списка, чтобы текст встал на те же 18px,
                  что и содержимое всех остальных карточек. -->
-            <ListBox Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
-                     Margin="6,0,6,0"
+            <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
+                     Margin="6,0,6,0" ItemContainerStyle="{StaticResource LogLine}"
                      FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
         </Grid>
     </Border>
