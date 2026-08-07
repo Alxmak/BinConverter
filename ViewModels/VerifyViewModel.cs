@@ -52,7 +52,7 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool hasResult;
 
         /// <summary>Все файлы совпали — от этого зависит цвет баннера результата.</summary>
-        [ObservableProperty] private bool isMatch;
+        [ObservableProperty] private bool isResultGood;
 
         [ObservableProperty] private string resultHeadline = Strings.Get("Verify_NoResultYet");
         [ObservableProperty] private string resultSubline = "";
@@ -236,14 +236,14 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case VerifyStatus.AllIdentical:
-                    IsMatch = true;
+                    IsResultGood = true;
                     ResultHeadline = Strings.Get("Verify_AllIdenticalHeadline");
                     ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount);
                     HasResult = true;
                     break;
 
                 case VerifyStatus.Different:
-                    IsMatch = false;
+                    IsResultGood = false;
                     ResultHeadline = Strings.Get("Verify_DifferenceHeadline");
                     // Когда совпавших пар нет вовсе, «1 из 5 идентичны» звучало бы странно.
                     ResultSubline = outcome.LargestGroupSize > 1

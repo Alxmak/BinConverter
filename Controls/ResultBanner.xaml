@@ -1,0 +1,81 @@
+<UserControl x:Class="TweakFirmware.Controls.ResultBanner"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Итог операции, который остаётся на экране. Диалог в конце сообщает о завершении
+         и закрывается, а этот баннер держит результат до следующего запуска.
+
+         Свой DataContext контрол не ставит — привязки берёт у ViewModel страницы:
+         HasResult, IsResultGood, ResultHeadline, ResultSubline. Имена одинаковы во всех
+         трёх разделах именно для того, чтобы баннер был один, а не скопирован трижды.
+
+         Три состояния на двух флагах: HasResult=false — нейтральное (ещё не считали
+         или отменили), дальше зелёное или красное по IsResultGood. Отмена намеренно
+         не красная: пользователь сам её попросил, это не поломка. -->
+    <Border Padding="12,10" CornerRadius="10" BorderThickness="1">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding HasResult}" Value="True"/>
+                            <Condition Binding="{Binding IsResultGood}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#1A16A34A"/>
+                        <Setter Property="BorderBrush" Value="#16A34A"/>
+                    </MultiDataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding HasResult}" Value="True"/>
+                            <Condition Binding="{Binding IsResultGood}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#1AE5484D"/>
+                        <Setter Property="BorderBrush" Value="#E5484D"/>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <StackPanel>
+            <TextBlock Text="{Binding ResultHeadline}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HasResult}" Value="True"/>
+                                    <Condition Binding="{Binding IsResultGood}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Foreground" Value="#16A34A"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HasResult}" Value="True"/>
+                                    <Condition Binding="{Binding IsResultGood}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Foreground" Value="#E5484D"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Пока пояснения нет, второй строки не видно — пустая занимала бы высоту. -->
+            <TextBlock Text="{Binding ResultSubline}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ResultSubline}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
+    </Border>
+</UserControl>
