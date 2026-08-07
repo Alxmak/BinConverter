@@ -282,7 +282,13 @@ namespace TweakFirmware.Tests
             });
 
             Assert.Equal(ConvertStatus.Completed, outcome.Status);
-            Assert.Equal("", outcome.SourceHash);
+
+            // Пустым остаётся именно RecombinedHash — по нему и видно, что дорогого
+            // повторного чтения всех частей не было. SourceHash при этом заполнен всегда:
+            // он считается попутно, за тот же единственный проход записи, и достаётся
+            // бесплатно независимо от галочки.
+            Assert.Equal("", outcome.RecombinedHash);
+            Assert.NotEqual("", outcome.SourceHash);
         }
 
         [Fact]

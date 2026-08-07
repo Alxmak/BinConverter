@@ -95,9 +95,9 @@ namespace TweakFirmware.Tests
         // ============ Размер цепочки ============
 
         [Fact]
-        public void GetChainSize_SumsEveryPart()
+        public async Task GetChainSize_SumsEveryPart()
         {
-            string basePath = MakeChain(6 * 1024, partSize: 1024).GetAwaiter().GetResult();
+            string basePath = await MakeChain(6 * 1024, partSize: 1024);
 
             long size = MergeOperation.GetChainSize(basePath, out var chain);
 
@@ -106,9 +106,9 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
-        public void GetChainSize_WorksFromAnyPartNotJustTheBase()
+        public async Task GetChainSize_WorksFromAnyPartNotJustTheBase()
         {
-            string basePath = MakeChain(4 * 1024, partSize: 1024).GetAwaiter().GetResult();
+            string basePath = await MakeChain(4 * 1024, partSize: 1024);
             var parts = Directory.GetFiles(Path.GetDirectoryName(basePath)!);
             Array.Sort(parts);
 
