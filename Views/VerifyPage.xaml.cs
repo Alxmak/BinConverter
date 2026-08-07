@@ -28,18 +28,18 @@ namespace TweakFirmware.Views
             e.Handled = true;
         }
 
-        private void FileA_Drop(object sender, DragEventArgs e)
+        /// <summary>
+        /// Строка, на которую бросили файл, известна по её DataContext. Если файлов
+        /// перетащили несколько, они раскладываются с этой строки и вниз — так пять
+        /// дампов добавляются одним движением, а не пятью.
+        /// </summary>
+        private void FileRow_Drop(object sender, DragEventArgs e)
         {
             if (_viewModel.IsBusy) return;
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
-                _viewModel.SetFileA(files[0]);
-        }
+            if (sender is not FrameworkElement row || row.DataContext is not VerifyFileSlot slot) return;
+            if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
 
-        private void FileB_Drop(object sender, DragEventArgs e)
-        {
-            if (_viewModel.IsBusy) return;
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
-                _viewModel.SetFileB(files[0]);
+            _viewModel.SetPathsFrom(slot, files);
         }
     }
 }

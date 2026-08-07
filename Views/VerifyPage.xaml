@@ -14,29 +14,47 @@
             <!-- Пока идёт сравнение, поля ввода недоступны — см. тот же приём в Конвертировании. -->
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
-                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="FileA_Drop" DragOver="Row_DragOver">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileALabel}" Style="{StaticResource RowLabel}"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding FileAPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
-                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseACommand}"/>
-                    </Grid>
 
-                    <Grid AllowDrop="True" Drop="FileB_Drop" DragOver="Row_DragOver">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_FileBLabel}" Style="{StaticResource RowLabel}"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding FileBPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
-                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseBCommand}"/>
-                    </Grid>
+                    <!-- Строк от двух до пяти, поэтому список, а не фиксированная разметка. -->
+                    <ItemsControl ItemsSource="{Binding Files}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
+                                      Drop="FileRow_Drop" DragOver="Row_DragOver">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="170"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource RowLabel}"/>
+
+                                    <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                                Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
+
+                                    <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}"
+                                            Command="{Binding DataContext.BrowseFileCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}"/>
+
+                                    <!-- Убрать можно только лишние строки: две обязательны. -->
+                                    <Button Grid.Column="3" Margin="6,0,0,0" Padding="9,6"
+                                            ToolTip="{loc:Loc Verify_RemoveFileTooltip}"
+                                            Command="{Binding DataContext.RemoveFileCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}">
+                                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="13"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:Loc Verify_AddFileButton}" Command="{Binding AddFileCommand}"/>
+                        <TextBlock Text="{Binding MaxFilesNote}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -67,57 +85,97 @@
                 </StackPanel>
             </Border>
 
-            <!-- Результат виден всегда: до первого сравнения показывает прочерки и
-                 пояснение. Совпадение/расхождение передаётся цветом текста, а не
-                 цветной заливкой карточки и не значком. -->
+            <!-- Результат виден всегда: до первого сравнения в баннере стоит пояснение. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Verify_ResultTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <Grid Margin="0,0,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_HashALine}" FontFamily="Cascadia Code, Consolas"
-                                   FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="1" Text="{Binding HashAText}" FontFamily="Cascadia Code, Consolas"
-                                   FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
-                    </Grid>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Verify_HashBLine}" FontFamily="Cascadia Code, Consolas"
-                                   FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="1" Text="{Binding HashBText}" FontFamily="Cascadia Code, Consolas"
-                                   FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
-                    </Grid>
-
-                    <TextBlock Text="{Binding ResultText}" FontSize="13" TextWrapping="Wrap" Margin="0,10,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    <!-- Баннер итога. Заливка и рамка тонированы под исход: зелёное — всё
+                         совпало, красное — есть расхождение, нейтральное — ещё не считали. -->
+                    <Border Padding="12,10" CornerRadius="10" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
                                 <Style.Triggers>
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding HasResult}" Value="True"/>
                                             <Condition Binding="{Binding IsMatch}" Value="True"/>
                                         </MultiDataTrigger.Conditions>
-                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                        <Setter Property="Background" Value="#1A16A34A"/>
+                                        <Setter Property="BorderBrush" Value="#16A34A"/>
                                     </MultiDataTrigger>
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding HasResult}" Value="True"/>
                                             <Condition Binding="{Binding IsMatch}" Value="False"/>
                                         </MultiDataTrigger.Conditions>
-                                        <Setter Property="Foreground" Value="#E5484D"/>
+                                        <Setter Property="Background" Value="#1AE5484D"/>
+                                        <Setter Property="BorderBrush" Value="#E5484D"/>
                                     </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <TextBlock Text="{Binding ResultHeadline}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding HasResult}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMatch}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="#16A34A"/>
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding HasResult}" Value="True"/>
+                                                    <Condition Binding="{Binding IsMatch}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="#E5484D"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- Пока не считали, второй строки нет — пустая занимала бы высоту. -->
+                            <TextBlock Text="{Binding ResultSubline}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ResultSubline}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Группы одинаковых хэшей. Одна группа — все файлы совпали;
+                         больше одной — видно, сколько файлов в каждой и какие именно. -->
+                    <ItemsControl ItemsSource="{Binding ResultGroups}" Margin="0,14,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,12">
+                                    <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Hash}" FontFamily="Cascadia Code, Consolas" FontSize="11"
+                                               TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding FileNames}" FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 
