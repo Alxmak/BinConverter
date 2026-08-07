@@ -154,7 +154,9 @@ namespace TweakFirmware.Core.Operations
             string outputFolder = Path.GetDirectoryName(outputPath) ?? ".";
             Directory.CreateDirectory(outputFolder);
 
-            var check = (spaceCheck ?? DiskSpaceHelper.CheckSpace)(outputFolder, chainSize);
+            var check = spaceCheck is null
+                ? DiskSpaceHelper.CheckSpace(outputFolder, chainSize)
+                : spaceCheck(outputFolder, chainSize);
             if (!check.HasEnoughSpace)
             {
                 return new MergeOutcome

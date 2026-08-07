@@ -152,7 +152,9 @@ namespace TweakFirmware.Core.Operations
 
             if (request.CheckDiskSpace)
             {
-                var check = (spaceCheck ?? DiskSpaceHelper.CheckSpace)(outputFolder, sourceSize);
+                var check = spaceCheck is null
+                    ? DiskSpaceHelper.CheckSpace(outputFolder, sourceSize)
+                    : spaceCheck(outputFolder, sourceSize);
                 if (!check.HasEnoughSpace)
                 {
                     return new ConvertOutcome
