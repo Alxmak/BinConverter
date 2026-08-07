@@ -318,15 +318,15 @@ namespace TweakFirmware.ViewModels
             switch (outcome.Status)
             {
                 case ConvertStatus.SourceNotFound:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_SelectSourceFirst"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Convert_SelectSourceFirst"));
                     break;
 
                 case ConvertStatus.OutputFolderNotSpecified:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_SpecifyOutputFolder"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Convert_SpecifyOutputFolder"));
                     break;
 
                 case ConvertStatus.InvalidPartSize:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Convert_InvalidPartSize"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Convert_InvalidPartSize"));
                     break;
 
                 case ConvertStatus.CancelledBeforeStart:
@@ -349,7 +349,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.HashMismatch:
-                    await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"),
                         Strings.Format("Convert_VerifyErrorMessage", HashDisplay.Wrap(outcome.SourceHash), HashDisplay.Wrap(outcome.RecombinedHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;

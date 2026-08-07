@@ -198,11 +198,11 @@ namespace TweakFirmware.ViewModels
             switch (outcome.Status)
             {
                 case MergeStatus.SourceNotFound:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Merge_SelectSourceFirst"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Merge_SelectSourceFirst"));
                     break;
 
                 case MergeStatus.OutputPathNotSpecified:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_Error"), Strings.Get("Merge_SpecifyOutputFile"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Merge_SpecifyOutputFile"));
                     break;
 
                 case MergeStatus.CancelledBeforeStart:
@@ -230,7 +230,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.HashMismatch:
-                    await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"),
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"),
                         Strings.Format("Merge_ResultMismatchMessage", HashDisplay.Wrap(ExpectedHashText.Trim()), HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
