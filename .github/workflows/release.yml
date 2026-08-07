@@ -58,6 +58,10 @@ jobs:
           files: |
             ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
             ./installer-output/*.exe
+          # Заголовок задаём явно. Без этого он берётся из уже существующего релиза,
+          # и если релиз успели создать руками до прогона, название остаётся тем,
+          # что набрали вручную (так у 2.7.0 вышло "2.7.0" вместо "v2.7.0").
+          name: ${{ github.ref_name }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
