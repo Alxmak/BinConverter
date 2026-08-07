@@ -243,7 +243,7 @@ namespace TweakFirmware.ViewModels
                     HasResult = true;
                     // Итог сообщается окном, как в Конвертировании и Сборке: операция может
                     // идти долго, и человек к этому моменту уже мог отойти от компьютера.
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"), BuildResultMessage());
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Different:
@@ -258,7 +258,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case VerifyStatus.Cancelled:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Verify_CancelledMessage"));
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_CancelledTitle"), Strings.Get("Verify_CancelledMessage"));
                     break;
 
                 case VerifyStatus.Failed:

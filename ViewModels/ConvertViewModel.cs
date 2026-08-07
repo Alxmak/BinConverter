@@ -333,7 +333,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.NotEnoughSpace:
-                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_LowSpaceTitle"),
                         Strings.Format("Convert_LowSpaceMessage",
                             SizeFormatHelper.Format(outcome.SourceSizeBytes),
                             SizeFormatHelper.Format(outcome.SpaceCheck.RequiredBytes),
@@ -342,7 +342,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.CompletedVerified:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, HashDisplay.Wrap(outcome.SourceHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
@@ -354,13 +354,13 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.Completed:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Convert_DoneMessage", outcome.PartsCreated));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.Cancelled:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"),
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_CancelledTitle"),
                         Strings.Format("Convert_CancelledMessage", outcome.CreatedFileCount));
                     break;
 

@@ -214,7 +214,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.NotEnoughSpace:
-                    await DialogService.ShowWarningAsync(Strings.Get("Convert_LowSpaceTitle"),
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_LowSpaceTitle"),
                         Strings.Format("Merge_LowSpaceMessage",
                             SizeFormatHelper.Format(outcome.ChainSizeBytes),
                             SizeFormatHelper.Format(outcome.SpaceCheck.RequiredBytes),
@@ -223,7 +223,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.HashMatch:
-                    await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"),
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Merge_ResultMatchMessage", HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
@@ -235,13 +235,13 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.Completed:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.Cancelled:
-                    await DialogService.ShowInfoAsync(Strings.Get("Convert_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_CancelledTitle"), Strings.Get("Merge_CancelledMessage"));
                     break;
 
                 case MergeStatus.Failed:
