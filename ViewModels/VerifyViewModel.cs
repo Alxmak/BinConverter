@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -240,6 +241,9 @@ namespace TweakFirmware.ViewModels
                     ResultHeadline = Strings.Get("Verify_AllIdenticalHeadline");
                     ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount);
                     HasResult = true;
+                    // Итог сообщается окном, как в Конвертировании и Сборке: операция может
+                    // идти долго, и человек к этому моменту уже мог отойти от компьютера.
+                    await DialogService.ShowInfoAsync(Strings.Get("Verify_ResultTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Different:
@@ -250,6 +254,7 @@ namespace TweakFirmware.ViewModels
                         ? Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount)
                         : Strings.Format("Verify_AllDifferentSubline", outcome.FileCount);
                     HasResult = true;
+                    await DialogService.ShowErrorAsync(Strings.Get("Verify_ResultTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Cancelled:
@@ -261,6 +266,27 @@ namespace TweakFirmware.ViewModels
                         Strings.Format("Verify_HashErrorMessage", outcome.ErrorMessage));
                     break;
             }
+        }
+
+        /// <summary>
+        /// Текст окна с итогом. Собирается из того же, что показано в карточке результата,
+        /// — заголовок исхода, пояснение и группы совпавших хэшей, — поэтому окно и карточка
+        /// не могут разойтись. Хэши переносим по строкам: в окно 64 знака одной строкой
+        /// не влезают (см. HashDisplay).
+        /// </summary>
+        private string BuildResultMessage()
+        {
+            var sb = new StringBuilder();
+            sb.Append(ResultHeadline);
+            if (ResultSubline.Length > 0) sb.Append("\n\n").Append(ResultSubline);
+
+            foreach (var group in ResultGroups)
+            {
+                sb.Append("\n\n").Append(group.Title).Append('\n').Append(HashDisplay.Wrap(group.Hash));
+                if (group.FileNames.Length > 0) sb.Append('\n').Append(group.FileNames);
+            }
+
+            return sb.ToString();
         }
 
         [RelayCommand]
