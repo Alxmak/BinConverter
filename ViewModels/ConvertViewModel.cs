@@ -260,7 +260,6 @@ namespace TweakFirmware.ViewModels
                 CurrentFileProgress = filePct;
                 OverallProgress = overallPct;
                 CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
-                StatusText = Strings.Format("Convert_ProgressStatus", p.TotalBytesWritten, p.TotalBytes, filePct);
             });
 
             var hashProgress = new Progress<(long done, long total)>(p =>
@@ -350,14 +349,14 @@ namespace TweakFirmware.ViewModels
                     // Пункт 1: статус-строку не дублируем текстом успеха — итог виден в диалоге.
                     StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
-                        Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, outcome.SourceHash));
+                        Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, HashDisplay.Wrap(outcome.SourceHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.HashMismatch:
                     StatusText = Strings.Get("Convert_HashCheckFailed");
                     await DialogService.ShowErrorAsync(Strings.Get("Convert_VerifyErrorTitle"),
-                        Strings.Format("Convert_VerifyErrorMessage", outcome.SourceHash, outcome.RecombinedHash));
+                        Strings.Format("Convert_VerifyErrorMessage", HashDisplay.Wrap(outcome.SourceHash), HashDisplay.Wrap(outcome.RecombinedHash)));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 

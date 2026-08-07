@@ -160,7 +160,6 @@ namespace TweakFirmware.ViewModels
                 CurrentFileProgress = filePct;
                 OverallProgress = totalPct;
                 CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
-                StatusText = Strings.Format("Merge_ProgressStatus", p.TotalBytesProcessed, p.TotalBytes, totalPct);
             });
 
             try
@@ -229,21 +228,21 @@ namespace TweakFirmware.ViewModels
                 case MergeStatus.HashMatch:
                     StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Merge_ResultTitle"),
-                        Strings.Format("Merge_ResultMatchMessage", outcome.MergedHash));
+                        Strings.Format("Merge_ResultMatchMessage", HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.HashMismatch:
                     StatusText = Strings.Get("Merge_HashCheckFailedStatus");
                     await DialogService.ShowErrorAsync(Strings.Get("Merge_ResultTitle"),
-                        Strings.Format("Merge_ResultMismatchMessage", ExpectedHashText.Trim(), outcome.MergedHash));
+                        Strings.Format("Merge_ResultMismatchMessage", HashDisplay.Wrap(ExpectedHashText.Trim()), HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.Completed:
                     StatusText = Strings.Get("Common_Done");
                     await DialogService.ShowInfoAsync(Strings.Get("Convert_DoneTitle"),
-                        Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, outcome.MergedHash));
+                        Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
