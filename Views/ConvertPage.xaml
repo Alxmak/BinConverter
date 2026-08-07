@@ -57,12 +57,16 @@
                         <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
                                   DisplayMemberPath="Name" HorizontalAlignment="Stretch"/>
                         <TextBlock Grid.Column="3" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
-                        <TextBox x:Name="LimitTextBox" Grid.Column="4"
-                                 Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
-                                 IsEnabled="{Binding IsCustomPreset}"
-                                 PreviewTextInput="LimitTextBox_PreviewTextInput"
-                                 DataObject.Pasting="LimitTextBox_Pasting"
-                                 TextChanged="LimitTextBox_TextChanged"/>
+                        <!-- ui:TextBox, а не обычный: подсказка внутри поля есть только у него.
+                             Обработчики принимают его как TextBox — Wpf.Ui.Controls.TextBox
+                             от него и наследуется. -->
+                        <ui:TextBox x:Name="LimitTextBox" Grid.Column="4" ClearButtonEnabled="False"
+                                    Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding IsCustomPreset}"
+                                    PlaceholderText="{loc:Loc Convert_LimitPlaceholder}"
+                                    PreviewTextInput="LimitTextBox_PreviewTextInput"
+                                    DataObject.Pasting="LimitTextBox_Pasting"
+                                    TextChanged="LimitTextBox_TextChanged"/>
                     </Grid>
                 </StackPanel>
             </Border>

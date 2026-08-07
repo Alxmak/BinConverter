@@ -127,6 +127,7 @@ namespace TweakFirmware.Core.Localization
             ["Convert_SourceFileLabel"] = "Исходный файл .bin",
             ["Convert_ProgrammerModelLabel"] = "Модель программатора",
             ["Convert_LimitLabel"] = "Лимит на один файл",
+            ["Convert_LimitPlaceholder"] = "Указывается в байтах",
             ["Convert_GeneralInfoTitle"] = "Общая информация",
             ["Convert_ParametersTitle"] = "Параметры",
             ["Convert_VerifyHashCheckbox"] = "Проверить SHA-256",
@@ -239,7 +240,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_ThemeLight"] = "Светлая",
             ["Settings_ThemeDark"] = "Тёмная",
             ["Settings_ThemeSystem"] = "Как в системе",
-            ["Settings_LanguageTitle"] = "Язык",
+            ["Settings_LanguageTitle"] = "Язык интерфейса",
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "Путь по умолчанию",
@@ -294,6 +295,7 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
+            ["Placeholder_ExtractText"] = "Инструмент для поиска и извлечения разделов из дампов прошивок.",
             ["Placeholder_TerminalTitle"] = "Терминал",
         };
 
@@ -384,6 +386,7 @@ namespace TweakFirmware.Core.Localization
             ["Convert_SourceFileLabel"] = "Source .bin file",
             ["Convert_ProgrammerModelLabel"] = "Programmer model",
             ["Convert_LimitLabel"] = "Limit per file",
+            ["Convert_LimitPlaceholder"] = "In bytes",
             ["Convert_GeneralInfoTitle"] = "General info",
             ["Convert_ParametersTitle"] = "Parameters",
             ["Convert_VerifyHashCheckbox"] = "Verify SHA-256",
@@ -496,7 +499,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_ThemeLight"] = "Light",
             ["Settings_ThemeDark"] = "Dark",
             ["Settings_ThemeSystem"] = "Same as system",
-            ["Settings_LanguageTitle"] = "Language",
+            ["Settings_LanguageTitle"] = "Interface language",
             ["Settings_LanguageRu"] = "Russian",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "Default path",
@@ -551,6 +554,7 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
+            ["Placeholder_ExtractText"] = "A tool for finding and extracting partitions from firmware dumps.",
             ["Placeholder_TerminalTitle"] = "Terminal",
         };
     }
