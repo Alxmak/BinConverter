@@ -32,35 +32,32 @@ namespace TweakFirmware.Views
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }
 
-        // Пункт 15: drag&drop работает только над строкой выбора исходного файла,
-        // а не над всей страницей.
+        // Перетаскивание принимают только поля путей — почему именно так и почему через
+        // Preview-события, см. FileDropHelper.
+        //
         // IsEnabled="False" на карточке блокирует мышь и клавиатуру, но события
         // перетаскивания в WPF доходят и до отключённых элементов, — поэтому во время
         // операции перетаскивание отсекаем здесь явно.
-        private void SourceRow_DragOver(object sender, DragEventArgs e)
+        private void SourceBox_DragOver(object sender, DragEventArgs e) =>
+            FileDropHelper.SetEffect(e, !_viewModel.IsBusy);
+
+        private async void SourceBox_Drop(object sender, DragEventArgs e)
         {
-            e.Effects = !_viewModel.IsBusy && e.Data.GetDataPresent(DataFormats.FileDrop)
-                ? DragDropEffects.Copy
-                : DragDropEffects.None;
-            e.Handled = true;
+            if (FileDropHelper.TakePaths(e, !_viewModel.IsBusy) is not string[] files) return;
+
+            await _viewModel.SetSourceAsync(files[0]);
         }
 
-        private async void SourceRow_Drop(object sender, DragEventArgs e)
-        {
-            if (_viewModel.IsBusy) return;
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
-                await _viewModel.SetSourceAsync(files[0]);
-        }
+        private void OutputBox_DragOver(object sender, DragEventArgs e) =>
+            FileDropHelper.SetEffect(e, !_viewModel.IsBusy);
 
         /// <summary>
-        /// На строку папки назначения тоже можно перетаскивать — раньше это работало
-        /// только для исходного файла. Бросили файл, а не папку — берём папку, в которой
-        /// он лежит: тащить из проводника файл проще, чем прицелиться в саму папку.
+        /// Бросили файл, а не папку — берём папку, в которой он лежит: тащить из
+        /// проводника файл проще, чем прицелиться в саму папку.
         /// </summary>
-        private void OutputRow_Drop(object sender, DragEventArgs e)
+        private void OutputBox_Drop(object sender, DragEventArgs e)
         {
-            if (_viewModel.IsBusy) return;
-            if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || paths.Length == 0) return;
+            if (FileDropHelper.TakePaths(e, !_viewModel.IsBusy) is not string[] paths) return;
 
             string? folder = DroppedFolder.Resolve(paths[0]);
             if (folder != null) _viewModel.SetOutputFolder(folder);

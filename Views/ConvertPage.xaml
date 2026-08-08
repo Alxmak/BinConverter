@@ -24,20 +24,27 @@
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
 
-                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
+                    <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
+                        <!-- Перетаскивание принимает само поле, а не строка целиком.
+                             Именно поле и есть цель, о которой говорит подсказка внутри
+                             него; раньше AllowDrop стоял на строке, и файл принимался
+                             мимо поля — над подписью и кнопкой, — а над полем нет:
+                             TextBox сам обрабатывает перетаскивание (он ждёт текст)
+                             и до строки событие не доходило. Preview-события нужны
+                             ровно для этого: перехватить до его собственной обработки. -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"
+                                    AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
-                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
-                          Drop="OutputRow_Drop" DragOver="SourceRow_DragOver">
+                    <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -45,7 +52,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding OutputFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"/>
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
@@ -91,7 +99,9 @@
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,10"/>
+                        <!-- Без нижнего отступа: обе строки — один список, а 10px между ними
+                             читались как лишняя пустая строка. -->
+                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                         <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
                         <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
                                 HorizontalAlignment="Left" FontSize="11" Padding="10,4"

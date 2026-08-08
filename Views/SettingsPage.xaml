@@ -100,7 +100,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_ConvertFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <Grid AllowDrop="True" Drop="ConvertFolderRow_Drop" DragOver="ConvertFolderRow_DragOver">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -110,7 +110,8 @@
                                   Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
                                     PlaceholderText="{loc:Loc Common_NoFolderSelected}"
-                                    IsEnabled="{Binding CanEditConvertPath}"/>
+                                    IsEnabled="{Binding CanEditConvertPath}"
+                                    AllowDrop="True" PreviewDragOver="ConvertFolderBox_DragOver" PreviewDrop="ConvertFolderBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                                 IsEnabled="{Binding CanEditConvertPath}"/>
                     </Grid>
@@ -120,7 +121,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_MergeFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <Grid AllowDrop="True" Drop="MergeFolderRow_Drop" DragOver="MergeFolderRow_DragOver">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -130,7 +131,8 @@
                                   Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
                                     PlaceholderText="{loc:Loc Common_NoFolderSelected}"
-                                    IsEnabled="{Binding CanEditMergePath}"/>
+                                    IsEnabled="{Binding CanEditMergePath}"
+                                    AllowDrop="True" PreviewDragOver="MergeFolderBox_DragOver" PreviewDrop="MergeFolderBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                                 IsEnabled="{Binding CanEditMergePath}"/>
                     </Grid>

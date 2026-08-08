@@ -22,27 +22,23 @@ namespace TweakFirmware.Views
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }
 
+        // Перетаскивание принимают только поля путей — см. FileDropHelper.
+        //
         // IsEnabled="False" на карточке блокирует мышь и клавиатуру, но события
         // перетаскивания в WPF доходят и до отключённых элементов, — поэтому во время
         // сравнения перетаскивание отсекаем здесь явно.
-        private void Row_DragOver(object sender, DragEventArgs e)
-        {
-            e.Effects = !_viewModel.IsBusy && e.Data.GetDataPresent(DataFormats.FileDrop)
-                ? DragDropEffects.Copy
-                : DragDropEffects.None;
-            e.Handled = true;
-        }
+        private void FileBox_DragOver(object sender, DragEventArgs e) =>
+            FileDropHelper.SetEffect(e, !_viewModel.IsBusy);
 
         /// <summary>
-        /// Строка, на которую бросили файл, известна по её DataContext. Если файлов
-        /// перетащили несколько, они раскладываются с этой строки и вниз — так пять
-        /// дампов добавляются одним движением, а не пятью.
+        /// Строка, в поле которой бросили файл, известна по DataContext этого поля.
+        /// Если файлов перетащили несколько, они раскладываются с этой строки и вниз —
+        /// так пять дампов добавляются одним движением, а не пятью.
         /// </summary>
-        private void FileRow_Drop(object sender, DragEventArgs e)
+        private void FileBox_Drop(object sender, DragEventArgs e)
         {
-            if (_viewModel.IsBusy) return;
-            if (sender is not FrameworkElement row || row.DataContext is not VerifyFileSlot slot) return;
-            if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
+            if (FileDropHelper.TakePaths(e, !_viewModel.IsBusy) is not string[] files) return;
+            if (sender is not FrameworkElement box || box.DataContext is not VerifyFileSlot slot) return;
 
             _viewModel.SetPathsFrom(slot, files);
         }

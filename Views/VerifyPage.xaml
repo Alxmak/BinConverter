@@ -26,8 +26,7 @@
                     <ItemsControl ItemsSource="{Binding Files}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
-                                      Drop="FileRow_Drop" DragOver="Row_DragOver">
+                                <Grid Style="{StaticResource RowGrid}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                                         <ColumnDefinition Width="*"/>
@@ -37,9 +36,12 @@
 
                                     <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource RowLabel}"/>
 
+                                    <!-- Цель перетаскивания — само поле; см. пояснение в Конвертировании.
+                                         Строку, на которую бросили, определяет DataContext поля. -->
                                     <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
                                                 Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}"
-                                                PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
+                                                PlaceholderText="{loc:Loc Common_NoFileSelected}"
+                                                AllowDrop="True" PreviewDragOver="FileBox_DragOver" PreviewDrop="FileBox_Drop"/>
 
                                     <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}"
                                             Command="{Binding DataContext.BrowseFileCommand, RelativeSource={RelativeSource AncestorType=Page}}"

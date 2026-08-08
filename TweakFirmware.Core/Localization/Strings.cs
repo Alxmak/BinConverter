@@ -539,7 +539,9 @@ namespace TweakFirmware.Core.Localization
             ["Settings_ThemeDark"] = "Dark",
             ["Settings_ThemeSystem"] = "Same as system",
             ["Settings_LanguageTitle"] = "Interface language",
-            ["Settings_LanguageRu"] = "Russian",
+            // Названия языков не переводятся: их читает тот, кто нужного языка
+            // ещё не выбрал, — «Русский» ему понятнее, чем «Russian».
+            ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "Default path",
             ["Settings_ChooseConvertFolderTitle"] = "Default folder for conversion",

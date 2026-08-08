@@ -22,20 +22,21 @@
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
 
-                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
+                    <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_AnyChainPartLabel}" Style="{StaticResource RowLabel}"/>
+                        <!-- Цель перетаскивания — само поле; см. пояснение в Конвертировании. -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"/>
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"
+                                    AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
-                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
-                          Drop="OutputRow_Drop" DragOver="SourceRow_DragOver">
+                    <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -43,7 +44,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"/>
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
 
