@@ -74,10 +74,29 @@ namespace TweakFirmware.ViewModels
         private long _expectedTotalSize;
         private long _expectedLimitBytes;
 
+        // Папку назначения человек мог задать сам, а мог оставить как есть. Пока она
+        // «как есть», подставляем актуальный путь по умолчанию из «Настроек» — раньше
+        // он перечитывался сам, потому что ViewModel создавалась заново на каждый переход.
+        // Тот же приём и по той же причине уже есть в Сборке.
+        private bool _outputFolderIsAuto = true;
+        private bool _settingOutputFolderInternally;
+
         public ConvertViewModel()
         {
             SelectedPreset = Presets[0];
-            OutputFolder = GetDefaultOutputFolder();
+            SetOutputFolderAuto(GetDefaultOutputFolder());
+        }
+
+        protected override void OnAttached()
+        {
+            if (_outputFolderIsAuto) SetOutputFolderAuto(GetDefaultOutputFolder());
+        }
+
+        private void SetOutputFolderAuto(string path)
+        {
+            _settingOutputFolderInternally = true;
+            OutputFolder = path;
+            _settingOutputFolderInternally = false;
         }
 
         /// <summary>
@@ -112,6 +131,12 @@ namespace TweakFirmware.ViewModels
         // предпросмотр должен обновляться и при прямом вводе, не только через SetSource.
         partial void OnSourcePathChanged(string value) => UpdatePreview();
         partial void OnShowAllFilesChanged(bool value) => RebuildFilesText();
+
+        partial void OnOutputFolderChanged(string value)
+        {
+            if (!_settingOutputFolderInternally) _outputFolderIsAuto = false;
+        }
+
         partial void OnIsBusyChanged(bool value)
         {
             OnPropertyChanged(nameof(CanStart));

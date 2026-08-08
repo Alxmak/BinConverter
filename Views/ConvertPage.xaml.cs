@@ -14,7 +14,7 @@ namespace TweakFirmware.Views
 {
     public partial class ConvertPage : Page
     {
-        private readonly ConvertViewModel _viewModel = new();
+        private readonly ConvertViewModel _viewModel = TabViewModels.ConvertTab;
         private Popup? _toastPopup;
         private DispatcherTimer? _toastTimer;
 
@@ -22,7 +22,9 @@ namespace TweakFirmware.Views
         {
             InitializeComponent();
             DataContext = _viewModel;
-            // Парой: ViewModel следит за сменой языка только пока страница на экране.
+            // ViewModel живёт дольше страницы, поэтому её надо оповещать, когда
+            // страница появилась и когда ушла: на появлении она догоняет то, что
+            // изменилось в других разделах (язык, папка по умолчанию).
             Loaded += (_, _) => _viewModel.Attach();
             Unloaded += (_, _) => _viewModel.Detach();
 

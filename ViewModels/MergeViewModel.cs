@@ -58,10 +58,30 @@ namespace TweakFirmware.ViewModels
         private bool _outputPathIsAuto = true;
         private bool _settingOutputPathInternally;
 
+        private const string DefaultOutputFileName = "emmc_merged.bin";
+
         public MergeViewModel()
         {
-            SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), "emmc_merged.bin"));
+            ResetOutputPathToDefault();
         }
+
+        /// <summary>
+        /// Папку по умолчанию могли поменять в «Настройках», пока мы были не на экране.
+        /// Раньше это подхватывалось само, потому что ViewModel создавалась заново
+        /// на каждый переход между разделами.
+        /// </summary>
+        protected override void OnAttached()
+        {
+            if (!_outputPathIsAuto) return;
+
+            // Если файл цепочки уже выбран, имя результата зависит от него — пусть
+            // его подберёт та же самая логика, что и при выборе файла.
+            if (File.Exists(SourcePath)) TryResolveChain();
+            else ResetOutputPathToDefault();
+        }
+
+        private void ResetOutputPathToDefault() =>
+            SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), DefaultOutputFileName));
 
         /// <summary>
         /// Тексты, заданные кодом: подпись кнопки паузы и карточка «Общая информация» —
@@ -144,7 +164,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand]
         private void BrowseOutput()
         {
-            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_BinFileFilter"), FileName = "emmc_merged.bin" };
+            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_BinFileFilter"), FileName = DefaultOutputFileName };
             if (dlg.ShowDialog() == true) OutputPath = dlg.FileName;
         }
 

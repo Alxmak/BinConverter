@@ -7,13 +7,15 @@ namespace TweakFirmware.Views
 {
     public partial class VerifyPage : Page
     {
-        private readonly VerifyViewModel _viewModel = new();
+        private readonly VerifyViewModel _viewModel = TabViewModels.VerifyTab;
 
         public VerifyPage()
         {
             InitializeComponent();
             DataContext = _viewModel;
-            // Парой: ViewModel следит за сменой языка только пока страница на экране.
+            // ViewModel живёт дольше страницы, поэтому её надо оповещать, когда
+            // страница появилась и когда ушла: на появлении она догоняет то, что
+            // изменилось в других разделах (язык, папка по умолчанию).
             Loaded += (_, _) => _viewModel.Attach();
             Unloaded += (_, _) => _viewModel.Detach();
 
