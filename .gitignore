@@ -11,6 +11,9 @@ publish/
 # Тестовые результаты
 TestResults/
 
+# Python (скрипт генерации иконок в Assets)
+__pycache__/
+
 # Прочее
 *.log
 .DS_Store
