@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # Второй способ запуска — вручную из вкладки Actions, с указанием версии.
+  # Нужен потому, что пуш тега доступен не из любого окружения (а релиз собрать
+  # надо всё равно): при таком запуске тег создаёт сам action-gh-release.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия без префикса v, например 2.8.0'
+        required: true
+        type: string
 
 jobs:
   build-and-release:
@@ -12,6 +21,21 @@ jobs:
     steps:
       - name: Checkout кода
         uses: actions/checkout@v4
+
+      # Дальше всё считается от одного значения, а не от github.ref_name: при запуске
+      # вручную ref_name — это "main", и в имена файлов попало бы оно.
+      - name: Определить тег релиза
+        id: tag
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "v" + "${{ inputs.version }}".TrimStart('v')
+          } else {
+            "${{ github.ref_name }}"
+          }
+          "name=$tag" >> $env:GITHUB_OUTPUT
+          "version=$($tag.TrimStart('v'))" >> $env:GITHUB_OUTPUT
+          Write-Host "Релиз: $tag"
 
       - name: Установить .NET 8 SDK
         uses: actions/setup-dotnet@v4
@@ -32,15 +56,8 @@ jobs:
           -o ./publish
 
       - name: Упаковать в zip (портативная версия)
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./TweakFirmware-${{ steps.tag.outputs.name }}-win-x64.zip
         shell: pwsh
-
-      - name: Определить версию для установщика
-        id: version
-        shell: pwsh
-        run: |
-          $version = "${{ github.ref_name }}".TrimStart('v')
-          "value=$version" >> $env:GITHUB_OUTPUT
 
       - name: Установить Inno Setup
         shell: pwsh
@@ -50,18 +67,21 @@ jobs:
         shell: pwsh
         # choco кладёт "shim" iscc.exe в C:\ProgramData\chocolatey\bin, который уже
         # входит в PATH на GitHub-раннерах — отдельно искать путь к Inno Setup не нужно.
-        run: iscc /DMyAppVersion=${{ steps.version.outputs.value }} installer\Setup.iss
+        run: iscc /DMyAppVersion=${{ steps.tag.outputs.version }} installer\Setup.iss
 
       - name: Создать релиз на GitHub
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./TweakFirmware-${{ github.ref_name }}-win-x64.zip
+            ./TweakFirmware-${{ steps.tag.outputs.name }}-win-x64.zip
             ./installer-output/*.exe
           # Заголовок задаём явно. Без этого он берётся из уже существующего релиза,
           # и если релиз успели создать руками до прогона, название остаётся тем,
           # что набрали вручную (так у 2.7.0 вышло "2.7.0" вместо "v2.7.0").
-          name: ${{ github.ref_name }}
+          # tag_name обязателен: при запуске вручную тега ещё нет, и его создаёт
+          # этот шаг. При запуске по тегу значение совпадает с уже существующим.
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
