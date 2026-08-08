@@ -7,6 +7,13 @@
 
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
+    <!-- Ширина колонки подписей во всех строках «подпись — поле» и в строках прогресса.
+         Ресурсом, а не числом на месте: раньше в «Сборке» и в строках прогресса стояло
+         190, а в остальных разделах 170, и подписи прогресс-баров не совпадали с
+         подписями полей над ними на той же странице. Значение 190 — по самой длинной
+         подписи («Любая часть цепочки»). -->
+    <GridLength x:Key="LabelColumnWidth">190</GridLength>
+
     <!-- Скругление 14 у карточек и 10 у кнопок — пресет "soft" из макета. -->
     <Style x:Key="CardStyle" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>

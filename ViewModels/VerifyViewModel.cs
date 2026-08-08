@@ -45,7 +45,7 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string currentFileLabel = "";
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(CompareCommand))]
+        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
         [NotifyCanExecuteChangedFor(nameof(AddFileCommand))]
         [NotifyCanExecuteChangedFor(nameof(RemoveFileCommand))]
         private bool isBusy;
@@ -60,7 +60,7 @@ namespace TweakFirmware.ViewModels
 
         public string MaxFilesNote => Strings.Format("Verify_MaxFilesNote", VerifyRequest.MaxFiles);
 
-        public bool CanCompare => !IsBusy;
+        public bool CanStart => !IsBusy;
 
         /// <summary>Пока идёт сравнение, поля вкладки недоступны.</summary>
         public bool IsNotBusy => !IsBusy;
@@ -102,7 +102,7 @@ namespace TweakFirmware.ViewModels
 
         partial void OnIsBusyChanged(bool value)
         {
-            OnPropertyChanged(nameof(CanCompare));
+            OnPropertyChanged(nameof(CanStart));
             OnPropertyChanged(nameof(IsNotBusy));
             OnPropertyChanged(nameof(CanAddFile));
             OnPropertyChanged(nameof(CanRemoveFile));
@@ -177,8 +177,8 @@ namespace TweakFirmware.ViewModels
             RenumberFiles();
         }
 
-        [RelayCommand(CanExecute = nameof(CanCompare))]
-        private async Task CompareAsync()
+        [RelayCommand(CanExecute = nameof(CanStart))]
+        private async Task StartAsync()
         {
             var paths = Files.Select(f => f.Path).ToArray();
             var request = new VerifyRequest { FilePaths = paths };
@@ -333,7 +333,7 @@ namespace TweakFirmware.ViewModels
             return sb.ToString();
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel() => _cts?.Cancel();
     }
 }

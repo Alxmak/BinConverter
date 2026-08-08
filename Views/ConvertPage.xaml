@@ -19,7 +19,7 @@
 
                     <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -31,7 +31,7 @@
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -47,7 +47,7 @@
                          (значение подставляет OnSelectedPresetChanged во ViewModel). -->
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="Auto"/>
@@ -82,7 +82,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
                         <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
                         <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
@@ -93,9 +93,9 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                     <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{loc:Loc Common_ParametersTitle}" Style="{StaticResource CardTitle}"/>
                         <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_VerifyHashCheckbox}" IsChecked="{Binding VerifyHashAfter}" Margin="0,0,0,10"/>
-                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Convert_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_CheckDiskSpaceCheckbox}" IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
                         <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
                     </StackPanel>
                 </Border>
@@ -108,7 +108,7 @@
                     <c:ProgressRow Label="{loc:Loc Convert_OverallProgressLabel}"
                                    Value="{Binding OverallProgress}" Fill="#2F6FED"/>
 
-                    <c:ProgressRow Label="{loc:Loc Convert_CurrentFileProgressLabel}"
+                    <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
                                    Value="{Binding CurrentFileProgress}" Fill="#16A34A"
                                    Caption="{Binding CurrentFileLabel}"/>
 
@@ -116,7 +116,10 @@
                                    Value="{Binding ShaProgress}" Fill="#8B5CF6"
                                    IsEnabled="{Binding VerifyHashAfter}"/>
 
-                    <c:OperationBar StartText="{loc:Loc Convert_StartButton}"/>
+                    <c:OperationBar StartText="{loc:Loc Convert_StartButton}"
+                                    StartCommand="{Binding StartCommand}"
+                                    PauseCommand="{Binding TogglePauseCommand}"
+                                    CancelCommand="{Binding CancelCommand}"/>
                 </StackPanel>
             </Border>
 

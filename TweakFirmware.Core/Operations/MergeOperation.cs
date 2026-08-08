@@ -15,6 +15,10 @@ namespace TweakFirmware.Core.Operations
 
         public string OutputPath { get; init; } = "";
 
+        /// <summary>Проверять ли свободное место перед началом. Та же галочка есть
+        /// в Конвертировании — это одна и та же проверка.</summary>
+        public bool CheckDiskSpace { get; init; }
+
         /// <summary>Необязательный ожидаемый SHA-256 собранного файла.</summary>
         public string ExpectedHash { get; init; } = "";
 
@@ -169,19 +173,25 @@ namespace TweakFirmware.Core.Operations
             string outputFolder = Path.GetDirectoryName(outputPath) ?? ".";
             Directory.CreateDirectory(outputFolder);
 
-            var check = spaceCheck is null
-                ? DiskSpaceHelper.CheckSpace(outputFolder, chainSize)
-                : spaceCheck(outputFolder, chainSize);
-            if (!check.HasEnoughSpace)
+            // Проверку можно отключить — та же галочка и та же форма записи, что
+            // в Конвертировании: раньше здесь она была безусловной, хотя это одна
+            // и та же проверка на обеих вкладках.
+            if (request.CheckDiskSpace)
             {
-                return new MergeOutcome
+                var check = spaceCheck is null
+                    ? DiskSpaceHelper.CheckSpace(outputFolder, chainSize)
+                    : spaceCheck(outputFolder, chainSize);
+                if (!check.HasEnoughSpace)
                 {
-                    Status = MergeStatus.NotEnoughSpace,
-                    OutputPath = outputPath,
-                    OutputPathChanged = pathChanged,
-                    ChainSizeBytes = chainSize,
-                    SpaceCheck = check
-                };
+                    return new MergeOutcome
+                    {
+                        Status = MergeStatus.NotEnoughSpace,
+                        OutputPath = outputPath,
+                        OutputPathChanged = pathChanged,
+                        ChainSizeBytes = chainSize,
+                        SpaceCheck = check
+                    };
+                }
             }
 
             // Проверки пройдены — см. пояснение к тому же сигналу в ConvertOperation.

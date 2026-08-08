@@ -8,7 +8,7 @@
     <StackPanel Margin="0,0,0,16">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="190"/>
+                <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>

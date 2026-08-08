@@ -26,10 +26,14 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string outputPath = "";
         [ObservableProperty] private string expectedHashText = "";
 
+        [ObservableProperty] private bool checkDiskSpace = true;
         [ObservableProperty] private bool openFolderAfter = true;
 
+        // Доступность всех трёх кнопок операции — через CanExecute, см. то же в Конвертировании.
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
+        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
         private bool isBusy;
 
         [ObservableProperty] private bool isPaused;
@@ -175,6 +179,7 @@ namespace TweakFirmware.ViewModels
             {
                 AnyChainFilePath = SourcePath,
                 OutputPath = OutputPath,
+                CheckDiskSpace = CheckDiskSpace,
                 ExpectedHash = ExpectedHashText
             };
 
@@ -299,16 +304,16 @@ namespace TweakFirmware.ViewModels
             if (string.IsNullOrEmpty(folder)) return;
 
             try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
-            catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
+            catch (Exception ex) { AppLogger.Log(Strings.Format("Common_OpenFolderFailedLog", ex.Message)); }
         }
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel()
         {
             _pauseController?.Resume();
             _cts?.Cancel();
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanPause))]
         private void TogglePause()
         {
             if (_pauseController == null) return;

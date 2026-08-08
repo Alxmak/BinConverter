@@ -103,10 +103,10 @@
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
                                         TargetPageType="{x:Type views:VerifyPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Info24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Archive24}"
                                         TargetPageType="{x:Type views:ExtractPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Info24}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Code24}"
                                         TargetPageType="{x:Type views:TerminalPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItemSeparator/>

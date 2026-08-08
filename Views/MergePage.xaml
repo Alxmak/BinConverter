@@ -17,7 +17,7 @@
 
                     <Grid Style="{StaticResource RowGrid}" AllowDrop="True" Drop="SourceRow_Drop" DragOver="SourceRow_DragOver">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -29,7 +29,7 @@
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -41,7 +41,7 @@
 
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_ExpectedHashLabel}" Style="{StaticResource RowLabel}"/>
@@ -63,7 +63,7 @@
 
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
                         <TextBlock Text="{Binding ResultSizeText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                         <!-- Сведения о цепочке появляются только после выбора файла; пустой
                              TextBlock всё равно занимал бы высоту строки, поэтому сворачиваем. -->
@@ -84,7 +84,9 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                     <StackPanel>
-                        <TextBlock Text="{loc:Loc Convert_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <TextBlock Text="{loc:Loc Common_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_CheckDiskSpaceCheckbox}"
+                                  IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
                         <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}" IsChecked="{Binding OpenFolderAfter}"/>
                     </StackPanel>
                 </Border>
@@ -97,11 +99,14 @@
                     <c:ProgressRow Label="{loc:Loc Merge_OverallProgressLabel}"
                                    Value="{Binding OverallProgress}" Fill="#2F6FED"/>
 
-                    <c:ProgressRow Label="{loc:Loc Convert_CurrentFileProgressLabel}"
+                    <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
                                    Value="{Binding CurrentFileProgress}" Fill="#16A34A"
                                    Caption="{Binding CurrentFileLabel}"/>
 
-                    <c:OperationBar StartText="{loc:Loc Merge_StartButton}"/>
+                    <c:OperationBar StartText="{loc:Loc Merge_StartButton}"
+                                    StartCommand="{Binding StartCommand}"
+                                    PauseCommand="{Binding TogglePauseCommand}"
+                                    CancelCommand="{Binding CancelCommand}"/>
                 </StackPanel>
             </Border>
 

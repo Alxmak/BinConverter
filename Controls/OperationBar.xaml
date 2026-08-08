@@ -7,23 +7,31 @@
 
     <!-- Только кнопки. Статусной строки справа больше нет: она повторяла то, что уже
          видно рядом — проценты у каждого бара, состояние паузы на самой кнопке,
-         итог в диалоге и в журнале. -->
+         итог в диалоге и в журнале.
+
+         Доступность кнопок никак не задаётся здесь: её решает CanExecute самих команд
+         во ViewModel. -->
     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-        <Button Command="{Binding StartCommand}" Style="{StaticResource SolidButtonStyle}"
+        <Button Command="{Binding StartCommand, ElementName=Root}" Style="{StaticResource SolidButtonStyle}"
                 Background="#2F6FED" Margin="0,0,8,0">
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,7,0"/>
                 <TextBlock Text="{Binding StartText, ElementName=Root}"/>
             </StackPanel>
         </Button>
-        <Button Command="{Binding TogglePauseCommand}" Style="{StaticResource PauseButtonStyle}"
-                IsEnabled="{Binding CanPause}" Margin="0,0,8,0">
+
+        <!-- Кнопки паузы нет там, где паузы нет: в «Проверке SHA-256» страница просто
+             не передаёт PauseCommand, и кнопка не показывается. Подпись берётся у
+             ViewModel страницы — она же меняет её на «Возобновить». -->
+        <Button x:Name="PauseButton" Command="{Binding PauseCommand, ElementName=Root}"
+                Style="{StaticResource PauseButtonStyle}" Margin="0,0,8,0">
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Pause24" FontSize="14" Margin="0,0,7,0"/>
                 <TextBlock Text="{Binding PauseButtonText}"/>
             </StackPanel>
         </Button>
-        <Button Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
+
+        <Button Command="{Binding CancelCommand, ElementName=Root}"
                 Style="{StaticResource SolidButtonStyle}" Background="#E5484D">
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Margin="0,0,7,0"/>

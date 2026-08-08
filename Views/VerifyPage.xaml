@@ -22,7 +22,7 @@
                                 <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
                                       Drop="FileRow_Drop" DragOver="Row_DragOver">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="170"/>
+                                        <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
@@ -66,22 +66,11 @@
                                    Value="{Binding OverallProgress}" Fill="#2F6FED"
                                    Caption="{Binding CurrentFileLabel}"/>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <Button Command="{Binding CompareCommand}" Style="{StaticResource SolidButtonStyle}"
-                                Background="#2F6FED" Margin="0,0,8,0">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,7,0"/>
-                                <TextBlock Text="{loc:Loc Verify_CompareButton}"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"
-                                Style="{StaticResource SolidButtonStyle}" Background="#E5484D">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Margin="0,0,7,0"/>
-                                <TextBlock Text="{loc:Loc Common_CancelButton}"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                    <!-- Та же строка кнопок, что в Конвертировании и Сборке. PauseCommand
+                         не передаём — паузы в сравнении нет, и кнопки не будет. -->
+                    <c:OperationBar StartText="{loc:Loc Verify_CompareButton}"
+                                    StartCommand="{Binding StartCommand}"
+                                    CancelCommand="{Binding CancelCommand}"/>
                 </StackPanel>
             </Border>
 

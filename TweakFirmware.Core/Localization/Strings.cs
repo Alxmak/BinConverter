@@ -76,6 +76,11 @@ namespace TweakFirmware.Core.Localization
             ["Common_DeletingIncompleteLog"] = "Удаление незавершённых файлов ({0})...",
             ["Common_DeletedLog"] = "Удалён: {0}",
             ["Common_DeleteFailedLog"] = "Не удалось удалить {0}: {1}",
+            ["Common_GeneralInfoTitle"] = "Общая информация",
+            ["Common_ParametersTitle"] = "Параметры",
+            ["Common_CheckDiskSpaceCheckbox"] = "Проверить свободное место на диске",
+            ["Common_CurrentFileProgressLabel"] = "Текущий файл",
+            ["Common_OpenFolderFailedLog"] = "Не удалось открыть папку: {0}",
             ["Update_GitHubRespondedError"] = "GitHub ответил: {0} {1}",
             ["Update_CheckFailedError"] = "Не удалось проверить обновления: {0}",
 
@@ -137,12 +142,8 @@ namespace TweakFirmware.Core.Localization
             ["Convert_ProgrammerModelLabel"] = "Модель программатора",
             ["Convert_LimitLabel"] = "Лимит на один файл",
             ["Convert_LimitPlaceholder"] = "Указывается в байтах",
-            ["Convert_GeneralInfoTitle"] = "Общая информация",
-            ["Convert_ParametersTitle"] = "Параметры",
             ["Convert_VerifyHashCheckbox"] = "Проверить SHA-256",
-            ["Convert_CheckDiskSpaceCheckbox"] = "Проверить свободное место на диске",
             ["Convert_OverallProgressLabel"] = "Конвертирование",
-            ["Convert_CurrentFileProgressLabel"] = "Текущий файл",
             ["Convert_HashProgressLabel"] = "Алгоритм SHA-256",
             ["Convert_StartButton"] = "Начать",
             ["Convert_CustomPresetName"] = "Пользовательские настройки",
@@ -170,7 +171,6 @@ namespace TweakFirmware.Core.Localization
             ["Convert_DoneVerifiedMessage"] = "Конвертирование завершено успешно.\nСоздано файлов: {0}\n\nSHA-256 совпадает — данные не повреждены.\n\n{1}",
             ["Convert_VerifyErrorMessage"] = "Контрольные суммы не совпадают — данные повреждены.\n\nИсточник:\n{0}\n\nРезультат:\n{1}",
             ["Convert_DoneMessage"] = "Конвертирование завершено.\nСоздано файлов: {0}",
-            ["Convert_OpenFolderFailedLog"] = "Не удалось открыть папку: {0}",
             ["Convert_CancelledLog"] = "Конвертирование отменено пользователем",
             ["Convert_CancelledMessage"] = "Конвертирование отменено.\nУдалено незавершённых файлов: {0}",
             ["Convert_ErrorLog"] = "Ошибка: {0}",
@@ -307,6 +307,7 @@ namespace TweakFirmware.Core.Localization
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
             ["Placeholder_ExtractText"] = "Инструмент для поиска и извлечения разделов из дампов прошивок.",
             ["Placeholder_TerminalTitle"] = "Терминал",
+            ["Placeholder_TerminalText"] = "Работа с программой из командной строки, без графического интерфейса.",
         };
 
         private static readonly Dictionary<string, string> En = new()
@@ -345,6 +346,11 @@ namespace TweakFirmware.Core.Localization
             ["Common_DeletingIncompleteLog"] = "Deleting incomplete files ({0})...",
             ["Common_DeletedLog"] = "Deleted: {0}",
             ["Common_DeleteFailedLog"] = "Failed to delete {0}: {1}",
+            ["Common_GeneralInfoTitle"] = "General info",
+            ["Common_ParametersTitle"] = "Parameters",
+            ["Common_CheckDiskSpaceCheckbox"] = "Check free space on the disk",
+            ["Common_CurrentFileProgressLabel"] = "Current file",
+            ["Common_OpenFolderFailedLog"] = "Failed to open the folder: {0}",
             ["Update_GitHubRespondedError"] = "GitHub responded: {0} {1}",
             ["Update_CheckFailedError"] = "Failed to check for updates: {0}",
 
@@ -406,12 +412,8 @@ namespace TweakFirmware.Core.Localization
             ["Convert_ProgrammerModelLabel"] = "Programmer model",
             ["Convert_LimitLabel"] = "Limit per file",
             ["Convert_LimitPlaceholder"] = "In bytes",
-            ["Convert_GeneralInfoTitle"] = "General info",
-            ["Convert_ParametersTitle"] = "Parameters",
             ["Convert_VerifyHashCheckbox"] = "Verify SHA-256",
-            ["Convert_CheckDiskSpaceCheckbox"] = "Check free space on the disk",
             ["Convert_OverallProgressLabel"] = "Conversion",
-            ["Convert_CurrentFileProgressLabel"] = "Current file",
             ["Convert_HashProgressLabel"] = "SHA-256 algorithm",
             ["Convert_StartButton"] = "Start",
             ["Convert_CustomPresetName"] = "Custom settings",
@@ -439,7 +441,6 @@ namespace TweakFirmware.Core.Localization
             ["Convert_DoneVerifiedMessage"] = "Conversion completed successfully.\nFiles created: {0}\n\nSHA-256 matches — data is intact.\n\n{1}",
             ["Convert_VerifyErrorMessage"] = "Checksums do not match — the data is corrupted.\n\nSource:\n{0}\n\nResult:\n{1}",
             ["Convert_DoneMessage"] = "Conversion completed.\nFiles created: {0}",
-            ["Convert_OpenFolderFailedLog"] = "Failed to open the folder: {0}",
             ["Convert_CancelledLog"] = "Conversion cancelled by the user",
             ["Convert_CancelledMessage"] = "Conversion cancelled.\nIncomplete files deleted: {0}",
             ["Convert_ErrorLog"] = "Error: {0}",
@@ -573,6 +574,7 @@ namespace TweakFirmware.Core.Localization
             ["Placeholder_ExtractTitle"] = "Extract partitions",
             ["Placeholder_ExtractText"] = "A tool for finding and extracting partitions from firmware dumps.",
             ["Placeholder_TerminalTitle"] = "Terminal",
+            ["Placeholder_TerminalText"] = "Driving the program from a command line, without the graphical interface.",
         };
     }
 }

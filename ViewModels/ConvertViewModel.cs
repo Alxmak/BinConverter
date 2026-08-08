@@ -46,13 +46,20 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool openFolderAfter = true;
         [ObservableProperty] private bool checkDiskSpace = true;
 
+        // Доступность всех трёх кнопок операции решается через CanExecute: общая строка
+        // кнопок (OperationBar) ничего не знает про IsBusy и не привязывает IsEnabled сама.
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
+        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
         private bool isBusy;
 
         [ObservableProperty] private bool isPaused;
         [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
-        [ObservableProperty] private bool isVerifying;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
+        private bool isVerifying;
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
@@ -415,17 +422,17 @@ namespace TweakFirmware.ViewModels
             if (!OpenFolderAfter) return;
 
             try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
-            catch (Exception ex) { AppLogger.Log(Strings.Format("Convert_OpenFolderFailedLog", ex.Message)); }
+            catch (Exception ex) { AppLogger.Log(Strings.Format("Common_OpenFolderFailedLog", ex.Message)); }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel()
         {
             _pauseController?.Resume();
             _cts?.Cancel();
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanPause))]
         private void TogglePause()
         {
             if (_pauseController == null || IsVerifying) return;

@@ -7,7 +7,7 @@
       ScrollViewer.CanContentScroll="False">
 
 
-    <ScrollViewer x:Name="RootScroll" Padding="24,20" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
             <!-- Шапка тоже карточка: раньше она висела «в воздухе» над остальными
@@ -54,7 +54,7 @@
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_NameLabel}" Style="{StaticResource RowLabel}"/>
@@ -65,7 +65,7 @@
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_ReplyToLabel}" Style="{StaticResource RowLabel}"/>
@@ -78,7 +78,7 @@
                          и подпись напротив первой строки смотрелась бы висящей в воздухе. -->
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_MessageLabel}" Style="{StaticResource RowLabel}"

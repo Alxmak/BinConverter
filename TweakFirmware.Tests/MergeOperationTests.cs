@@ -364,7 +364,7 @@ namespace TweakFirmware.Tests
             int started = 0;
 
             var outcome = await MergeOperation.RunAsync(
-                new MergeRequest { AnyChainFilePath = chain, OutputPath = output },
+                new MergeRequest { AnyChainFilePath = chain, OutputPath = output, CheckDiskSpace = true },
                 new FixedConflictPolicy(ConflictDecision.Overwrite), null, Log, null, CancellationToken.None,
                 onStarted: () => started++,
                 spaceCheck: (_, needed) => new SpaceCheckResult { RequiredBytes = needed, AvailableBytes = needed / 2 });
@@ -374,6 +374,29 @@ namespace TweakFirmware.Tests
             Assert.False(File.Exists(output));
             // Размер цепочки нужен диалогу — он должен быть посчитан до отказа.
             Assert.Equal(4 * 1024, outcome.ChainSizeBytes);
+        }
+
+        [Fact]
+        public async Task SpaceCheckOff_MergesEvenWhenTheDiskLooksFull()
+        {
+            // Галочка «Проверить свободное место» есть и в Сборке: на некоторых
+            // накопителях свободное место определяется неверно, и проверка только мешает.
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            string output = Path.Combine(_root, "merged.bin");
+            bool checkCalled = false;
+
+            var outcome = await MergeOperation.RunAsync(
+                new MergeRequest { AnyChainFilePath = chain, OutputPath = output, CheckDiskSpace = false },
+                new FixedConflictPolicy(ConflictDecision.Overwrite), null, Log, null, CancellationToken.None,
+                spaceCheck: (_, needed) =>
+                {
+                    checkCalled = true;
+                    return new SpaceCheckResult { RequiredBytes = needed, AvailableBytes = 0 };
+                });
+
+            Assert.Equal(MergeStatus.Completed, outcome.Status);
+            Assert.False(checkCalled);
+            Assert.Equal(4 * 1024, new FileInfo(output).Length);
         }
 
         // ============ Отмена ============
