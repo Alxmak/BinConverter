@@ -55,6 +55,11 @@ namespace TweakFirmware.ViewModels
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
+        /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
+        private const int InputSettleDelayMs = 250;
+
+        private int _chainGeneration;
+
         // Пункт: "Папка назначения" должна показывать путь по умолчанию сразу при запуске
         // (как в Конвертировании), а не только после выбора файла цепочки. Пока путь не
         // менялся пользователем явно (набор текста/вставка/"Обзор..."), автоматически
@@ -80,7 +85,7 @@ namespace TweakFirmware.ViewModels
 
             // Если файл цепочки уже выбран, имя результата зависит от него — пусть
             // его подберёт та же самая логика, что и при выборе файла.
-            if (File.Exists(SourcePath)) TryResolveChain();
+            if (File.Exists(SourcePath)) ProbeChainNow();
             else ResetOutputPathToDefault();
         }
 
@@ -89,12 +94,12 @@ namespace TweakFirmware.ViewModels
 
         /// <summary>
         /// Тексты, заданные кодом: подпись кнопки паузы и карточка «Общая информация» —
-        /// её строки собирает TryResolveChain, а не разметка.
+        /// её строки собираются кодом по осмотру цепочки, а не разметкой.
         /// </summary>
         protected override void OnLanguageChanged()
         {
             PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
-            TryResolveChain();
+            ProbeChainNow();
         }
 
         partial void OnIsBusyChanged(bool value)
@@ -105,8 +110,8 @@ namespace TweakFirmware.ViewModels
         }
 
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
-        // цепочка частей должна пересчитываться и при прямом вводе, не только через SetSource.
-        partial void OnSourcePathChanged(string value) => TryResolveChain();
+        // цепочка частей должна осматриваться и при прямом вводе, не только через SetSource.
+        partial void OnSourcePathChanged(string value) => ScheduleChainProbe();
 
         partial void OnOutputPathChanged(string value)
         {
@@ -154,28 +159,54 @@ namespace TweakFirmware.ViewModels
             SourcePath = path;
         }
 
-        private void TryResolveChain()
+        /// <summary>
+        /// Осмотр цепочки — не сразу. Раньше он шёл прямо из обработчика изменения текста,
+        /// то есть на каждое нажатие клавиши в поле пути, и перебирал файлы на диске
+        /// в потоке интерфейса: на сетевом пути окно подвисало на каждую букву.
+        ///
+        /// Счётчик поколений отбрасывает устаревшие ответы: пока ждали или пока ходили
+        /// на диск, путь мог измениться ещё раз.
+        /// </summary>
+        private async void ScheduleChainProbe()
         {
-            try
-            {
-                // Тот же расчёт, что делает сама сборка перед проверкой места, —
-                // считаем его один раз и в одном месте.
-                long total = MergeOperation.GetChainSize(SourcePath, out var chain);
+            int generation = ++_chainGeneration;
 
-                ChainInfoText = Strings.Format("Merge_ChainFoundInfo", chain.Count, SizeFormatHelper.Format(total), Path.GetFileName(chain[0]));
-                ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(total));
+            await Task.Delay(InputSettleDelayMs);
+            if (generation != _chainGeneration) return;
 
-                if (_outputPathIsAuto)
-                {
-                    string name = MergeOutputNaming.SuggestFileName(HashHelper.ResolveBasePath(SourcePath));
-                    SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), name));
-                }
-            }
-            catch (Exception ex)
+            string path = SourcePath;
+            var probe = await Task.Run(() => ChainProbe.Measure(path));
+            if (generation != _chainGeneration) return;
+
+            ApplyChainProbe(probe);
+        }
+
+        /// <summary>Осмотреть сейчас же — когда путь задан не набором текста
+        /// (кнопка «Обзор», перетаскивание, возврат на вкладку, смена языка).</summary>
+        private void ProbeChainNow()
+        {
+            _chainGeneration++;
+            ApplyChainProbe(ChainProbe.Measure(SourcePath));
+        }
+
+        private void ApplyChainProbe(ChainProbeResult probe)
+        {
+            if (!probe.Resolved)
             {
-                ChainInfoText = Strings.Format("Merge_ChainResolveError", ex.Message);
+                // Пустой путь — это ещё не ошибка, просто нечего показывать.
+                ChainInfoText = probe.ErrorMessage.Length == 0
+                    ? ""
+                    : Strings.Format("Merge_ChainResolveError", probe.ErrorMessage);
                 ResultSizeText = Strings.Format("Merge_ResultSizeLine", NoValuePlaceholder);
+                return;
             }
+
+            ChainInfoText = Strings.Format("Merge_ChainFoundInfo",
+                probe.PartCount, SizeFormatHelper.Format(probe.TotalBytes), probe.BaseFileName);
+            ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(probe.TotalBytes));
+
+            if (_outputPathIsAuto)
+                SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), probe.SuggestedOutputFileName));
         }
 
         [RelayCommand]

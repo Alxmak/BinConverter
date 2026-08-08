@@ -11,9 +11,14 @@ namespace TweakFirmware.Core
     /// </summary>
     public sealed class PauseController
     {
+        private readonly object _gate = new();
+
         private TaskCompletionSource<bool> _resumeSignal = CreateSignaledTcs();
 
-        public bool IsPaused { get; private set; }
+        /// <summary>volatile: флаг читается из рабочего потока операции, а меняется из потока интерфейса.</summary>
+        private volatile bool _isPaused;
+
+        public bool IsPaused => _isPaused;
 
         private static TaskCompletionSource<bool> CreateSignaledTcs()
         {
@@ -24,25 +29,44 @@ namespace TweakFirmware.Core
 
         public void Pause()
         {
-            if (IsPaused) return;
-            IsPaused = true;
-            _resumeSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            lock (_gate)
+            {
+                if (_isPaused) return;
+                _isPaused = true;
+                _resumeSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
         }
 
         public void Resume()
         {
-            if (!IsPaused) return;
-            IsPaused = false;
-            _resumeSignal.TrySetResult(true);
+            lock (_gate)
+            {
+                if (!_isPaused) return;
+                _isPaused = false;
+                _resumeSignal.TrySetResult(true);
+            }
         }
 
+        /// <summary>
+        /// Ждёт снятия паузы. Если во время ожидания пришла отмена — выбрасывает
+        /// <see cref="System.OperationCanceledException"/>, как и любая другая
+        /// отменяемая операция.
+        /// </summary>
         public async Task WaitIfPausedAsync(CancellationToken ct)
         {
-            var tcs = _resumeSignal;
-            if (tcs.Task.IsCompleted) return;
+            Task signal;
+            lock (_gate)
+            {
+                signal = _resumeSignal.Task;
+            }
 
-            using var registration = ct.Register(() => tcs.TrySetCanceled(ct));
-            await tcs.Task.ConfigureAwait(false);
+            if (signal.IsCompletedSuccessfully) return;
+
+            // WaitAsync, а не отмена самого сигнала. Раньше отмена делала TrySetCanceled
+            // на общем TaskCompletionSource, и он оставался отменённым навсегда: Resume()
+            // уже не мог его переустановить, а следующее ожидание видело «задача
+            // завершена» и молча пропускало паузу вместо того, чтобы бросить отмену.
+            await signal.WaitAsync(ct).ConfigureAwait(false);
         }
     }
 }

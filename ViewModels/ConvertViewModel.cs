@@ -77,6 +77,10 @@ namespace TweakFirmware.ViewModels
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
+        /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
+        private const int InputSettleDelayMs = 250;
+
+        private int _previewGeneration;
         private int _expectedFileCount;
         private long _expectedTotalSize;
         private long _expectedLimitBytes;
@@ -115,7 +119,7 @@ namespace TweakFirmware.ViewModels
         {
             Presets[^1].Name = Strings.Get("Convert_CustomPresetName");
             PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
-            UpdatePreview();
+            UpdatePreviewNow();
         }
 
         private static string GetDefaultOutputFolder() => OutputPathSettingsService.GetConvertFolder();
@@ -130,13 +134,13 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(IsCustomPreset));
             if (value?.MaxPartSizeBytes is long fixedBytes)
                 CustomLimitBytesText = fixedBytes.ToString();
-            UpdatePreview();
+            UpdatePreviewNow();
         }
 
-        partial void OnCustomLimitBytesTextChanged(string value) => UpdatePreview();
+        partial void OnCustomLimitBytesTextChanged(string value) => SchedulePreviewUpdate();
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // предпросмотр должен обновляться и при прямом вводе, не только через SetSource.
-        partial void OnSourcePathChanged(string value) => UpdatePreview();
+        partial void OnSourcePathChanged(string value) => SchedulePreviewUpdate();
         partial void OnShowAllFilesChanged(bool value) => RebuildFilesText();
 
         partial void OnOutputFolderChanged(string value)
@@ -184,7 +188,7 @@ namespace TweakFirmware.ViewModels
         public void SetOutputFolder(string path)
         {
             OutputFolder = path;
-            UpdatePreview();
+            UpdatePreviewNow();
         }
 
         [RelayCommand]
@@ -195,11 +199,42 @@ namespace TweakFirmware.ViewModels
         // Пункт 5: строки всегда на экране — до выбора файла напротив них прочерк
         // (NoValuePlaceholder — из LogHostViewModel, он общий для всех вкладок).
 
-        private void UpdatePreview()
+        /// <summary>
+        /// Пересчёт предпросмотра — не сразу. Раньше он вызывался прямо из обработчика
+        /// изменения текста, то есть на каждое нажатие клавиши в поле пути, и каждый раз
+        /// спрашивал файловую систему в потоке интерфейса: на локальном диске незаметно,
+        /// на сетевом пути окно подвисало на каждую букву.
+        ///
+        /// Счётчик поколений отбрасывает устаревшие вызовы: пока ждали или пока ходили
+        /// на диск, путь мог измениться ещё раз, и старый ответ затёр бы новый.
+        /// </summary>
+        private async void SchedulePreviewUpdate()
+        {
+            int generation = ++_previewGeneration;
+
+            await Task.Delay(InputSettleDelayMs);
+            if (generation != _previewGeneration) return;
+
+            string path = SourcePath;
+            var probe = await Task.Run(() => FileProbe.Measure(path));
+            if (generation != _previewGeneration) return;
+
+            UpdatePreview(probe);
+        }
+
+        /// <summary>Пересчитать сейчас же — когда путь задан не набором текста
+        /// (кнопка «Обзор», перетаскивание, возврат на вкладку).</summary>
+        private void UpdatePreviewNow()
+        {
+            _previewGeneration++;
+            UpdatePreview(FileProbe.Measure(SourcePath));
+        }
+
+        private void UpdatePreview(FileProbeResult source)
         {
             long limit = CurrentLimitBytes;
 
-            if (!File.Exists(SourcePath))
+            if (!source.Exists)
             {
                 GeneralInfoText =
                     Strings.Format("Convert_SourceSizeLine", NoValuePlaceholder) + "\n" +
@@ -210,7 +245,7 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            long size = new FileInfo(SourcePath).Length;
+            long size = source.SizeBytes;
 
             if (limit < 1024)
             {
@@ -290,7 +325,7 @@ namespace TweakFirmware.ViewModels
             _pauseController = new PauseController();
 
             // Общая работа: при проверке хэша файл читается ещё раз, поэтому байт вдвое больше.
-            long sourceSize = File.Exists(SourcePath) ? new FileInfo(SourcePath).Length : 0;
+            long sourceSize = FileProbe.Measure(SourcePath).SizeBytes;
             long totalWorkBytes = sourceSize * (VerifyHashAfter ? 2 : 1);
 
             var splitProgress = new Progress<SplitProgress>(p =>

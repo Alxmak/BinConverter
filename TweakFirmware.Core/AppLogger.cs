@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Core
@@ -27,7 +28,24 @@ namespace TweakFirmware.Core
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Tweak Firmware", "TweakFirmware.log.txt");
 
+        /// <summary>
+        /// Предел размера файла журнала. Файл только дописывался — по строке на каждую
+        /// созданную часть, за все запуски программы, — и рос без границы. При достижении
+        /// предела старые записи отбрасываются, свежие сохраняются: журнал нужен, чтобы
+        /// разобраться в том, что произошло сейчас, а не полгода назад.
+        /// </summary>
+        private const long MaxFileBytes = 1024 * 1024;
+
+        /// <summary>Сколько последних строк остаётся после обрезки.</summary>
+        private const int KeepLinesOnTrim = 2000;
+
         private static readonly object _lock = new();
+
+        /// <summary>
+        /// Размер файла, чтобы не спрашивать его у файловой системы на каждой строке:
+        /// за большую операцию строк тысячи. -1 — ещё не смотрели.
+        /// </summary>
+        private static long _knownSize = -1;
 
         /// <summary>
         /// Срабатывает при каждой новой строке лога — на неё подписано окно журнала,
@@ -93,13 +111,53 @@ namespace TweakFirmware.Core
                 try
                 {
                     EnsureDirectory();
-                    File.AppendAllText(LogFilePath, line + Environment.NewLine);
+
+                    string text = line + Environment.NewLine;
+                    File.AppendAllText(LogFilePath, text);
+
+                    if (_knownSize < 0) _knownSize = new FileInfo(LogFilePath).Length;
+                    else _knownSize += Encoding.UTF8.GetByteCount(text);
+
+                    if (_knownSize > MaxFileBytes) TrimOldestEntries();
                 }
                 catch
                 {
                     // Молча: см. пояснение к классу. Сообщить о неудаче записи в журнал
                     // можно было бы только… записью в журнал.
+                    _knownSize = -1; // размер больше не знаем — перечитаем при следующей записи
                 }
+            }
+        }
+
+        /// <summary>
+        /// Оставляет последние <see cref="KeepLinesOnTrim"/> строк. Вызывается изнутри
+        /// уже взятой блокировки. Читать файл целиком здесь не страшно: это происходит
+        /// один раз на мегабайт записей, а не на каждую строку.
+        /// </summary>
+        private static void TrimOldestEntries()
+        {
+            try
+            {
+                string[] lines = File.ReadAllLines(LogFilePath);
+                if (lines.Length <= KeepLinesOnTrim)
+                {
+                    // Строк мало, а байтов много: файл раздут длинными строками, обрезать
+                    // по строкам нечего. Пересчитываем размер и оставляем как есть, иначе
+                    // обрезка вызывалась бы на каждой следующей записи.
+                    _knownSize = new FileInfo(LogFilePath).Length;
+                    return;
+                }
+
+                var kept = new string[KeepLinesOnTrim + 1];
+                kept[0] = Strings.Format("Log_TrimmedOlderEntries", lines.Length - KeepLinesOnTrim);
+                Array.Copy(lines, lines.Length - KeepLinesOnTrim, kept, 1, KeepLinesOnTrim);
+
+                File.WriteAllLines(LogFilePath, kept);
+                _knownSize = new FileInfo(LogFilePath).Length;
+            }
+            catch
+            {
+                _knownSize = -1;
             }
         }
 
@@ -111,10 +169,12 @@ namespace TweakFirmware.Core
                 {
                     EnsureDirectory();
                     File.WriteAllText(LogFilePath, line + Environment.NewLine);
+                    _knownSize = Encoding.UTF8.GetByteCount(line + Environment.NewLine);
                     return true;
                 }
                 catch
                 {
+                    _knownSize = -1;
                     return false;
                 }
             }

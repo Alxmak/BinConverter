@@ -12,11 +12,27 @@ namespace TweakFirmware.Services
     /// </summary>
     public static class LogService
     {
+        /// <summary>
+        /// Предел числа строк на экране. Коллекция общая на всё приложение и живёт до
+        /// закрытия программы, то есть росла без границы ровно как и файл журнала:
+        /// большая операция добавляет тысячи строк. Полная история остаётся в файле —
+        /// его открывает кнопка «Открыть».
+        /// </summary>
+        public const int MaxVisibleLines = 5000;
+
         public static ObservableCollection<string> Lines { get; } = new();
 
         static LogService()
         {
-            AppLogger.LogWritten += line => Application.Current?.Dispatcher.BeginInvoke(() => Lines.Add(line));
+            AppLogger.LogWritten += line => Application.Current?.Dispatcher.BeginInvoke(() => Append(line));
+        }
+
+        private static void Append(string line)
+        {
+            Lines.Add(line);
+
+            // По одной за раз: строки добавляются по одной, поэтому и лишняя всегда одна.
+            if (Lines.Count > MaxVisibleLines) Lines.RemoveAt(0);
         }
 
         /// <summary>Нужно дёрнуть один раз при старте приложения, чтобы статический конструктор
