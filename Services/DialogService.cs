@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
+using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
 
 // Пространство Wpf.Ui.Controls целиком не подключаем: в нём есть свои TextBlock и Grid,
@@ -43,6 +45,88 @@ namespace TweakFirmware.Services
 
             SetOwner(box);
             await box.ShowDialogAsync();
+        }
+
+        /// <summary>
+        /// Итог с хэшем: под сообщением — подпись, сам хэш и кнопка копирования рядом.
+        /// Хэш нужен не «на посмотреть»: его вписывают в поле «Ожидаемый SHA-256» при
+        /// обратной сборке, а раньше 64 знака из окна оставалось только перепечатывать.
+        /// </summary>
+        public static async Task ShowInfoWithHashAsync(string title, string message, string hashLabel, string hash)
+        {
+            var box = new MessageBox
+            {
+                Title = title,
+                Content = BuildHashContent(message, hashLabel, hash),
+                CloseButtonText = Strings.Get("Common_OkButton")
+            };
+
+            SetOwner(box);
+            await box.ShowDialogAsync();
+        }
+
+        private static object BuildHashContent(string message, string hashLabel, string hash)
+        {
+            var panel = new StackPanel();
+
+            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            panel.Children.Add(text);
+
+            var row = new Grid { Margin = new Thickness(0, 16, 0, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            // Подпись обычным шрифтом, хэш — моноширинным и с переносами: 64 знака
+            // одной строкой в окно не влезают (см. HashDisplay).
+            var hashBlock = new TextBlock { TextWrapping = TextWrapping.Wrap };
+            hashBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            hashBlock.Inlines.Add(new Run(hashLabel));
+            hashBlock.Inlines.Add(new LineBreak());
+            hashBlock.Inlines.Add(new Run(HashDisplay.Wrap(hash))
+            {
+                FontFamily = new FontFamily("Cascadia Code, Consolas"),
+                FontSize = 12
+            });
+            Grid.SetColumn(hashBlock, 0);
+            row.Children.Add(hashBlock);
+
+            var copy = BuildCopyButton(hash);
+            Grid.SetColumn(copy, 1);
+            row.Children.Add(copy);
+
+            panel.Children.Add(row);
+            return panel;
+        }
+
+        /// <summary>
+        /// Копирует хэш одной строкой, без переносов, которые добавлены для показа, —
+        /// вставлять нужно именно 64 знака подряд.
+        /// </summary>
+        private static Button BuildCopyButton(string hash)
+        {
+            var icon = new SymbolIcon { Symbol = SymbolRegular.Copy24, FontSize = 16 };
+
+            var button = new Button
+            {
+                Content = icon,
+                Padding = new Thickness(8, 6, 8, 6),
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Top,
+                ToolTip = Strings.Get("Common_CopyHashTooltip")
+            };
+
+            button.Click += (_, _) =>
+            {
+                if (!ClipboardHelper.TryCopy(hash)) return;
+
+                // Галочка вместо значка копирования — единственный отклик, который тут
+                // уместен: окно короткоживущее, отдельное сообщение поверх него мешало бы.
+                icon.Symbol = SymbolRegular.Checkmark24;
+                button.ToolTip = Strings.Get("Common_CopiedTooltip");
+            };
+
+            return button;
         }
 
         /// <summary>

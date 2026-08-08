@@ -434,8 +434,12 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case ConvertStatus.CompletedVerified:
-                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
-                        Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated, HashDisplay.Wrap(outcome.SourceHash)));
+                    // Хэш отдаётся отдельным полем, а не внутри текста: рядом с ним
+                    // в окне стоит кнопка копирования — его вписывают в «Ожидаемый
+                    // SHA-256» при обратной сборке.
+                    await DialogService.ShowInfoWithHashAsync(Strings.Get("Common_DoneTitle"),
+                        Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated),
+                        Strings.Get("Convert_HashConfirmedLabel"), outcome.SourceHash);
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 

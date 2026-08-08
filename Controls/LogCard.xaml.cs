@@ -3,8 +3,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using TweakFirmware.Core;
-using TweakFirmware.Core.Localization;
+using TweakFirmware.Services;
 
 namespace TweakFirmware.Controls
 {
@@ -104,16 +103,9 @@ namespace TweakFirmware.Controls
                     text.Append(item);
                 }
 
-            try
-            {
-                Clipboard.SetDataObject(text.ToString(), copy: true);
-            }
-            catch (System.Exception ex)
-            {
-                // Буфер обмена бывает занят другим приложением. Молча не проглатываем,
-                // но и мешать окном из-за копирования не стоит.
-                AppLogger.Log(Strings.Format("Common_ClipboardFailedLog", ex.Message));
-            }
+            // Неудачу записи в буфер обмена разбирает ClipboardHelper — она возможна,
+            // пока буфером владеет другое приложение, и мешать окном из-за этого не стоит.
+            ClipboardHelper.TryCopy(text.ToString());
         }
 
         /// <summary>

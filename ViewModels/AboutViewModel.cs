@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Core;
@@ -104,7 +103,7 @@ namespace TweakFirmware.ViewModels
             if (tooLongForLink)
             {
                 uri = FeedbackLetter.BuildMailtoUri(FeedbackLetter.ContactEmail, subject, "");
-                TryCopyToClipboard(body);
+                ClipboardHelper.TryCopy(body);
             }
 
             try
@@ -118,7 +117,7 @@ namespace TweakFirmware.ViewModels
                 // и называем адрес, поля при этом не очищаем.
                 AppLogger.Log(Strings.Format("Feedback_MailClientFailedLog", ex.Message));
 
-                bool copied = TryCopyToClipboard(body);
+                bool copied = ClipboardHelper.TryCopy(body);
                 FeedbackStatusText = "";
                 await DialogService.ShowWarningAsync(Strings.Get("Feedback_Title"),
                     Strings.Format(copied ? "Feedback_NoMailClientCopied" : "Feedback_NoMailClient", FeedbackLetter.ContactEmail));
@@ -134,7 +133,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanSendFeedback))]
         private void CopyFeedback()
         {
-            FeedbackStatusText = TryCopyToClipboard(BuildFeedbackBody())
+            FeedbackStatusText = ClipboardHelper.TryCopy(BuildFeedbackBody())
                 ? Strings.Get("Feedback_CopiedStatus")
                 : Strings.Get("Feedback_CopyFailedStatus");
         }
@@ -142,22 +141,5 @@ namespace TweakFirmware.ViewModels
         private string BuildFeedbackBody() => FeedbackLetter.BuildBody(
             FeedbackName, FeedbackReplyTo, FeedbackMessage,
             UpdateService.GetCurrentVersion(), RuntimeInformation.OSDescription);
-
-        private static bool TryCopyToClipboard(string text)
-        {
-            // Буфер обмена в Windows — общий ресурс: пока им владеет другое приложение,
-            // запись падает с COM-ошибкой. Это не повод ронять программу — сообщаем
-            // о неудаче вызывающему коду, и он предлагает написать вручную.
-            try
-            {
-                Clipboard.SetDataObject(text, copy: true);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Log(Strings.Format("Common_ClipboardFailedLog", ex.Message));
-                return false;
-            }
-        }
     }
 }
