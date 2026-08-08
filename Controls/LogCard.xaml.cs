@@ -1,6 +1,10 @@
 using System.Collections.Specialized;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 
 namespace TweakFirmware.Controls
 {
@@ -69,6 +73,47 @@ namespace TweakFirmware.Controls
             if (e.ExtentHeightChange != 0) return;
 
             _stickToBottom = e.VerticalOffset + e.ViewportHeight >= e.ExtentHeight - BottomTolerance;
+        }
+
+        /// <summary>
+        /// Ctrl+C — то же, что «Копировать» в контекстном меню. Список сам копирование
+        /// не умеет, а выделение строки без возможности её забрать было бесполезным:
+        /// из журнала обычно и нужен хэш или путь.
+        /// </summary>
+        private void LogList_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.C || (Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+
+            CopySelectedLines();
+            e.Handled = true;
+        }
+
+        private void CopySelected_Click(object sender, RoutedEventArgs e) => CopySelectedLines();
+
+        private void CopySelectedLines()
+        {
+            if (LogList.SelectedItems.Count == 0) return;
+
+            // Порядок берём из самого списка, а не из порядка выделения: выделять можно
+            // и снизу вверх, а скопированное должно читаться как в журнале.
+            var text = new StringBuilder();
+            foreach (var item in LogList.Items)
+                if (LogList.SelectedItems.Contains(item))
+                {
+                    if (text.Length > 0) text.Append('\n');
+                    text.Append(item);
+                }
+
+            try
+            {
+                Clipboard.SetDataObject(text.ToString(), copy: true);
+            }
+            catch (System.Exception ex)
+            {
+                // Буфер обмена бывает занят другим приложением. Молча не проглатываем,
+                // но и мешать окном из-за копирования не стоит.
+                AppLogger.Log(Strings.Format("Common_ClipboardFailedLog", ex.Message));
+            }
         }
 
         /// <summary>

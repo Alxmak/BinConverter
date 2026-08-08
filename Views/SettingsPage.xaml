@@ -100,7 +100,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_ConvertFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <Grid>
+                    <Grid AllowDrop="True" Drop="ConvertFolderRow_Drop" DragOver="ConvertFolderRow_DragOver">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -120,7 +120,7 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_MergeFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <Grid>
+                    <Grid AllowDrop="True" Drop="MergeFolderRow_Drop" DragOver="MergeFolderRow_DragOver">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>

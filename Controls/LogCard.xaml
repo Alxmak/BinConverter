@@ -61,9 +61,28 @@
                  из-за этих 6px строки журнала выпирали левее заголовка. Добираем
                  разницу отступом самого списка, чтобы текст встал на те же 18px,
                  что и содержимое всех остальных карточек. -->
-            <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogLines}" Height="113" BorderThickness="0"
+            <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogLines}" Height="180" BorderThickness="0"
                      Margin="6,0,6,0" ItemContainerStyle="{StaticResource LogLine}"
-                     FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"/>
+                     FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"
+                     SelectionMode="Extended" KeyDown="LogList_KeyDown"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <!-- Строки переносятся, а не обрезаются: в журнал попадают полные пути
+                     и хэши, и раньше их конец было просто не увидеть. -->
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+
+                <!-- Выделение строки теперь не просто подсветка: её можно скопировать —
+                     из журнала часто нужен хэш или путь. -->
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{loc:Loc Common_LogCopyButton}" Click="CopySelected_Click"/>
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
         </Grid>
     </Border>
 </UserControl>

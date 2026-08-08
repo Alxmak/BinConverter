@@ -48,9 +48,13 @@
                     <TextBlock Text="{loc:Loc Feedback_Title}" Style="{StaticResource CardTitle}"/>
                     <TextBlock Text="{loc:Loc Feedback_Intro}" TextWrapping="Wrap" FontSize="13"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding ContactEmail}" FontSize="13" Margin="0,4,0,16"
-                               FontFamily="Cascadia Code, Consolas"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <!-- Адрес кликабельный, как ссылки в «Источниках»: именно его чаще
+                         всего и хотят нажать, а он был обычным текстом. -->
+                    <TextBlock FontSize="13" Margin="0,4,0,16" FontFamily="Cascadia Code, Consolas">
+                        <Hyperlink NavigateUri="{Binding ContactMailtoUri}" RequestNavigate="Hyperlink_RequestNavigate">
+                            <TextBlock Text="{Binding ContactEmail}"/>
+                        </Hyperlink>
+                    </TextBlock>
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>

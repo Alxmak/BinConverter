@@ -71,6 +71,11 @@ namespace TweakFirmware.ViewModels
         /// <summary>Адрес показывается в карточке, чтобы написать можно было и вручную.</summary>
         public string ContactEmail => FeedbackLetter.ContactEmail;
 
+        /// <summary>Ссылка под этим адресом: нажатие открывает пустое письмо в почтовом
+        /// клиенте. Отдельно от <see cref="ContactEmail"/>, потому что показывать в тексте
+        /// «mailto:» незачем.</summary>
+        public string ContactMailtoUri => "mailto:" + FeedbackLetter.ContactEmail;
+
         [ObservableProperty] private string feedbackName = "";
         [ObservableProperty] private string feedbackReplyTo = "";
 
@@ -150,7 +155,7 @@ namespace TweakFirmware.ViewModels
             }
             catch (Exception ex)
             {
-                AppLogger.Log(Strings.Format("Feedback_ClipboardFailedLog", ex.Message));
+                AppLogger.Log(Strings.Format("Common_ClipboardFailedLog", ex.Message));
                 return false;
             }
         }

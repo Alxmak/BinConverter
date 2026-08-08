@@ -8,6 +8,13 @@
       ScrollViewer.CanContentScroll="False">
 
 
+    <!-- Esc отменяет идущую операцию. Enter на «Начать» намеренно не назначен: на этих
+         страницах есть поля ввода, и нажатие Enter при правке пути запускало бы
+         многочасовую запись на диск. -->
+    <Page.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}"/>
+    </Page.InputBindings>
+
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
@@ -27,7 +34,8 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
-                    <Grid Style="{StaticResource RowGrid}">
+                    <Grid Style="{StaticResource RowGrid}" AllowDrop="True"
+                          Drop="OutputRow_Drop" DragOver="SourceRow_DragOver">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
@@ -45,9 +53,13 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_ExpectedHashLabel}" Style="{StaticResource RowLabel}"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ExpectedHashText, UpdateSourceTrigger=PropertyChanged}"
+                        <!-- Вставка — главный способ заполнить это поле, и именно при
+                             вставке приезжает обрезанный или посторонний текст. -->
+                        <ui:TextBox x:Name="ExpectedHashTextBox" ClearButtonEnabled="False" Grid.Column="1"
+                                    Text="{Binding ExpectedHashText, UpdateSourceTrigger=PropertyChanged}"
                                     PlaceholderText="{loc:Loc Merge_ExpectedHashPlaceholder}"
-                                    ToolTip="{loc:Loc Merge_ExpectedHashTooltip}"/>
+                                    ToolTip="{loc:Loc Merge_ExpectedHashTooltip}"
+                                    DataObject.Pasting="ExpectedHash_Pasting"/>
                     </Grid>
                 </StackPanel>
             </Border>

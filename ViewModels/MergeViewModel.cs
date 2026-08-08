@@ -113,6 +113,19 @@ namespace TweakFirmware.ViewModels
             if (!_settingOutputPathInternally) _outputPathIsAuto = false;
         }
 
+        /// <summary>
+        /// Меняет только папку результата, имя файла оставляет прежним. Нужно для
+        /// перетаскивания папки на строку назначения: путь здесь — файл, и подставлять
+        /// вместо него папку было бы неверно.
+        /// </summary>
+        public void SetOutputFolderKeepingFileName(string folder)
+        {
+            string name = Path.GetFileName(OutputPath);
+            if (string.IsNullOrEmpty(name)) name = DefaultOutputFileName;
+
+            OutputPath = Path.Combine(folder, name);
+        }
+
         private void SetOutputPathAuto(string path)
         {
             _settingOutputPathInternally = true;

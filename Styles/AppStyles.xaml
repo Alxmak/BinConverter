@@ -70,9 +70,17 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="10" SnapsToDevicePixels="True">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-                    </Border>
+                    <!-- Рамка нужна для показа фокуса с клавиатуры (см. триггер ниже),
+                         поэтому здесь Grid, а не один Border: рамка рисуется поверх и
+                         не меняет размер кнопки, иначе при переходе табом кнопка бы
+                         дёргалась, а соседние — сдвигались. -->
+                    <Grid>
+                        <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="10" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <Border x:Name="FocusRing" CornerRadius="10" BorderThickness="2" BorderBrush="White"
+                                Margin="1" Visibility="Collapsed" SnapsToDevicePixels="True"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Opacity" Value="0.88"/>
@@ -82,6 +90,13 @@
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                        <!-- Свой шаблон отменил стандартную рамку фокуса, и пройти по
+                             вкладке табом было можно, а понять, где ты, — нет. Белая
+                             рамка читается на всех трёх цветах этих кнопок (синей,
+                             красной, оранжевой) в обеих темах. -->
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Visibility" Value="Visible"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

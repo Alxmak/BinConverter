@@ -8,6 +8,13 @@
       ScrollViewer.CanContentScroll="False">
 
 
+    <!-- Esc отменяет идущую операцию. Enter на «Начать» намеренно не назначен: на этих
+         страницах есть поля ввода, и нажатие Enter при правке пути запускало бы
+         многочасовую запись на диск. -->
+    <Page.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}"/>
+    </Page.InputBindings>
+
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
