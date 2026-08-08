@@ -208,11 +208,20 @@ def main() -> None:
         append_images=frames[:-1],
     )
 
+    # Отдельные PNG под конкретные места в интерфейсе — размер под каждое взят
+    # такой, чтобы WPF масштабировал как можно меньше:
+    #   256 — раздел «О программе» (показывается крупно)
+    #   64  — иконка окна: её Windows просит и мелкой (панель задач), и крупной
+    #         (Alt+Tab), так что нужен размер посередине
+    #   32  — иконка в заголовке окна: он рисует её в 16 точек, то есть ровно 32
+    #         пикселя при масштабе 200% и уменьшение вдвое при 100%. Из 64-го
+    #         кадра выходило уменьшение вчетверо, и это было заметно мылом.
     render(256).save("Assets/AppIcon-256.png")
     render(64).save("Assets/AppIcon-64.png")
+    render(32).save("Assets/AppIcon-32.png")
 
     print("Assets/AppIcon.ico:", ", ".join(f"{s}x{s}" for s in ICO_SIZES))
-    print("Assets/AppIcon-256.png, Assets/AppIcon-64.png")
+    print("Assets/AppIcon-256.png, AppIcon-64.png, AppIcon-32.png")
 
 
 if __name__ == "__main__":

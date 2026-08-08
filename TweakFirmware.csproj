@@ -39,6 +39,7 @@
   <ItemGroup>
     <Resource Include="Assets\AppIcon-256.png" />
     <Resource Include="Assets\AppIcon-64.png" />
+    <Resource Include="Assets\AppIcon-32.png" />
   </ItemGroup>
 
   <ItemGroup>

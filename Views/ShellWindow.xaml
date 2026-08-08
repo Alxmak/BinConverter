@@ -26,7 +26,12 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-64.png'}"/>
+        <!-- Иконка заголовка берётся из кадра на 32, а не на 64: заголовок рисует её
+             в 16 точек, то есть уменьшает вдвое при обычном масштабе и не уменьшает
+             вовсе при 200%. С 64-м кадром уменьшение было вчетверо и давало мыло.
+             Иконка самого окна (атрибут Icon выше) остаётся 64-й: её Windows просит
+             и мелкой для панели задач, и крупной для Alt+Tab. -->
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-32.png'}"/>
 
         <!-- Баннер автообновления: своя DataContext (UpdateManager), не зависит от
              OperationLockService, который используется остальным окном. -->
