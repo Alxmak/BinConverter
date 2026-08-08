@@ -93,20 +93,21 @@
                 </StackPanel>
             </Border>
 
-            <!-- Каждая папка — своя карточка со своим заголовком: раньше обе строки
-                 жили в одной безымянной карточке и приходилось подписывать их слева. -->
+            <!-- Каждая папка — своя карточка со своим заголовком. Подписи «Папка назначения»
+                 у строки нет: карточка уже названа по своей папке, а слева на её месте
+                 стоит галочка — она и работает подписью строки. Колонка та же
+                 (LabelColumnWidth), поэтому поле стоит там же, где на рабочих вкладках. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_ConvertFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"
-                              Margin="0,0,0,14"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
+                        <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
+                                  Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
                                     PlaceholderText="{loc:Loc Common_NoFolderSelected}"
                                     IsEnabled="{Binding CanEditConvertPath}"/>
@@ -119,15 +120,14 @@
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_MergeFolderTitle}" Style="{StaticResource CardTitle}"/>
-                    <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"
-                              Margin="0,0,0,14"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
+                        <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
+                                  Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
                                     PlaceholderText="{loc:Loc Common_NoFolderSelected}"
                                     IsEnabled="{Binding CanEditMergePath}"/>
