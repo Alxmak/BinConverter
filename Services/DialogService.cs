@@ -34,69 +34,70 @@ namespace TweakFirmware.Services
         public static Task ShowWarningAsync(string title, string message) => ShowAsync(title, message, Severity.Warning);
         public static Task ShowErrorAsync(string title, string message) => ShowAsync(title, message, Severity.Error);
 
-        private static async Task ShowAsync(string title, string message, Severity severity)
+        private static async Task ShowAsync(string title, string message, Severity severity, HashRow[]? hashes = null)
         {
             var box = new MessageBox
             {
                 Title = title,
-                Content = BuildContent(message, severity),
+                Content = BuildContent(message, severity, hashes),
                 CloseButtonText = Strings.Get("Common_OkButton")
             };
 
             SetOwner(box);
             await box.ShowDialogAsync();
         }
+
+        /// <summary>Подпись и сам хэш — одна строка итога в окне.</summary>
+        public readonly record struct HashRow(string Label, string Hash);
 
         /// <summary>
-        /// Итог с хэшем: под сообщением — подпись, сам хэш и кнопка копирования рядом.
-        /// Хэш нужен не «на посмотреть»: его вписывают в поле «Ожидаемый SHA-256» при
+        /// Итог с хэшами: под сообщением у каждого своя подпись и кнопка копирования.
+        /// Хэш нужен не «на посмотреть» — его вписывают в поле «Ожидаемый SHA-256» при
         /// обратной сборке, а раньше 64 знака из окна оставалось только перепечатывать.
         /// </summary>
-        public static async Task ShowInfoWithHashAsync(string title, string message, string hashLabel, string hash)
+        public static Task ShowInfoWithHashesAsync(string title, string message, params HashRow[] hashes) =>
+            ShowAsync(title, message, Severity.Info, hashes);
+
+        /// <summary>То же для расхождения хэшей: там их два, и оба нужны в буфере обмена
+        /// не меньше — именно с ними идут разбираться, почему результат не совпал.</summary>
+        public static Task ShowErrorWithHashesAsync(string title, string message, params HashRow[] hashes) =>
+            ShowAsync(title, message, Severity.Error, hashes);
+
+        /// <summary>
+        /// Строка хэша: подпись, под ней с отступом сам хэш, а кнопка копирования —
+        /// на уровне хэша, а не подписи.
+        /// </summary>
+        private static UIElement BuildHashRow(HashRow row)
         {
-            var box = new MessageBox
+            var block = new StackPanel { Margin = new Thickness(0, 16, 0, 0) };
+
+            var label = new TextBlock { Text = row.Label, TextWrapping = TextWrapping.Wrap };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            block.Children.Add(label);
+
+            var line = new Grid { Margin = new Thickness(0, 6, 0, 0) };
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            // Моноширинный и с переносами: 64 знака одной строкой в окно не влезают
+            // (см. HashDisplay).
+            var hash = new TextBlock
             {
-                Title = title,
-                Content = BuildHashContent(message, hashLabel, hash),
-                CloseButtonText = Strings.Get("Common_OkButton")
-            };
-
-            SetOwner(box);
-            await box.ShowDialogAsync();
-        }
-
-        private static object BuildHashContent(string message, string hashLabel, string hash)
-        {
-            var panel = new StackPanel();
-
-            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
-            panel.Children.Add(text);
-
-            var row = new Grid { Margin = new Thickness(0, 16, 0, 0) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            // Подпись обычным шрифтом, хэш — моноширинным и с переносами: 64 знака
-            // одной строкой в окно не влезают (см. HashDisplay).
-            var hashBlock = new TextBlock { TextWrapping = TextWrapping.Wrap };
-            hashBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
-            hashBlock.Inlines.Add(new Run(hashLabel));
-            hashBlock.Inlines.Add(new LineBreak());
-            hashBlock.Inlines.Add(new Run(HashDisplay.Wrap(hash))
-            {
+                Text = HashDisplay.Wrap(row.Hash),
+                TextWrapping = TextWrapping.Wrap,
                 FontFamily = new FontFamily("Cascadia Code, Consolas"),
                 FontSize = 12
-            });
-            Grid.SetColumn(hashBlock, 0);
-            row.Children.Add(hashBlock);
+            };
+            hash.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            Grid.SetColumn(hash, 0);
+            line.Children.Add(hash);
 
-            var copy = BuildCopyButton(hash);
+            var copy = BuildCopyButton(row.Hash);
             Grid.SetColumn(copy, 1);
-            row.Children.Add(copy);
+            line.Children.Add(copy);
 
-            panel.Children.Add(row);
-            return panel;
+            block.Children.Add(line);
+            return block;
         }
 
         /// <summary>
@@ -129,14 +130,32 @@ namespace TweakFirmware.Services
             return button;
         }
 
-        /// <summary>
-        /// Diagnostics: значок слева от текста. Он же единственное, что отличает
-        /// сообщения по важности, — цвет берётся тот же, которым размечены итоги
-        /// в самой программе (зелёный успех, красная неудача).
-        /// </summary>
-        private static object BuildContent(string message, Severity severity)
+        private static object BuildContent(string message, Severity severity, HashRow[]? hashes)
         {
-            if (severity == Severity.Info) return message;
+            // Простой случай оставляем строкой: так окно выглядит ровно так, как его
+            // рисует библиотека, без нашей вёрстки.
+            if (severity == Severity.Info && (hashes == null || hashes.Length == 0)) return message;
+
+            var panel = new StackPanel();
+            panel.Children.Add(BuildMessageRow(message, severity));
+
+            if (hashes != null)
+                foreach (var row in hashes) panel.Children.Add(BuildHashRow(row));
+
+            return panel;
+        }
+
+        /// <summary>
+        /// Значок слева от текста. Он же единственное, что отличает сообщения
+        /// по важности, — цвет берётся тот же, которым размечены итоги в самой
+        /// программе (красная неудача, оранжевое предупреждение).
+        /// </summary>
+        private static UIElement BuildMessageRow(string message, Severity severity)
+        {
+            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+
+            if (severity == Severity.Info) return text;
 
             var icon = new SymbolIcon
             {
@@ -148,9 +167,6 @@ namespace TweakFirmware.Services
                     ? Color.FromRgb(0xE5, 0x48, 0x4D)   // тот же красный, что у неудачи в карточках
                     : Color.FromRgb(0xF2, 0xA9, 0x3B))  // тот же оранжевый, что у паузы
             };
-
-            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
 
             var row = new Grid();
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });

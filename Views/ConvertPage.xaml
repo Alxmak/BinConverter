@@ -99,10 +99,17 @@
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                        <!-- Без нижнего отступа: обе строки — один список, а 10px между ними
-                             читались как лишняя пустая строка. -->
-                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
+                        <!-- Строки разведены межстрочным интервалом, а не отступами блоков:
+                             содержимое обоих собирается кодом и число строк заранее неизвестно,
+                             а так расстояние одинаковое между всеми — и внутри блока, и на стыке.
+                             BlockLineHeight нужен, чтобы LineHeight соблюдался точно, а не
+                             только увеличивал строку при необходимости. -->
+                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13"
+                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13"
+                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
                         <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
                                 HorizontalAlignment="Left" FontSize="11" Padding="10,4"
                                 Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>

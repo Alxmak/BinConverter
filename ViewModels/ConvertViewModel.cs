@@ -437,15 +437,19 @@ namespace TweakFirmware.ViewModels
                     // Хэш отдаётся отдельным полем, а не внутри текста: рядом с ним
                     // в окне стоит кнопка копирования — его вписывают в «Ожидаемый
                     // SHA-256» при обратной сборке.
-                    await DialogService.ShowInfoWithHashAsync(Strings.Get("Common_DoneTitle"),
+                    await DialogService.ShowInfoWithHashesAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Convert_DoneVerifiedMessage", outcome.PartsCreated),
-                        Strings.Get("Convert_HashConfirmedLabel"), outcome.SourceHash);
+                        new DialogService.HashRow(Strings.Get("Common_HashConfirmedLabel"), outcome.SourceHash));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 
                 case ConvertStatus.HashMismatch:
-                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"),
-                        Strings.Format("Convert_VerifyErrorMessage", HashDisplay.Wrap(outcome.SourceHash), HashDisplay.Wrap(outcome.RecombinedHash)));
+                    // Оба хэша — с кнопками копирования: именно с ними идут разбираться,
+                    // почему части не сложились в исходный файл.
+                    await DialogService.ShowErrorWithHashesAsync(Strings.Get("Common_VerifyErrorTitle"),
+                        Strings.Get("Convert_VerifyErrorMessage"),
+                        new DialogService.HashRow(Strings.Get("Convert_HashSourceLabel"), outcome.SourceHash),
+                        new DialogService.HashRow(Strings.Get("Convert_HashResultLabel"), outcome.RecombinedHash));
                     OpenResultFolder(outcome.OutputFolder);
                     break;
 

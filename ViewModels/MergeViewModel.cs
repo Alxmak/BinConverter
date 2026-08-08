@@ -323,21 +323,26 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.HashMatch:
-                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
-                        Strings.Format("Merge_ResultMatchMessage", HashDisplay.Wrap(outcome.MergedHash)));
+                    await DialogService.ShowInfoWithHashesAsync(Strings.Get("Common_DoneTitle"),
+                        Strings.Get("Merge_ResultMatchMessage"),
+                        new DialogService.HashRow(Strings.Get("Common_HashConfirmedLabel"), outcome.MergedHash));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.HashMismatch:
-                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"),
-                        Strings.Format("Merge_ResultMismatchMessage",
-                            HashDisplay.Wrap(Sha256Text.Normalize(ExpectedHashText)), HashDisplay.Wrap(outcome.MergedHash)));
+                    await DialogService.ShowErrorWithHashesAsync(Strings.Get("Common_VerifyErrorTitle"),
+                        Strings.Get("Merge_ResultMismatchMessage"),
+                        new DialogService.HashRow(Strings.Get("Merge_HashExpectedLabel"), Sha256Text.Normalize(ExpectedHashText)),
+                        new DialogService.HashRow(Strings.Get("Merge_HashActualLabel"), outcome.MergedHash));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
                 case MergeStatus.Completed:
-                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"),
-                        Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes, HashDisplay.Wrap(outcome.MergedHash)));
+                    // Ожидаемый хэш не задавали, сверять было не с чем — поэтому подпись
+                    // не «подтверждён», а просто «хэш собранного файла».
+                    await DialogService.ShowInfoWithHashesAsync(Strings.Get("Common_DoneTitle"),
+                        Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes),
+                        new DialogService.HashRow(Strings.Get("Merge_HashResultLabel"), outcome.MergedHash));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
