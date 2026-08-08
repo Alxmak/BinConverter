@@ -30,7 +30,7 @@ namespace TweakFirmware.ViewModels
         private static string BuildVersionText() =>
             Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
 
-        /// <summary>«Версия 2.7.0» — строка собирается кодом, разметка её не обновит.
+        /// <summary>Строка «Версия N» собирается кодом, разметка её не обновит.
         /// Итоги проверки обновлений и отправки письма не трогаем: это результат
         /// конкретного нажатия, он относится к моменту, когда его показали.</summary>
         protected override void OnLanguageChanged() => VersionText = BuildVersionText();
