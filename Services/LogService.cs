@@ -31,6 +31,9 @@ namespace TweakFirmware.Services
 
         public static void SaveAs(string destinationPath)
         {
+            // Файла может не быть: записи в него могли не удаваться (папка только для
+            // чтения, занят антивирусом) — журнал при этом всё равно виден на экране.
+            AppLogger.EnsureFileExists();
             File.Copy(AppLogger.LogFilePath, destinationPath, overwrite: true);
         }
     }

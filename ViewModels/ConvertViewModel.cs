@@ -373,6 +373,18 @@ namespace TweakFirmware.ViewModels
                     await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Convert_InvalidPartSize"));
                     break;
 
+                // Обе ситуации — «нельзя начать»: ни одного файла ещё не создано,
+                // и дело в настройках, а не в сорвавшейся работе.
+                case ConvertStatus.SourceInsideOutput:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"),
+                        Strings.Get("Convert_SourceInsideOutputMessage"));
+                    break;
+
+                case ConvertStatus.OutputNotUsable:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"),
+                        Strings.Format("Common_OutputNotUsableMessage", outcome.ErrorMessage));
+                    break;
+
                 case ConvertStatus.CancelledBeforeStart:
                     // Пользователь сам отказался в диалоге конфликта — сообщать ему об этом нечего.
                     break;

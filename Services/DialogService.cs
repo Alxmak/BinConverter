@@ -1,5 +1,14 @@
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using TweakFirmware.Core.Localization;
+
+// Пространство Wpf.Ui.Controls целиком не подключаем: в нём есть свои TextBlock и Grid,
+// и вместе с System.Windows.Controls они дали бы неоднозначность имён.
+using MessageBox = Wpf.Ui.Controls.MessageBox;
+using SymbolIcon = Wpf.Ui.Controls.SymbolIcon;
+using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
 
 namespace TweakFirmware.Services
 {
@@ -9,22 +18,75 @@ namespace TweakFirmware.Services
     /// Все всплывающие уведомления в программе идут через этот сервис — единый
     /// современный вид (Wpf.Ui.Controls.MessageBox, в стиле Fluent) вместо
     /// устаревших системных окон Windows.
+    ///
+    /// Три степени важности теперь и выглядят по-разному. Раньше ShowWarningAsync
+    /// и ShowErrorAsync были простыми псевдонимами ShowInfoAsync: код называл три
+    /// разных случая, а на экране они были неотличимы, и вся разница жила только
+    /// в тексте заголовка.
     /// </summary>
     public static class DialogService
     {
-        public static async Task ShowInfoAsync(string title, string message)
+        private enum Severity { Info, Warning, Error }
+
+        public static Task ShowInfoAsync(string title, string message) => ShowAsync(title, message, Severity.Info);
+        public static Task ShowWarningAsync(string title, string message) => ShowAsync(title, message, Severity.Warning);
+        public static Task ShowErrorAsync(string title, string message) => ShowAsync(title, message, Severity.Error);
+
+        private static async Task ShowAsync(string title, string message, Severity severity)
         {
-            var box = new Wpf.Ui.Controls.MessageBox
+            var box = new MessageBox
             {
                 Title = title,
-                Content = message,
+                Content = BuildContent(message, severity),
                 CloseButtonText = Strings.Get("Common_OkButton")
             };
+
+            SetOwner(box);
             await box.ShowDialogAsync();
         }
 
-        public static Task ShowWarningAsync(string title, string message) => ShowInfoAsync(title, message);
-        public static Task ShowErrorAsync(string title, string message) => ShowInfoAsync(title, message);
+        /// <summary>
+        /// Diagnostics: значок слева от текста. Он же единственное, что отличает
+        /// сообщения по важности, — цвет берётся тот же, которым размечены итоги
+        /// в самой программе (зелёный успех, красная неудача).
+        /// </summary>
+        private static object BuildContent(string message, Severity severity)
+        {
+            if (severity == Severity.Info) return message;
+
+            var icon = new SymbolIcon
+            {
+                Symbol = severity == Severity.Error ? SymbolRegular.ErrorCircle24 : SymbolRegular.Warning24,
+                FontSize = 20,
+                Margin = new Thickness(0, 1, 10, 0),
+                VerticalAlignment = VerticalAlignment.Top,
+                Foreground = new SolidColorBrush(severity == Severity.Error
+                    ? Color.FromRgb(0xE5, 0x48, 0x4D)   // тот же красный, что у неудачи в карточках
+                    : Color.FromRgb(0xF2, 0xA9, 0x3B))  // тот же оранжевый, что у паузы
+            };
+
+            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+
+            var row = new Grid();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Grid.SetColumn(icon, 0);
+            Grid.SetColumn(text, 1);
+            row.Children.Add(icon);
+            row.Children.Add(text);
+            return row;
+        }
+
+        /// <summary>
+        /// Без владельца окно сообщения центрируется по экрану, а не по программе,
+        /// и может оказаться позади главного окна — что выглядит как зависание.
+        /// </summary>
+        private static void SetOwner(Window box)
+        {
+            var main = Application.Current?.MainWindow;
+            if (main != null && main.IsLoaded && !ReferenceEquals(main, box)) box.Owner = main;
+        }
 
         /// <summary>
         /// Диалог с 2-3 вариантами ответа. Primary — основное действие, Secondary — альтернативное,
@@ -32,7 +94,7 @@ namespace TweakFirmware.Services
         /// </summary>
         public static async Task<DialogChoice> ShowConfirmAsync(string title, string message, string primaryText, string? secondaryText, string closeText)
         {
-            var box = new Wpf.Ui.Controls.MessageBox
+            var box = new MessageBox
             {
                 Title = title,
                 Content = message,
@@ -41,6 +103,7 @@ namespace TweakFirmware.Services
             };
             if (secondaryText != null) box.SecondaryButtonText = secondaryText;
 
+            SetOwner(box);
             var result = await box.ShowDialogAsync();
 
             // Сравниваем по имени значения, а не по самому enum — устойчиво к точному

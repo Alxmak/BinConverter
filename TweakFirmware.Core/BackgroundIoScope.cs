@@ -25,23 +25,32 @@ namespace TweakFirmware.Core
 
         public BackgroundIoScope()
         {
-            try
-            {
-                _active = SetPriorityClass(Process.GetCurrentProcess().Handle, PROCESS_MODE_BACKGROUND_BEGIN);
-            }
-            catch
-            {
-                _active = false; // если не получилось — работаем как обычно, без фонового режима
-            }
+            _active = TrySetMode(PROCESS_MODE_BACKGROUND_BEGIN);
         }
 
         public void Dispose()
         {
-            if (_active)
+            if (!_active) return;
+
+            TrySetMode(PROCESS_MODE_BACKGROUND_END);
+            _active = false;
+        }
+
+        /// <summary>
+        /// Process.GetCurrentProcess() возвращает объект, владеющий хендлом, — его нужно
+        /// освобождать. Без using каждая операция оставляла после себя два незакрытых
+        /// хендла (по одному на вход в режим и на выход).
+        /// </summary>
+        private static bool TrySetMode(uint mode)
+        {
+            try
             {
-                try { SetPriorityClass(Process.GetCurrentProcess().Handle, PROCESS_MODE_BACKGROUND_END); }
-                catch { /* игнорируем — процесс всё равно скоро завершит операцию */ }
-                _active = false;
+                using var process = Process.GetCurrentProcess();
+                return SetPriorityClass(process.Handle, mode);
+            }
+            catch
+            {
+                return false; // если не получилось — работаем как обычно, без фонового режима
             }
         }
     }

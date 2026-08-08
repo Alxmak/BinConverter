@@ -253,6 +253,19 @@ namespace TweakFirmware.ViewModels
                     await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Merge_SpecifyOutputFile"));
                     break;
 
+                // Самая дорогая из ошибок, которые программа может допустить: сборка
+                // поверх собираемой цепочки уничтожила бы её часть. Поэтому не «Ошибка»
+                // после, а «Нельзя начать» до.
+                case MergeStatus.OutputInsideChain:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"),
+                        Strings.Get("Merge_OutputInsideChainMessage"));
+                    break;
+
+                case MergeStatus.OutputNotUsable:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"),
+                        Strings.Format("Common_OutputNotUsableMessage", outcome.ErrorMessage));
+                    break;
+
                 case MergeStatus.CancelledBeforeStart:
                     // Пользователь сам отказался перезаписывать файл — сообщать ему об этом нечего.
                     break;

@@ -43,6 +43,15 @@ namespace TweakFirmware.Core.Operations
         /// <summary>Поле «Ожидаемый SHA-256» заполнено, но это не хэш.</summary>
         ExpectedHashInvalid,
 
+        /// <summary>Файл результата — это один из файлов собираемой цепочки.</summary>
+        OutputInsideChain,
+
+        /// <summary>
+        /// С папкой результата работать нельзя: путь набран с ошибкой, диска нет,
+        /// прав нет, или у сетевого ресурса не удалось спросить свободное место.
+        /// </summary>
+        OutputNotUsable,
+
         /// <summary>Цепочку частей собрать не удалось — пропуск, нечитаемый файл и подобное.</summary>
         ChainResolveFailed,
 
@@ -137,6 +146,31 @@ namespace TweakFirmware.Core.Operations
             string outputPath = request.OutputPath;
             bool pathChanged = false;
 
+            // Цепочка разбирается раньше вопроса о перезаписи: если она вообще нечитаема,
+            // спрашивать про перезапись незачем. И только зная её состав, можно проверить,
+            // что результат — не один из её же файлов.
+            long chainSize;
+            List<string> chain;
+            try
+            {
+                chainSize = GetChainSize(request.AnyChainFilePath, out chain);
+            }
+            catch (Exception ex)
+            {
+                return new MergeOutcome
+                {
+                    Status = MergeStatus.ChainResolveFailed,
+                    OutputPath = outputPath,
+                    ErrorMessage = ex.Message
+                };
+            }
+
+            // Самая дорогая ошибка из возможных: FileMerger создаёт файл результата до
+            // чтения частей, поэтому запись «в саму цепочку» обнулила бы одну из частей,
+            // а уборка за сорванной операцией её потом удалила. См. OutputCollision.
+            if (OutputCollision.ChainIncludes(chain, outputPath))
+                return new MergeOutcome { Status = MergeStatus.OutputInsideChain, OutputPath = outputPath };
+
             if (File.Exists(outputPath))
             {
                 var decision = await conflicts.ResolveOutputFileConflictAsync(outputPath);
@@ -152,46 +186,44 @@ namespace TweakFirmware.Core.Operations
                 }
             }
 
-            // Размер цепочки нужен, чтобы заранее понять, хватит ли места. Здесь же
-            // выясняется, что цепочка вообще читаемая и в ней нет пропусков.
-            long chainSize;
+            // Как и в Конвертировании: работа с папкой назначения может упасть по причинам,
+            // к сборке не относящимся (нет диска, нет прав, сетевой ресурс), и раньше это
+            // исключение улетало наружу и роняло приложение.
             try
             {
-                chainSize = GetChainSize(request.AnyChainFilePath, out _);
+                string outputFolder = Path.GetDirectoryName(outputPath) ?? ".";
+                Directory.CreateDirectory(outputFolder);
+
+                // Проверку можно отключить — та же галочка и та же форма записи, что
+                // в Конвертировании: раньше здесь она была безусловной, хотя это одна
+                // и та же проверка на обеих вкладках.
+                if (request.CheckDiskSpace)
+                {
+                    var check = spaceCheck is null
+                        ? DiskSpaceHelper.CheckSpace(outputFolder, chainSize)
+                        : spaceCheck(outputFolder, chainSize);
+                    if (!check.HasEnoughSpace)
+                    {
+                        return new MergeOutcome
+                        {
+                            Status = MergeStatus.NotEnoughSpace,
+                            OutputPath = outputPath,
+                            OutputPathChanged = pathChanged,
+                            ChainSizeBytes = chainSize,
+                            SpaceCheck = check
+                        };
+                    }
+                }
             }
             catch (Exception ex)
             {
                 return new MergeOutcome
                 {
-                    Status = MergeStatus.ChainResolveFailed,
+                    Status = MergeStatus.OutputNotUsable,
                     OutputPath = outputPath,
                     OutputPathChanged = pathChanged,
                     ErrorMessage = ex.Message
                 };
-            }
-
-            string outputFolder = Path.GetDirectoryName(outputPath) ?? ".";
-            Directory.CreateDirectory(outputFolder);
-
-            // Проверку можно отключить — та же галочка и та же форма записи, что
-            // в Конвертировании: раньше здесь она была безусловной, хотя это одна
-            // и та же проверка на обеих вкладках.
-            if (request.CheckDiskSpace)
-            {
-                var check = spaceCheck is null
-                    ? DiskSpaceHelper.CheckSpace(outputFolder, chainSize)
-                    : spaceCheck(outputFolder, chainSize);
-                if (!check.HasEnoughSpace)
-                {
-                    return new MergeOutcome
-                    {
-                        Status = MergeStatus.NotEnoughSpace,
-                        OutputPath = outputPath,
-                        OutputPathChanged = pathChanged,
-                        ChainSizeBytes = chainSize,
-                        SpaceCheck = check
-                    };
-                }
             }
 
             // Проверки пройдены — см. пояснение к тому же сигналу в ConvertOperation.

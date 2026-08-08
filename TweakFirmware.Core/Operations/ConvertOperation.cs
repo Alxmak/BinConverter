@@ -38,6 +38,15 @@ namespace TweakFirmware.Core.Operations
         /// <summary>Места на диске назначения не хватает — не начинали, чтобы не упасть на середине.</summary>
         NotEnoughSpace,
 
+        /// <summary>Один из создаваемых файлов лёг бы прямо на исходный.</summary>
+        SourceInsideOutput,
+
+        /// <summary>
+        /// С папкой назначения работать нельзя: путь набран с ошибкой, диска нет,
+        /// прав нет, или у сетевого ресурса не удалось спросить свободное место.
+        /// </summary>
+        OutputNotUsable,
+
         /// <summary>Пользователь отказался от записи при конфликте имён.</summary>
         CancelledBeforeStart,
 
@@ -129,43 +138,72 @@ namespace TweakFirmware.Core.Operations
             string baseName = request.EffectiveBaseFileName;
             string outputFolder = request.OutputFolder;
             bool folderChanged = false;
-            long sourceSize = new FileInfo(request.SourcePath).Length;
+            long sourceSize;
 
-            if (FileConflictHelper.AnyConflict(outputFolder, baseName))
+            // Всё, что ниже, трогает диск, а значит может упасть по причинам, никак не
+            // связанным с самой нарезкой: папки нет на несуществующем диске, путь набран
+            // с ошибкой, на папку нет прав, назначение — сетевой ресурс (у него нельзя
+            // спросить свободное место через DriveInfo). Раньше эти проверки шли без
+            // защиты и исключение улетало из операции наружу, а ViewModel его не ловит —
+            // то есть неверный путь в поле роняло приложение целиком.
+            try
             {
-                var decision = await conflicts.ResolveOutputFolderConflictAsync(outputFolder, baseName);
+                sourceSize = new FileInfo(request.SourcePath).Length;
 
-                if (decision == ConflictDecision.Cancel)
-                    return new ConvertOutcome { Status = ConvertStatus.CancelledBeforeStart, OutputFolder = outputFolder };
+                // Пишем в ту же папку, откуда читаем? Часть создаваемых файлов может лечь
+                // прямо на исходник — см. OutputCollision.
+                int expectedParts = FileSplitter.CalculateExpectedPartCount(sourceSize, request.MaxPartSizeBytes);
+                if (OutputCollision.SplitWouldOverwriteSource(request.SourcePath, outputFolder, baseName, expectedParts))
+                    return new ConvertOutcome { Status = ConvertStatus.SourceInsideOutput, OutputFolder = outputFolder };
 
-                if (decision == ConflictDecision.UseAlternative)
+                if (FileConflictHelper.AnyConflict(outputFolder, baseName))
                 {
-                    outputFolder = FileConflictHelper.SuggestAlternativeFolder(outputFolder);
-                    folderChanged = true;
-                    log(Strings.Format("Convert_ConflictLog", outputFolder));
+                    var decision = await conflicts.ResolveOutputFolderConflictAsync(outputFolder, baseName);
+
+                    if (decision == ConflictDecision.Cancel)
+                        return new ConvertOutcome { Status = ConvertStatus.CancelledBeforeStart, OutputFolder = outputFolder };
+
+                    if (decision == ConflictDecision.UseAlternative)
+                    {
+                        outputFolder = FileConflictHelper.SuggestAlternativeFolder(outputFolder);
+                        folderChanged = true;
+                        log(Strings.Format("Convert_ConflictLog", outputFolder));
+                    }
+                }
+
+                // Создаём папку до проверки места: свободное место считается по её диску,
+                // а у несуществующего пути диск определить не всегда возможно.
+                Directory.CreateDirectory(outputFolder);
+
+                if (request.CheckDiskSpace)
+                {
+                    var check = spaceCheck is null
+                        ? DiskSpaceHelper.CheckSpace(outputFolder, sourceSize)
+                        : spaceCheck(outputFolder, sourceSize);
+                    if (!check.HasEnoughSpace)
+                    {
+                        return new ConvertOutcome
+                        {
+                            Status = ConvertStatus.NotEnoughSpace,
+                            OutputFolder = outputFolder,
+                            OutputFolderChanged = folderChanged,
+                            SourceSizeBytes = sourceSize,
+                            SpaceCheck = check
+                        };
+                    }
                 }
             }
-
-            // Создаём папку до проверки места: свободное место считается по её диску,
-            // а у несуществующего пути диск определить не всегда возможно.
-            Directory.CreateDirectory(outputFolder);
-
-            if (request.CheckDiskSpace)
+            catch (Exception ex)
             {
-                var check = spaceCheck is null
-                    ? DiskSpaceHelper.CheckSpace(outputFolder, sourceSize)
-                    : spaceCheck(outputFolder, sourceSize);
-                if (!check.HasEnoughSpace)
+                // Ни одного файла ещё не создано, поэтому это не Failed («сорвалось на
+                // середине»), а «нельзя начать»: убирать нечего, а причина — в настройках.
+                return new ConvertOutcome
                 {
-                    return new ConvertOutcome
-                    {
-                        Status = ConvertStatus.NotEnoughSpace,
-                        OutputFolder = outputFolder,
-                        OutputFolderChanged = folderChanged,
-                        SourceSizeBytes = sourceSize,
-                        SpaceCheck = check
-                    };
-                }
+                    Status = ConvertStatus.OutputNotUsable,
+                    OutputFolder = outputFolder,
+                    OutputFolderChanged = folderChanged,
+                    ErrorMessage = ex.Message
+                };
             }
 
             // Все проверки пройдены и работа сейчас начнётся. Отдельный сигнал нужен потому,

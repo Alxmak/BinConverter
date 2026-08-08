@@ -92,6 +92,90 @@ namespace TweakFirmware.Tests
             Assert.False(outcome.Succeeded);
         }
 
+        // ============ Результат внутри собираемой цепочки ============
+
+        [Fact]
+        public async Task OutputIsTheChainBaseFile_RefusedAndNothingIsTouched()
+        {
+            // Без этой проверки FileMerger обнулял базовый файл (он создаётся на запись
+            // до чтения частей), затем падал на чтении, а уборка его удаляла — часть
+            // прошивки исчезала безвозвратно.
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            long sizeBefore = new FileInfo(chain).Length;
+
+            var outcome = await RunAsync(new MergeRequest { AnyChainFilePath = chain, OutputPath = chain });
+
+            Assert.Equal(MergeStatus.OutputInsideChain, outcome.Status);
+            Assert.True(File.Exists(chain));
+            Assert.Equal(sizeBefore, new FileInfo(chain).Length);
+        }
+
+        [Fact]
+        public async Task OutputIsAMiddlePartOfTheChain_AlsoRefused()
+        {
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            string part2 = chain + ".part2";
+            long sizeBefore = new FileInfo(part2).Length;
+
+            var outcome = await RunAsync(new MergeRequest { AnyChainFilePath = chain, OutputPath = part2 });
+
+            Assert.Equal(MergeStatus.OutputInsideChain, outcome.Status);
+            Assert.Equal(sizeBefore, new FileInfo(part2).Length);
+        }
+
+        [Fact]
+        public async Task OutputIsRefusedBeforeAskingAboutOverwriting()
+        {
+            // Порядок важен: спросить «перезаписать?» и только потом отказать — значит
+            // предложить человеку согласиться на то, что всё равно не будет сделано.
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            var resolver = new CountingResolver();
+
+            var outcome = await MergeOperation.RunAsync(
+                new MergeRequest { AnyChainFilePath = chain, OutputPath = chain },
+                resolver, null, Log, null, CancellationToken.None);
+
+            Assert.Equal(MergeStatus.OutputInsideChain, outcome.Status);
+            Assert.Equal(0, resolver.Calls);
+        }
+
+        [Fact]
+        public async Task OutputNextToTheChainButUnderAnotherName_IsFine()
+        {
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            string output = Path.Combine(Path.GetDirectoryName(chain)!, "emmc_merged.bin");
+
+            var outcome = await RunAsync(new MergeRequest { AnyChainFilePath = chain, OutputPath = output });
+
+            Assert.Equal(MergeStatus.Completed, outcome.Status);
+            Assert.Equal(4 * 1024, new FileInfo(output).Length);
+        }
+
+        // ============ Непригодная папка результата ============
+
+        [Fact]
+        public async Task ImpossibleOutputPath_IsReportedInsteadOfThrowing()
+        {
+            // Раньше исключение из Directory.CreateDirectory улетало из операции наружу,
+            // а ViewModel его не ловит — приложение падало от одной опечатки в поле.
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+
+            // Папку создать невозможно, потому что по этому пути уже лежит файл.
+            // Способ надёжнее, чем недопустимые символы: он не зависит от того, какая
+            // именно проверка пути срабатывает в конкретной версии .NET.
+            string blocker = Path.Combine(_root, "это-файл-а-не-папка");
+            File.WriteAllText(blocker, "x");
+
+            var outcome = await RunAsync(new MergeRequest
+            {
+                AnyChainFilePath = chain,
+                OutputPath = Path.Combine(blocker, "merged.bin")
+            });
+
+            Assert.Equal(MergeStatus.OutputNotUsable, outcome.Status);
+            Assert.NotEqual("", outcome.ErrorMessage);
+        }
+
         // ============ Разбор поля «Ожидаемый SHA-256» ============
 
         [Theory]

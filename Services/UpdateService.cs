@@ -140,7 +140,12 @@ namespace TweakFirmware.Services
         public static async Task<string> DownloadInstallerAsync(
             string url, string fileName, IProgress<double>? progress, CancellationToken ct)
         {
-            string tempPath = Path.Combine(Path.GetTempPath(), fileName);
+            // GetFileName обязателен: имя приходит из описания релиза на GitHub, то есть
+            // снаружи. Имя вида "..\..\что-то.exe" вывело бы запись за пределы %TEMP%.
+            string safeName = Path.GetFileName(fileName);
+            if (string.IsNullOrWhiteSpace(safeName)) safeName = "TweakFirmwareSetup.exe";
+
+            string tempPath = Path.Combine(Path.GetTempPath(), safeName);
 
             using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
             response.EnsureSuccessStatusCode();

@@ -455,6 +455,87 @@ namespace TweakFirmware.Tests
             Assert.Equal(ConvertStatus.Cancelled, outcome.Status);
         }
 
+        // ============ Пишем туда, откуда читаем ============
+
+        [Fact]
+        public async Task OutputFolderIsTheSourceFolderWithTheSameName_RefusedBeforeStarting()
+        {
+            // Исходник и базовый создаваемый файл — один и тот же путь. Windows не даст
+            // открыть его на запись (он открыт на чтение), но операция умирала бы
+            // посреди работы с невнятной ошибкой ввода-вывода вместо понятного отказа.
+            string source = MakeSource(4096);
+
+            var outcome = await RunAsync(new ConvertRequest
+            {
+                SourcePath = source,
+                OutputFolder = _root,
+                BaseFileName = Path.GetFileName(source),
+                MaxPartSizeBytes = 1024
+            });
+
+            Assert.Equal(ConvertStatus.SourceInsideOutput, outcome.Status);
+            Assert.Equal(4096, new FileInfo(source).Length);
+        }
+
+        [Fact]
+        public async Task SourceIsOneOfThePartsThatWouldBeWritten_AlsoRefused()
+        {
+            // Имена «разные», но нарезка создаёт emmc.bin.part1 в той же папке — ровно
+            // поверх исходника.
+            string source = Path.Combine(_root, "emmc.bin.part1");
+            File.WriteAllBytes(source, new byte[4096]);
+
+            var outcome = await RunAsync(new ConvertRequest
+            {
+                SourcePath = source,
+                OutputFolder = _root,
+                BaseFileName = "emmc.bin",
+                MaxPartSizeBytes = 1024
+            });
+
+            Assert.Equal(ConvertStatus.SourceInsideOutput, outcome.Status);
+        }
+
+        [Fact]
+        public async Task SameFolderButAnotherName_IsFine()
+        {
+            string source = MakeSource(2048);
+
+            var outcome = await RunAsync(new ConvertRequest
+            {
+                SourcePath = source,
+                OutputFolder = _root,
+                BaseFileName = "emmc.bin",
+                MaxPartSizeBytes = 1024
+            });
+
+            Assert.Equal(ConvertStatus.Completed, outcome.Status);
+            Assert.Equal(2, outcome.PartsCreated);
+        }
+
+        // ============ Непригодная папка назначения ============
+
+        [Fact]
+        public async Task ImpossibleOutputFolder_IsReportedInsteadOfThrowing()
+        {
+            // Раньше исключение из Directory.CreateDirectory улетало наружу, а ViewModel
+            // его не ловит — приложение падало от одной опечатки в поле пути.
+            string blocker = Path.Combine(_root, "это-файл-а-не-папка");
+            File.WriteAllText(blocker, "x");
+
+            var outcome = await RunAsync(new ConvertRequest
+            {
+                SourcePath = MakeSource(1024),
+                OutputFolder = Path.Combine(blocker, "out"),
+                MaxPartSizeBytes = 1024
+            });
+
+            Assert.Equal(ConvertStatus.OutputNotUsable, outcome.Status);
+            Assert.NotEqual("", outcome.ErrorMessage);
+            // Ничего не начиналось, значит и убирать было нечего.
+            Assert.Equal(0, outcome.CreatedFileCount);
+        }
+
         // ============ Вспомогательное ============
 
         private string MakeSource(int sizeBytes)
