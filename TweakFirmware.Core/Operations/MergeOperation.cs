@@ -18,7 +18,14 @@ namespace TweakFirmware.Core.Operations
         /// <summary>Необязательный ожидаемый SHA-256 собранного файла.</summary>
         public string ExpectedHash { get; init; } = "";
 
-        public bool HasExpectedHash => !string.IsNullOrWhiteSpace(ExpectedHash);
+        public bool HasExpectedHash => !Sha256Text.IsBlank(ExpectedHash);
+
+        /// <summary>
+        /// Заполненное поле, но не похожее на SHA-256. Отделено от <see cref="HasExpectedHash"/>,
+        /// потому что реакция разная: пустое поле — законный случай (сверять не просили),
+        /// а мусор в поле надо показать до начала работы, а не после.
+        /// </summary>
+        public bool HasMalformedExpectedHash => HasExpectedHash && !Sha256Text.LooksValid(ExpectedHash);
     }
 
     public enum MergeStatus
@@ -28,6 +35,9 @@ namespace TweakFirmware.Core.Operations
 
         /// <summary>Не задан файл результата.</summary>
         OutputPathNotSpecified,
+
+        /// <summary>Поле «Ожидаемый SHA-256» заполнено, но это не хэш.</summary>
+        ExpectedHashInvalid,
 
         /// <summary>Цепочку частей собрать не удалось — пропуск, нечитаемый файл и подобное.</summary>
         ChainResolveFailed,
@@ -115,6 +125,11 @@ namespace TweakFirmware.Core.Operations
             if (string.IsNullOrWhiteSpace(request.OutputPath))
                 return new MergeOutcome { Status = MergeStatus.OutputPathNotSpecified };
 
+            // До конфликтов и до первого байта: сборка идёт часами, и узнавать об опечатке
+            // в конце — значит потратить их зря.
+            if (request.HasMalformedExpectedHash)
+                return new MergeOutcome { Status = MergeStatus.ExpectedHashInvalid };
+
             string outputPath = request.OutputPath;
             bool pathChanged = false;
 
@@ -188,7 +203,10 @@ namespace TweakFirmware.Core.Operations
                 MergeStatus status = MergeStatus.Completed;
                 if (request.HasExpectedHash)
                 {
-                    bool match = string.Equals(request.ExpectedHash.Trim(), result.MergedHash, StringComparison.OrdinalIgnoreCase);
+                    // Normalize, а не Trim: хэш, скопированный из нашего же окна с итогом,
+                    // приходит разбитым на строки — там он переносится, чтобы влезть.
+                    bool match = string.Equals(
+                        Sha256Text.Normalize(request.ExpectedHash), result.MergedHash, StringComparison.OrdinalIgnoreCase);
                     log(match ? Strings.Get("Merge_HashMatchLog") : Strings.Get("Merge_HashMismatchLog"));
                     status = match ? MergeStatus.HashMatch : MergeStatus.HashMismatch;
                 }

@@ -22,6 +22,15 @@ namespace TweakFirmware.Services
 
         [ObservableProperty] private string currentLanguage = Strings.DefaultLanguage;
 
+        /// <summary>
+        /// Язык переключили. Нужно тем текстам, которые заданы не разметкой, а кодом:
+        /// привязка {loc:Loc} обновляется сама, а строка, однажды присвоенная свойству
+        /// ViewModel через Strings.Get, так и останется на прежнем языке. Подписываться
+        /// следует парой Attach/Detach (см. LocalizedViewModel), иначе обработчики
+        /// накапливаются при каждом переходе между разделами.
+        /// </summary>
+        public event Action? LanguageChanged;
+
         /// <summary>Индексатор для XAML-привязок вида {Binding Source={x:Static ...Instance}, Path=[Key]}.</summary>
         public string this[string key] => Strings.Get(key);
 
@@ -58,6 +67,8 @@ namespace TweakFirmware.Services
             // WPF слушает именно это специальное имя свойства, чтобы обновить все
             // привязки к индексатору — в т.ч. те, что созданы через {loc:Loc ...}.
             OnPropertyChanged(Binding.IndexerName);
+
+            LanguageChanged?.Invoke();
         }
 
         private static string LoadSavedLanguage()

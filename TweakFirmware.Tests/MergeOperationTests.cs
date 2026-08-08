@@ -92,6 +92,80 @@ namespace TweakFirmware.Tests
             Assert.False(outcome.Succeeded);
         }
 
+        // ============ Разбор поля «Ожидаемый SHA-256» ============
+
+        [Theory]
+        [InlineData("не хэш")]
+        [InlineData("e3b0c44298fc1c14")]                                                    // обрезанная копия
+        [InlineData("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8")]      // на два знака короче
+        [InlineData("z3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")]    // 64 знака, но не hex
+        public async Task MalformedExpectedHash_StopsBeforeDoingAnyWork(string expected)
+        {
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            string output = Path.Combine(_root, "merged.bin");
+
+            var outcome = await RunAsync(new MergeRequest
+            {
+                AnyChainFilePath = chain,
+                OutputPath = output,
+                ExpectedHash = expected
+            });
+
+            // Именно до работы: иначе об опечатке узнаёшь через часы сборки, да ещё и
+            // сообщением про повреждённые данные.
+            Assert.Equal(MergeStatus.ExpectedHashInvalid, outcome.Status);
+            Assert.False(File.Exists(output));
+            Assert.Empty(_log);
+        }
+
+        [Fact]
+        public async Task BlankExpectedHash_IsNotMalformed_ItJustMeansNoComparison()
+        {
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+
+            var outcome = await RunAsync(new MergeRequest
+            {
+                AnyChainFilePath = chain,
+                OutputPath = Path.Combine(_root, "merged.bin"),
+                ExpectedHash = "   \r\n  "
+            });
+
+            Assert.Equal(MergeStatus.Completed, outcome.Status);
+        }
+
+        [Fact]
+        public async Task ExpectedHashPastedWithLineBreaks_StillMatches()
+        {
+            // Хэш, скопированный из нашего же окна с итогом, разбит на строки.
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            var full = await RunAsync(new MergeRequest { AnyChainFilePath = chain, OutputPath = Path.Combine(_root, "full.bin") });
+
+            var outcome = await RunAsync(new MergeRequest
+            {
+                AnyChainFilePath = chain,
+                OutputPath = Path.Combine(_root, "again.bin"),
+                ExpectedHash = HashDisplay.Wrap(full.MergedHash)
+            });
+
+            Assert.Equal(MergeStatus.HashMatch, outcome.Status);
+        }
+
+        [Fact]
+        public async Task ExpectedHashInDifferentCase_StillMatches()
+        {
+            string chain = await MakeChain(4 * 1024, partSize: 1024);
+            var full = await RunAsync(new MergeRequest { AnyChainFilePath = chain, OutputPath = Path.Combine(_root, "full.bin") });
+
+            var outcome = await RunAsync(new MergeRequest
+            {
+                AnyChainFilePath = chain,
+                OutputPath = Path.Combine(_root, "again.bin"),
+                ExpectedHash = full.MergedHash.ToUpperInvariant()
+            });
+
+            Assert.Equal(MergeStatus.HashMatch, outcome.Status);
+        }
+
         // ============ Размер цепочки ============
 
         [Fact]

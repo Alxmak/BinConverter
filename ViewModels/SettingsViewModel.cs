@@ -1,9 +1,8 @@
 using System;
-using System.Windows;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using TweakFirmware.Core;
 using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
@@ -114,11 +113,17 @@ namespace TweakFirmware.ViewModels
             RefreshFolderDisplays();
         }
 
+        /// <summary>
+        /// Чистит журнал — и файл на диске, и то, что показано в карточке «Журнал».
+        /// Раньше вызывался AppLogger.ClearLog напрямую: файл становился пустым, а на
+        /// экране оставались все прежние строки, и «Сохранить» отдавал файл, не
+        /// совпадающий с тем, что человек видит. LogService.Clear делает и то, и другое.
+        /// </summary>
         [RelayCommand]
-        private void ClearCache()
+        private async Task ClearLogAsync()
         {
-            AppLogger.ClearLog();
-            MessageBox.Show(Strings.Get("Settings_CacheClearedMessage"), Strings.Get("Settings_CacheClearedTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            LogService.Clear();
+            await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), Strings.Get("Settings_LogClearedMessage"));
         }
     }
 }

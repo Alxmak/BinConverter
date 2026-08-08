@@ -70,10 +70,34 @@ namespace TweakFirmware.ViewModels
 
         private CancellationTokenSource? _cts;
 
+        /// <summary>
+        /// Итог последнего сравнения — чтобы после смены языка перерисовать карточку
+        /// результата, а не сбрасывать её. Все её тексты собираются кодом, поэтому сами
+        /// они не переведутся.
+        /// </summary>
+        private VerifyOutcome? _lastOutcome;
+
         public VerifyViewModel()
         {
             for (int i = 0; i < VerifyRequest.MinFiles; i++) Files.Add(new VerifyFileSlot());
             RenumberFiles();
+        }
+
+        protected override void OnLanguageChanged()
+        {
+            // Подписи «Файл 1»/«Файл 2» и заметка про предел файлов.
+            RenumberFiles();
+            OnPropertyChanged(nameof(MaxFilesNote));
+
+            if (_lastOutcome is { HasResult: true } outcome)
+            {
+                ShowGroups(outcome);
+                ApplyResultTexts(outcome);
+            }
+            else
+            {
+                ResultHeadline = Strings.Get("Verify_NoResultYet");
+            }
         }
 
         partial void OnIsBusyChanged(bool value)
@@ -172,6 +196,7 @@ namespace TweakFirmware.ViewModels
                 var outcome = await VerifyOperation.RunAsync(
                     request, progress, AppLogger.Log, _cts.Token, MarkOperationStarted);
 
+                _lastOutcome = outcome;
                 ShowGroups(outcome);
                 await ShowOutcomeAsync(outcome);
             }
@@ -181,6 +206,7 @@ namespace TweakFirmware.ViewModels
                 CurrentFileLabel = "";
                 IsBusy = false;
                 OperationLockService.Instance.IsBusy = false;
+                _cts?.Dispose();
                 _cts = null;
             }
         }
@@ -196,6 +222,7 @@ namespace TweakFirmware.ViewModels
             ResultHeadline = Strings.Get("Verify_NoResultYet");
             ResultSubline = "";
             ResultGroups.Clear();
+            _lastOutcome = null;
             OverallProgress = 0;
         }
 
@@ -222,6 +249,32 @@ namespace TweakFirmware.ViewModels
             }
         }
 
+        /// <summary>
+        /// Заголовок и пояснение в карточке результата. Отдельным методом, потому что
+        /// вызывается дважды: по окончании сравнения и заново при смене языка.
+        /// </summary>
+        private void ApplyResultTexts(VerifyOutcome outcome)
+        {
+            bool allSame = outcome.Status == VerifyStatus.AllIdentical;
+
+            IsResultGood = allSame;
+            ResultHeadline = Strings.Get(allSame ? "Verify_AllIdenticalHeadline" : "Verify_DifferenceHeadline");
+
+            if (allSame)
+            {
+                ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount);
+            }
+            else
+            {
+                // Когда совпавших пар нет вовсе, «1 из 5 идентичны» звучало бы странно.
+                ResultSubline = outcome.LargestGroupSize > 1
+                    ? Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount)
+                    : Strings.Format("Verify_AllDifferentSubline", outcome.FileCount);
+            }
+
+            HasResult = true;
+        }
+
         private async Task ShowOutcomeAsync(VerifyOutcome outcome)
         {
             switch (outcome.Status)
@@ -237,23 +290,14 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case VerifyStatus.AllIdentical:
-                    IsResultGood = true;
-                    ResultHeadline = Strings.Get("Verify_AllIdenticalHeadline");
-                    ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount);
-                    HasResult = true;
+                    ApplyResultTexts(outcome);
                     // Итог сообщается окном, как в Конвертировании и Сборке: операция может
                     // идти долго, и человек к этому моменту уже мог отойти от компьютера.
                     await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Different:
-                    IsResultGood = false;
-                    ResultHeadline = Strings.Get("Verify_DifferenceHeadline");
-                    // Когда совпавших пар нет вовсе, «1 из 5 идентичны» звучало бы странно.
-                    ResultSubline = outcome.LargestGroupSize > 1
-                        ? Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount)
-                        : Strings.Format("Verify_AllDifferentSubline", outcome.FileCount);
-                    HasResult = true;
+                    ApplyResultTexts(outcome);
                     await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"), BuildResultMessage());
                     break;
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
@@ -19,7 +18,7 @@ namespace TweakFirmware.ViewModels
     /// <see cref="DialogService"/> и есть то единое место, через которое по договорённости
     /// идут все всплывающие сообщения.
     /// </summary>
-    public abstract partial class LogHostViewModel : ObservableObject
+    public abstract partial class LogHostViewModel : LocalizedViewModel
     {
         /// <summary>Прочерк вместо пустого места в строках, которые видны всегда.</summary>
         protected const string NoValuePlaceholder = "—";

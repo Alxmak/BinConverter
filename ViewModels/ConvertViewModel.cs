@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -81,9 +80,17 @@ namespace TweakFirmware.ViewModels
             OutputFolder = GetDefaultOutputFolder();
         }
 
-        /// <summary>Больше не требуется — журнал общий и не привязан к жизни этой ViewModel,
-        /// но метод оставлен для совместимости точки вызова из code-behind.</summary>
-        public void Detach() { }
+        /// <summary>
+        /// Тексты, заданные кодом, после смены языка: имя пользовательского пресета
+        /// в списке, подпись кнопки списка файлов, подпись кнопки паузы и вся
+        /// «Общая информация» — она собирается в UpdatePreview, а не разметкой.
+        /// </summary>
+        protected override void OnLanguageChanged()
+        {
+            Presets[^1].Name = Strings.Get("Convert_CustomPresetName");
+            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            UpdatePreview();
+        }
 
         private static string GetDefaultOutputFolder() => OutputPathSettingsService.GetConvertFolder();
 
@@ -114,17 +121,20 @@ namespace TweakFirmware.ViewModels
         partial void OnIsVerifyingChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
         [RelayCommand]
-        private void BrowseSource()
+        private async Task BrowseSourceAsync()
         {
             var dlg = new OpenFileDialog { Filter = Strings.Get("Common_BinFileFilter") };
-            if (dlg.ShowDialog() == true) SetSource(dlg.FileName);
+            if (dlg.ShowDialog() == true) await SetSourceAsync(dlg.FileName);
         }
 
-        public void SetSource(string path)
+        /// <summary>Асинхронный, потому что о ненайденном файле сообщает окно в стиле
+        /// программы (<see cref="DialogService"/>), а не системный MessageBox.</summary>
+        public async Task SetSourceAsync(string path)
         {
             if (!File.Exists(path))
             {
-                MessageBox.Show(Strings.Get("Common_FileNotFoundMessage"), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                await DialogService.ShowWarningAsync(Strings.Get("Common_FileNotFoundTitle"),
+                    Strings.Format("Common_FileNotFoundMessage", path));
                 return;
             }
 
@@ -292,6 +302,9 @@ namespace TweakFirmware.ViewModels
                 IsPaused = false;
                 IsVerifying = false;
                 OperationLockService.Instance.IsBusy = false;
+                // Dispose до обнуления: и здесь, и в Cancel мы в потоке интерфейса,
+                // поэтому «отменить уже освобождённый» невозможно.
+                _cts?.Dispose();
                 _cts = null;
                 _pauseController = null;
             }

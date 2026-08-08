@@ -8,10 +8,15 @@ namespace TweakFirmware.Views
 {
     public partial class AboutPage : Page
     {
+        private readonly AboutViewModel _viewModel = new();
+
         public AboutPage()
         {
             InitializeComponent();
-            DataContext = new AboutViewModel();
+            DataContext = _viewModel;
+            // Парой: ViewModel следит за сменой языка только пока страница на экране.
+            Loaded += (_, _) => _viewModel.Attach();
+            Unloaded += (_, _) => _viewModel.Detach();
 
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }

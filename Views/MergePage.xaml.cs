@@ -13,6 +13,8 @@ namespace TweakFirmware.Views
         {
             InitializeComponent();
             DataContext = _viewModel;
+            // Парой: ViewModel следит за сменой языка только пока страница на экране.
+            Loaded += (_, _) => _viewModel.Attach();
             Unloaded += (_, _) => _viewModel.Detach();
 
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
@@ -29,11 +31,11 @@ namespace TweakFirmware.Views
             e.Handled = true;
         }
 
-        private void SourceRow_Drop(object sender, DragEventArgs e)
+        private async void SourceRow_Drop(object sender, DragEventArgs e)
         {
             if (_viewModel.IsBusy) return;
             if (e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
-                _viewModel.SetSource(files[0]);
+                await _viewModel.SetSourceAsync(files[0]);
         }
     }
 }

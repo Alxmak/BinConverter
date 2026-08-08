@@ -139,10 +139,10 @@
 
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_ClearCacheTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{loc:Loc Settings_ClearCacheDescription}" TextWrapping="Wrap"
+                    <TextBlock Text="{loc:Loc Settings_ClearLogTitle}" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Text="{loc:Loc Settings_ClearLogDescription}" TextWrapping="Wrap"
                                FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,12"/>
-                    <Button Content="{loc:Loc Settings_ClearCacheTitle}" Command="{Binding ClearCacheCommand}"
+                    <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
                             HorizontalAlignment="Left"/>
                 </StackPanel>
             </Border>

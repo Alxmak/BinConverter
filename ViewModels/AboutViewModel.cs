@@ -10,7 +10,7 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class AboutViewModel : ObservableObject
+    public partial class AboutViewModel : LocalizedViewModel
     {
         [ObservableProperty] private string versionText;
         [ObservableProperty]
@@ -24,8 +24,16 @@ namespace TweakFirmware.ViewModels
 
         public AboutViewModel()
         {
-            versionText = Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
+            versionText = BuildVersionText();
         }
+
+        private static string BuildVersionText() =>
+            Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
+
+        /// <summary>«Версия 2.7.0» — строка собирается кодом, разметка её не обновит.
+        /// Итоги проверки обновлений и отправки письма не трогаем: это результат
+        /// конкретного нажатия, он относится к моменту, когда его показали.</summary>
+        protected override void OnLanguageChanged() => VersionText = BuildVersionText();
 
         // Пункт 5: та же логика, что и фоновая ежедневная проверка — если обновление
         // найдено, дальше им занимается общий баннер в ShellWindow (скачивание и тихая

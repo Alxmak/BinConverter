@@ -13,6 +13,9 @@ namespace TweakFirmware.Views
         {
             InitializeComponent();
             DataContext = _viewModel;
+            // Парой: ViewModel следит за сменой языка только пока страница на экране.
+            Loaded += (_, _) => _viewModel.Attach();
+            Unloaded += (_, _) => _viewModel.Detach();
 
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }

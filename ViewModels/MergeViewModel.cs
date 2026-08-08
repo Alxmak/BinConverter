@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -64,7 +63,15 @@ namespace TweakFirmware.ViewModels
             SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), "emmc_merged.bin"));
         }
 
-        public void Detach() { }
+        /// <summary>
+        /// Тексты, заданные кодом: подпись кнопки паузы и карточка «Общая информация» —
+        /// её строки собирает TryResolveChain, а не разметка.
+        /// </summary>
+        protected override void OnLanguageChanged()
+        {
+            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            TryResolveChain();
+        }
 
         partial void OnIsBusyChanged(bool value)
         {
@@ -90,17 +97,20 @@ namespace TweakFirmware.ViewModels
         }
 
         [RelayCommand]
-        private void BrowseSource()
+        private async Task BrowseSourceAsync()
         {
             var dlg = new OpenFileDialog { Filter = Strings.Get("Merge_SourceFileFilter") };
-            if (dlg.ShowDialog() == true) SetSource(dlg.FileName);
+            if (dlg.ShowDialog() == true) await SetSourceAsync(dlg.FileName);
         }
 
-        public void SetSource(string path)
+        /// <summary>Асинхронный по той же причине, что и в Конвертировании: сообщение
+        /// о ненайденном файле идёт через <see cref="DialogService"/>.</summary>
+        public async Task SetSourceAsync(string path)
         {
             if (!File.Exists(path))
             {
-                MessageBox.Show(Strings.Get("Common_FileNotFoundMessage"), Strings.Get("Common_Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                await DialogService.ShowWarningAsync(Strings.Get("Common_FileNotFoundTitle"),
+                    Strings.Format("Common_FileNotFoundMessage", path));
                 return;
             }
 
@@ -177,6 +187,7 @@ namespace TweakFirmware.ViewModels
                 IsBusy = false;
                 IsPaused = false;
                 OperationLockService.Instance.IsBusy = false;
+                _cts?.Dispose();
                 _cts = null;
                 _pauseController = null;
             }
@@ -208,6 +219,13 @@ namespace TweakFirmware.ViewModels
                     // Пользователь сам отказался перезаписывать файл — сообщать ему об этом нечего.
                     break;
 
+                // Ловим до начала работы: раньше опечатка в поле доезжала до конца сборки
+                // и выдавала «Ошибка проверки» — как будто испорчен файл, а не введённая строка.
+                case MergeStatus.ExpectedHashInvalid:
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"),
+                        Strings.Format("Merge_ExpectedHashInvalidMessage", Sha256Text.HexLength));
+                    break;
+
                 case MergeStatus.ChainResolveFailed:
                     await DialogService.ShowErrorAsync(Strings.Get("Common_Error"),
                         Strings.Format("Merge_ChainCheckErrorMessage", outcome.ErrorMessage));
@@ -230,7 +248,8 @@ namespace TweakFirmware.ViewModels
 
                 case MergeStatus.HashMismatch:
                     await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"),
-                        Strings.Format("Merge_ResultMismatchMessage", HashDisplay.Wrap(ExpectedHashText.Trim()), HashDisplay.Wrap(outcome.MergedHash)));
+                        Strings.Format("Merge_ResultMismatchMessage",
+                            HashDisplay.Wrap(Sha256Text.Normalize(ExpectedHashText)), HashDisplay.Wrap(outcome.MergedHash)));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
