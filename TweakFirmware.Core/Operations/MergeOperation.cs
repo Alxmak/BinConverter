@@ -232,8 +232,6 @@ namespace TweakFirmware.Core.Operations
             log(Strings.Format("Merge_StartLog", request.AnyChainFilePath, outputPath));
 
             var createdFiles = new List<string>();
-            using var backgroundIo = new BackgroundIoScope();
-
             try
             {
                 var result = await Task.Run(() => FileMerger.MergeAsync(

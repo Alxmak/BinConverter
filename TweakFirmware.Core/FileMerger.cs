@@ -93,6 +93,9 @@ namespace TweakFirmware.Core
                         });
                     }
                 }
+
+                // Перед закрытием — см. пояснение к тому же шагу в FileSplitter.
+                log(Strings.Format("Log_ClosingFile", Path.GetFileName(outputPath)));
             }
 
             log(Strings.Format("Log_MergeFinished", Path.GetFileName(outputPath), totalWritten));
