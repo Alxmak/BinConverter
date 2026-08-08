@@ -62,25 +62,52 @@ namespace TweakFirmware
             };
         }
 
+        /// <summary>
+        /// Окно с ошибкой показывается один раз за запуск. Раньше оно ставилось в очередь
+        /// на каждое исключение — и когда исключения пошли потоком, очередь из окон стала
+        /// частью того же круга: каждое падало с той же ошибкой, никто его не дожидался,
+        /// и это возвращалось сюда через UnobservedTaskException.
+        /// </summary>
+        private bool _alreadyToldTheUser;
+
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             LogUnhandled(e.Exception, "Dispatcher");
             e.Handled = true;
 
+            if (_alreadyToldTheUser) return;
+            _alreadyToldTheUser = true;
+
+            string message = Strings.Format("Common_UnexpectedErrorMessage", e.Exception.Message);
+
             // Через диспетчер, а не напрямую: показывать модальное окно изнутри
             // обработчика исключения — верный способ получить второе исключение.
-            Dispatcher.BeginInvoke(() => _ = DialogService.ShowErrorAsync(
-                Strings.Get("Common_UnexpectedErrorTitle"),
-                Strings.Format("Common_UnexpectedErrorMessage", e.Exception.Message)));
+            // И с перехватом внутри: если и окно не покажется, это не должно вернуться
+            // сюда же ещё одним необработанным исключением.
+            Dispatcher.BeginInvoke(async () =>
+            {
+                try
+                {
+                    await DialogService.ShowErrorAsync(Strings.Get("Common_UnexpectedErrorTitle"), message);
+                }
+                catch (Exception ex)
+                {
+                    LogUnhandled(ex, "ErrorDialog");
+                }
+            });
         }
 
         private static void LogUnhandled(Exception? ex, string source)
         {
             if (ex == null) return;
 
-            // Тип и место тоже в журнал: одного текста сообщения обычно не хватает,
+            // Только в файл, не в журнал на экране: журнал — это элемент интерфейса,
+            // и запись в него сама способна бросить исключение. Именно так сообщение
+            // об ошибке однажды стало причиной следующей ошибки (см. LogToFileOnly).
+            //
+            // Тип и место записываем тоже: одного текста сообщения обычно не хватает,
             // чтобы понять, откуда оно.
-            AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog", source, ex.GetType().Name, ex.Message));
+            AppLogger.LogToFileOnly(Strings.Format("Common_UnexpectedErrorLog", source, ex.GetType().Name, ex.Message));
         }
     }
 }

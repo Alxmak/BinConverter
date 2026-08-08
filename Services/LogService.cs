@@ -27,12 +27,22 @@ namespace TweakFirmware.Services
             AppLogger.LogWritten += line => Application.Current?.Dispatcher.BeginInvoke(() => Append(line));
         }
 
+        /// <summary>
+        /// Сколько строк снимается за один раз, когда предел превышен. Пачкой, а не
+        /// по одной на каждую добавленную: каждое удаление — отдельное уведомление
+        /// подписчикам, то есть на список на экране приходилось бы по два изменения
+        /// на строку вместо одного, причём подряд. Именно такие сдвоенные изменения
+        /// и валили список с «ItemsControl не соответствует своему источнику элементов».
+        /// </summary>
+        private const int TrimBatchSize = 500;
+
         private static void Append(string line)
         {
             Lines.Add(line);
 
-            // По одной за раз: строки добавляются по одной, поэтому и лишняя всегда одна.
-            if (Lines.Count > MaxVisibleLines) Lines.RemoveAt(0);
+            if (Lines.Count <= MaxVisibleLines + TrimBatchSize) return;
+
+            for (int i = 0; i < TrimBatchSize; i++) Lines.RemoveAt(0);
         }
 
         /// <summary>Нужно дёрнуть один раз при старте приложения, чтобы статический конструктор

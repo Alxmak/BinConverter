@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Specialized;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.Controls
@@ -25,6 +27,9 @@ namespace TweakFirmware.Controls
         /// иначе каждая новая строка возвращала бы вниз прямо во время чтения.
         /// </summary>
         private bool _stickToBottom = true;
+
+        /// <summary>Прокрутка уже поставлена в очередь — второй раз ставить не нужно.</summary>
+        private bool _scrollQueued;
 
         public LogCard()
         {
@@ -61,7 +66,37 @@ namespace TweakFirmware.Controls
                 return;
             }
 
-            if (_stickToBottom) ScrollToLastEntry();
+            if (_stickToBottom) ScheduleScrollToLastEntry();
+        }
+
+        /// <summary>
+        /// Прокрутка откладывается до следующего свободного прохода диспетчера, а не
+        /// делается сразу.
+        ///
+        /// Причина: ScrollIntoView запускает пересчёт разметки, а вызывается это изнутри
+        /// уведомления об изменении коллекции — то есть в момент, когда ItemsControl ещё
+        /// не согласовал своё состояние с источником. Если во время этого пересчёта
+        /// придёт следующее изменение (а при записи журнала строки идут очередями), список
+        /// падает с InvalidOperationException «не соответствует своему источнику элементов».
+        /// Ровно это и случилось: одно такое исключение раскрутилось в бесконечный круг
+        /// и подвесило окно.
+        ///
+        /// Флаг ещё и склеивает очередь: на десяток строк подряд — одна прокрутка,
+        /// а не десять.
+        /// </summary>
+        private void ScheduleScrollToLastEntry()
+        {
+            if (_scrollQueued) return;
+            _scrollQueued = true;
+
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                _scrollQueued = false;
+
+                // Страницу могли закрыть, пока прокрутка ждала своей очереди. Прокручивать
+                // список, которого нет на экране, не нужно и небезопасно.
+                if (IsLoaded) ScrollToLastEntry();
+            }));
         }
 
         private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
