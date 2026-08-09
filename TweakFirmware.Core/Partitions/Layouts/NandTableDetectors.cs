@@ -169,8 +169,8 @@ namespace TweakFirmware.Core.Partitions.Layouts
 
         public LayoutDetection? TryDetect(IDumpReader dump, DumpContext context, IAnalysisHost host, CancellationToken ct)
         {
-            long offset = TableOffsetFor(dump);
-            if (offset < 0 || !dump.Contains(offset, TableLength)) return null;
+            long offset = TableOffset;
+            if (!dump.Contains(offset, TableLength)) return null;
 
             var table = dump.ReadBlock(offset, TableLength);
             if (BinaryPrimitives.ReadUInt32LittleEndian(table) != Signature) return null;
@@ -179,16 +179,16 @@ namespace TweakFirmware.Core.Partitions.Layouts
         }
 
         /// <summary>
-        /// Таблица занимает последний сектор перед началом второго блока. Оригинал считал
-        /// этот адрес в физических координатах — с учётом служебных областей, — а читает
-        /// его теперь читатель дампа, который сам делает пересчёт, поэтому здесь адрес
-        /// логический.
+        /// Таблица занимает последний сектор перед началом второго блока.
+        ///
+        /// Оригинал считал этот адрес в физических координатах: <c>addSpare(0x20000)</c>
+        /// минус spare, минус сектор. Для любой встречающейся геометрии это ровно то же
+        /// место, что и логический <c>0x20000 - 0x200</c>: 0x20000 кратно размеру main,
+        /// поэтому адрес попадает на границу страницы, а вычитание spare возвращает
+        /// в область данных предыдущей страницы. Читает по логическому адресу сам
+        /// читатель дампа, он же делает пересчёт.
         /// </summary>
-        private static long TableOffsetFor(IDumpReader dump)
-        {
-            const long SecondBlock = 0x20000;
-            return SecondBlock - TableLength;
-        }
+        private const long TableOffset = 0x20000 - TableLength;
 
         public void ReadParts(
             LayoutDetection detection,
@@ -212,6 +212,12 @@ namespace TweakFirmware.Core.Partitions.Layouts
                 string name = DumpStrings.ReadFixed(data, record, 8);
 
                 // Big-endian: у этой прошивки числа записаны в обратном порядке байт.
+                //
+                // В таблице записаны логические адреса — сам оригинал называл прочитанные
+                // значения «without_spare». Здесь они такими и остаются: в физические их
+                // переведёт общий пересчёт перед записью на диск, как и у всех остальных
+                // разметок. Оригинал же переводил их прямо тут, а потом общий пересчёт
+                // переводил ещё раз — единственная разметка, где это делалось дважды.
                 long length = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(record + 0x08));
                 long offset = BinaryPrimitives.ReadUInt32BigEndian(data.AsSpan(record + 0x10));
 

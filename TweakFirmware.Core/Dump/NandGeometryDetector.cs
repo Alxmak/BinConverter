@@ -184,6 +184,11 @@ namespace TweakFirmware.Core.Dump
         /// <summary>
         /// Варианты для ручного выбора, когда автоопределение не справилось. Последний в
         /// списке — «spare нет»: им пользователь говорит разбирать дамп как сплошной.
+        ///
+        /// Каждый spare считается от своего main, а не удвоением предыдущего, как в
+        /// оригинале. Для всех соотношений, кроме одного, это одно и то же, но у
+        /// K9GAG08U0E (relativeMain = 0x800) первый вариант даёт 256/2048 = 0, и дальше
+        /// оригинал удваивал ноль — то есть все восемь вариантов оказывались без spare.
         /// </summary>
         public static IReadOnlyList<NandGeometryOption> BuildManualOptions(int relativeMain, int relativeSpare)
         {

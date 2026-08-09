@@ -128,6 +128,19 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
+        public void BuildManualOptions_KeepsSpareMeaningfulForK9Gag08U0E()
+        {
+            // У этой микросхемы соотношение 0x800:0x6D, и при main = 256 spare округляется
+            // в ноль. Оригинал дальше удваивал этот ноль, и ни один из вариантов не давал
+            // spare вообще; здесь каждый вариант считается от своего main.
+            var options = NandGeometryDetector.BuildManualOptions(0x800, 0x6D);
+
+            Assert.Equal(0, options[0].Spare);
+            Assert.Equal(0x6D, options[3].Spare);       // main = 2048
+            Assert.Equal(2 * 0x6D, options[4].Spare);   // main = 4096
+        }
+
+        [Fact]
         public void FromManualChoice_BuildsTheGeometryTheUserPicked()
         {
             var geometry = NandGeometryDetector.FromManualChoice(3, 0x20, 0x01);

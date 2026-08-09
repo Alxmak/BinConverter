@@ -209,6 +209,30 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
+        public void GptNameIsReadToItsFullWidth()
+        {
+            // Имя в GPT — 72 байта UTF-16, то есть 36 знаков. Оригинал читал 36 байт,
+            // и от такого имени оставалась ровно первая половина.
+            const string Name = "persistent_storage_partition";
+            const int RecordLength = 128;
+
+            var builder = new DumpBuilder(1 << 20);
+            WithMbr(builder, 0, (0xEE, 1, 2000));
+
+            var records = new byte[RecordLength];
+            WriteUInt64(records, 0x20, 100);
+            WriteUInt64(records, 0x28, 199);
+            Encoding.Unicode.GetBytes(Name).CopyTo(records, 0x38);
+
+            builder.Write(2 * Sector, records);
+            WriteGptHeader(builder, 1, 2, 500, 1, RecordLength, records);
+
+            var (table, _) = Run(builder.Build());
+
+            Assert.Contains(table, p => p.Name == Name);
+        }
+
+        [Fact]
         public void ReportsACorruptedGptTableButStillReadsIt()
         {
             const int PartitionCount = 2;
