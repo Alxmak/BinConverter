@@ -58,13 +58,6 @@ namespace TweakFirmware.Core.Partitions
 
         public void Add(PartitionEntry entry) => _items.Add(entry);
 
-        /// <summary>Добавляет раздел с именем <c>part_NN</c>, продолжая сквозную нумерацию.</summary>
-        public PartitionEntry AddAutoNamed(long offset, long length, byte mbrStatus = 0, byte mbrType = 0)
-        {
-            AutoPartCounter++;
-            return Add($"part_{AutoPartCounter:D2}", offset, length, FsType.Unknown, "", mbrStatus, mbrType);
-        }
-
         public void RemoveAt(int index) => _items.RemoveAt(index);
 
         public void Clear()

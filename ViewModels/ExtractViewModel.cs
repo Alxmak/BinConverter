@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -272,6 +273,11 @@ namespace TweakFirmware.ViewModels
             var geometry = _result?.Geometry;
             bool physical = ShowPhysicalAddresses && geometry is not null;
 
+            // Адреса дополняются нулями до одной ширины, чтобы столбцы читались сверху
+            // вниз, — так же, как их печатал оригинал. Ширина берётся по размеру дампа:
+            // у восьмигигабайтного она больше, чем у стомегабайтного.
+            string format = "X" + HexWidth(physical).ToString(CultureInfo.InvariantCulture);
+
             int number = 1;
             foreach (var part in _table.Items)
             {
@@ -281,8 +287,8 @@ namespace TweakFirmware.ViewModels
                 {
                     Number = number,
                     Name = part.Name,
-                    Offset = "0x" + shown.Offset.ToString("X"),
-                    Length = "0x" + shown.Length.ToString("X"),
+                    Offset = "0x" + shown.Offset.ToString(format, CultureInfo.InvariantCulture),
+                    Length = "0x" + shown.Length.ToString(format, CultureInfo.InvariantCulture),
                     FileSystem = FileSystemLabel(part.FsType),
                     BadBlocks = part.BadBlocks > 0 ? part.BadBlocks.ToString() : "",
                     Comment = part.Comment,
@@ -292,6 +298,19 @@ namespace TweakFirmware.ViewModels
 
                 number++;
             }
+        }
+
+        /// <summary>
+        /// Сколько шестнадцатеричных знаков нужно, чтобы записать любой адрес этого дампа.
+        /// Физические адреса длиннее логических, поэтому ширина считается по тем, которые
+        /// сейчас показаны.
+        /// </summary>
+        private int HexWidth(bool physical)
+        {
+            long size = _result?.LogicalSize ?? 0;
+            if (physical && _result?.Geometry is { } geometry) size = geometry.AddSpare(size);
+
+            return DumpContext.HexWidthOf(size);
         }
 
         private static string FileSystemLabel(FsType type) => type switch
