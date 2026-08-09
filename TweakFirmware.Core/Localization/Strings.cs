@@ -411,6 +411,11 @@ namespace TweakFirmware.Core.Localization
             ["Extract_AndroidSwVersion"] = "  Версия ПО: {0}",
             ["Extract_AndroidHwBoard"] = "  Шасси: {0}",
             ["Extract_AndroidDisplaySize"] = "  Диагональ: {0}",
+            ["Extract_FileSize"] = "Размер файла {0} ({1:N0} байт).",
+            ["Extract_LayoutFound"] = "Опознана разметка {0}.",
+            ["Extract_LayoutNotRecognised"] = "Разметку опознать не удалось.",
+            ["Extract_PartsTotal"] = "Разделов в списке: {0}.",
+            ["Extract_SearchFileSystemsQuestion"] = "Искать файловые системы внутри разделов?",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -783,6 +788,11 @@ namespace TweakFirmware.Core.Localization
             ["Extract_AndroidSwVersion"] = "  Software version: {0}",
             ["Extract_AndroidHwBoard"] = "  Chassis: {0}",
             ["Extract_AndroidDisplaySize"] = "  Display size: {0}",
+            ["Extract_FileSize"] = "File size {0} ({1:N0} bytes).",
+            ["Extract_LayoutFound"] = "Layout recognised: {0}.",
+            ["Extract_LayoutNotRecognised"] = "The layout could not be recognised.",
+            ["Extract_PartsTotal"] = "Partitions in the list: {0}.",
+            ["Extract_SearchFileSystemsQuestion"] = "Search for file systems inside the partitions?",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
