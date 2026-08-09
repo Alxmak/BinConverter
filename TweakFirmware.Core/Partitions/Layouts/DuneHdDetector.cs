@@ -83,6 +83,12 @@ namespace TweakFirmware.Core.Partitions.Layouts
                 string name = ReadText(config, $"_part{i}_name") ?? $"part_{i}";
                 table.Add(name, offset.Value, size.Value);
             }
+
+            // Файл лицензии ищем здесь же: он не входит ни в один раздел, и его место
+            // нужно знать до того, как пользователь нажмёт «Извлечь».
+            context.DuneLicense = FindLicense(dump, ct);
+            if (context.DuneLicense.Found)
+                host.Log(Strings.Format("Extract_DuneLicenseFound", context.DuneLicense.Length), AnalysisLogLevel.Found);
         }
 
         private static void LogValue(byte[] config, string key, string messageKey, IAnalysisHost host)

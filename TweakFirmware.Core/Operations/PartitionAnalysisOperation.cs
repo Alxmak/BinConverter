@@ -70,6 +70,9 @@ namespace TweakFirmware.Core.Operations
 
         public Philips24C64.Content? Eeprom { get; init; }
 
+        /// <summary>Место файла лицензии Dune HD в дампе, если он нашёлся.</summary>
+        public DuneLicense DuneLicense { get; init; }
+
         public string ErrorMessage { get; init; } = "";
     }
 
@@ -237,7 +240,8 @@ namespace TweakFirmware.Core.Operations
                 Geometry = geometry,
                 LogicalSize = context.LogicalSize,
                 Android = android,
-                Philips = context.PhilipsInfo
+                Philips = context.PhilipsInfo,
+                DuneLicense = context.DuneLicense
             };
         }
 

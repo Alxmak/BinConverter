@@ -79,6 +79,16 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private bool isNandDump;
 
+        /// <summary>
+        /// Дамп опознан как прошивка Philips, и для него есть осмысленное имя. Оригинал
+        /// предлагал переименовать файл диалогом посреди разбора; здесь это отдельная
+        /// кнопка — менять чужой файл программа должна только когда её об этом попросили.
+        /// </summary>
+        [ObservableProperty] private bool canRename;
+
+        /// <summary>Имя, которое будет предложено при переименовании.</summary>
+        [ObservableProperty] private string suggestedFileName = "";
+
         /// <summary>Искать ли файловые системы внутри разделов — ответ даётся заранее.</summary>
         [ObservableProperty] private bool searchFileSystems = true;
 
@@ -106,6 +116,8 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(CanAnalyse));
             OnPropertyChanged(nameof(CanUseResult));
             OnPropertyChanged(nameof(CanSplitNand));
+            OnPropertyChanged(nameof(CanRenameDump));
+            RenameDumpCommand.NotifyCanExecuteChanged();
         }
 
         partial void OnSourcePathChanged(string value)
@@ -126,6 +138,8 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(CanSplitNand));
             SplitNandCommand.NotifyCanExecuteChanged();
         }
+
+        partial void OnCanRenameChanged(bool value) => RenameDumpCommand.NotifyCanExecuteChanged();
 
         /// <summary>Переключение координат перерисовывает таблицу, но не меняет разделы.</summary>
         partial void OnShowPhysicalAddressesChanged(bool value) => RebuildRows();
@@ -161,6 +175,8 @@ namespace TweakFirmware.ViewModels
             _cts = new CancellationTokenSource();
             IsBusy = true;
             HasResult = false;
+            CanRename = false;
+            SuggestedFileName = "";
             Partitions.Clear();
             Progress = 0;
 
@@ -172,6 +188,8 @@ namespace TweakFirmware.ViewModels
                     new PartitionAnalysisRequest { SourcePath = SourcePath }, this, _cts.Token));
 
                 ApplyResult(result);
+                PrepareRename(result);
+                await SaveArtifactsAsync(result, _cts.Token);
             }
             catch (Exception ex)
             {
@@ -221,6 +239,28 @@ namespace TweakFirmware.ViewModels
             HasResult = Partitions.Count > 0;
 
             Summary = Strings.Format("Extract_ResultSummary", result.MarkName ?? "—", Partitions.Count);
+        }
+
+        /// <summary>
+        /// Побочные находки — build.prop и файл лицензии Dune HD — сохраняются рядом с
+        /// дампом сразу: они маленькие, а искали их именно ради того, чтобы получить.
+        /// </summary>
+        private async Task SaveArtifactsAsync(PartitionAnalysisResult result, CancellationToken ct)
+        {
+            if (result.Android is null && !result.DuneLicense.Found) return;
+
+            await AnalysisArtifactWriter.WriteAsync(result, SourcePath, OutputPath, this, ct);
+        }
+
+        /// <summary>Готовит кнопку переименования, если дамп опознан как прошивка Philips.</summary>
+        private void PrepareRename(PartitionAnalysisResult result)
+        {
+            SuggestedFileName = result.Philips?.SuggestedFileName
+                                ?? result.Eeprom?.SuggestedFileName
+                                ?? "";
+
+            CanRename = SuggestedFileName.Length > 0
+                        && !string.Equals(SuggestedFileName, Path.GetFileName(SourcePath), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>Перестраивает таблицу из текущего списка разделов.</summary>
@@ -395,6 +435,48 @@ namespace TweakFirmware.ViewModels
                 _cts = null;
             }
         }
+
+        /// <summary>
+        /// Переименовывает дамп в имя, собранное из модели, версии и серийного номера.
+        /// Это единственное место, где программа меняет исходный файл, поэтому спрашивает
+        /// подтверждение и никогда не перезаписывает существующий файл.
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanRenameDump))]
+        private async Task RenameDumpAsync()
+        {
+            string folder = Path.GetDirectoryName(Path.GetFullPath(SourcePath)) ?? ".";
+            string target = Path.Combine(folder, SuggestedFileName);
+
+            if (File.Exists(target))
+            {
+                await DialogService.ShowWarningAsync(
+                    Strings.Get("Extract_RenameQuestionTitle"), Strings.Get("Extract_RenameExists"));
+                return;
+            }
+
+            var answer = await DialogService.ShowConfirmAsync(
+                Strings.Get("Extract_RenameQuestionTitle"),
+                Strings.Format("Extract_RenameQuestion", SuggestedFileName),
+                Strings.Get("Common_OkButton"), null, Strings.Get("Common_CancelButton"));
+
+            if (answer != DialogChoice.Primary) return;
+
+            try
+            {
+                File.Move(SourcePath, target);
+                SourcePath = target;
+                CanRename = false;
+
+                AppLogger.Log(Strings.Format("Extract_RenameDone", target));
+            }
+            catch (Exception ex)
+            {
+                await DialogService.ShowErrorAsync(
+                    Strings.Get("Common_Error"), Strings.Format("Extract_RenameFailed", ex.Message));
+            }
+        }
+
+        public bool CanRenameDump => !IsBusy && CanRename;
 
         [RelayCommand]
         private void Cancel() => _cts?.Cancel();

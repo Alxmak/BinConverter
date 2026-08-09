@@ -61,6 +61,13 @@ namespace TweakFirmware.Core.Analysis
         public Partitions.Layouts.PhilipsFirmwareInfo? PhilipsInfo { get; set; }
 
         /// <summary>
+        /// Где в дампе Dune HD лежит файл лицензии плеера. Он не входит ни в один раздел,
+        /// а при замене платы его переносят отдельно, поэтому его извлекают самостоятельным
+        /// файлом.
+        /// </summary>
+        public Partitions.Layouts.DuneLicense DuneLicense { get; set; }
+
+        /// <summary>
         /// Сколько шестнадцатеричных разрядов занимает размер дампа. По этому числу
         /// выравниваются все колонки с адресами, чтобы таблица разделов читалась столбиком.
         /// </summary>

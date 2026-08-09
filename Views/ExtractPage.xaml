@@ -69,6 +69,15 @@
                                 Margin="8,0,0,0" IsEnabled="{Binding IsBusy}"/>
                     </StackPanel>
 
+                    <!-- Появляется только у прошивок Philips: только для них в дампе есть
+                         модель, версия и серийный номер, из которых собирается имя. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
+                        <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"/>
+                        <TextBlock Text="{Binding SuggestedFileName}" Margin="12,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+
                     <TextBlock Text="{Binding Summary}" Margin="0,12,0,0" TextWrapping="Wrap"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
