@@ -352,6 +352,11 @@ namespace TweakFirmware.Core.Localization
             ["Extract_EbrChainTooLong"] = "Цепочка EBR слишком длинная — разбор остановлен.",
             ["Extract_PartsStringFound"] = "Список разделов найден по адресу {0}:",
             ["Extract_PartsStringRecordRejected"] = "Запись «{0}» разобрать не удалось — пропущена.",
+            ["Extract_PartsFromTable"] = "Разделов в таблице: {0}.",
+            ["Extract_MtkLgTableFound"] = "Найдена таблица «{0}» по адресу {1}.",
+            ["Extract_SonyFixedMapGn5ur"] = "Дамп Sony MediaTek eMMC, точная карта GN5UR/MT5835.",
+            ["Extract_SonyFixedMapSkan"] = "Дамп Sony MediaTek eMMC, точная карта Skan_dump.",
+            ["Extract_SonyFloatingMap"] = "Дамп Sony MediaTek eMMC, карта построена по найденным EXT4/FAT16/AVB.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -665,6 +670,11 @@ namespace TweakFirmware.Core.Localization
             ["Extract_EbrChainTooLong"] = "The EBR chain is too long — parsing stopped.",
             ["Extract_PartsStringFound"] = "Partition list found at {0}:",
             ["Extract_PartsStringRecordRejected"] = "Could not parse the record \u201C{0}\u201D — skipped.",
+            ["Extract_PartsFromTable"] = "Partitions in the table: {0}.",
+            ["Extract_MtkLgTableFound"] = "Found table \u201C{0}\u201D at {1}.",
+            ["Extract_SonyFixedMapGn5ur"] = "Sony MediaTek eMMC dump, fixed GN5UR/MT5835 map.",
+            ["Extract_SonyFixedMapSkan"] = "Sony MediaTek eMMC dump, fixed Skan_dump map.",
+            ["Extract_SonyFloatingMap"] = "Sony MediaTek eMMC dump, map built from the EXT4/FAT16/AVB anchors found.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
