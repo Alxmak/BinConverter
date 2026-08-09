@@ -3,18 +3,23 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
       Title="{loc:Loc Extract_Title}"
       ScrollViewer.CanContentScroll="False">
 
-    <!-- Esc отменяет идущую операцию — как на остальных вкладках. -->
+    <!-- Esc отменяет идущую операцию. Enter на запуске намеренно не назначен: на этих
+         страницах есть поля ввода, и нажатие Enter при правке пути запускало бы
+         долгое чтение диска. Как на остальных трёх вкладках. -->
     <Page.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}"/>
     </Page.InputBindings>
 
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
-            <!-- Пока идёт разбор или извлечение, поля недоступны. -->
+            <!-- Пока идёт разбор или извлечение, поля недоступны: менять дамп или папку
+                 на ходу нельзя — параметры разойдутся с запущенной работой. IsEnabled
+                 наследуется вглубь, поэтому достаточно поставить его на карточку. -->
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
                 <StackPanel>
 
@@ -25,6 +30,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Extract_DumpLabel}" Style="{StaticResource RowLabel}"/>
+                        <!-- Перетаскивание принимает само поле, а не строка целиком —
+                             см. подробное пояснение в «Конвертировании». -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
                                     Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}"
                                     PlaceholderText="{loc:Loc Common_NoFileSelected}"
@@ -39,52 +46,88 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
+                        <!-- Своя подсказка, а не общая «Папка не выбрана»: здесь пустое поле
+                             значит «рядом с дампом», а не «не задано». -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
                                     Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}"
                                     PlaceholderText="{loc:Loc Extract_OutputPlaceholder}"
                                     AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
                     </Grid>
-
-                    <!-- Второй проход дольше первого: он читает дамп целиком, а не по
-                         нескольким адресам. Поэтому спрашиваем заранее, а не в середине. -->
-                    <CheckBox Margin="0,4,0,0"
-                              Content="{loc:Loc Extract_SearchFileSystemsCheckbox}"
-                              IsChecked="{Binding SearchFileSystems}"/>
                 </StackPanel>
             </Border>
 
+            <!-- Общая информация и Параметры — рядом, как в «Конвертировании»: страница
+                 не растёт вниз и её меньше приходится листать. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+                        <!-- Тот же межстрочный интервал, что в информационных карточках
+                             остальных вкладок: содержимое собирается кодом, и число строк
+                             заранее неизвестно. -->
+                        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" FontSize="13"
+                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <!-- Второй проход дольше первого: он читает дамп целиком, а не по
+                             нескольким адресам. Поэтому спрашиваем галочкой заранее,
+                             а не диалогом посреди работы. -->
+                        <CheckBox Style="{StaticResource CardCheckBox}"
+                                  Content="{loc:Loc Extract_SearchFileSystemsCheckbox}"
+                                  IsChecked="{Binding SearchFileSystems}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="{loc:Loc Extract_AnalyseButton}" Command="{Binding AnalyseCommand}"
-                                Style="{StaticResource SolidButtonStyle}" MinWidth="150"/>
-                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
-                                Margin="8,0,0,0" MinWidth="180"/>
+                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+
+                    <!-- Полоса та же, что на остальных вкладках. Название текущего этапа
+                         идёт подписью под ней — у ProgressRow для этого есть Caption. -->
+                    <c:ProgressRow Label="{loc:Loc Extract_AnalysisProgressLabel}"
+                                   Value="{Binding Progress}" Fill="#2F6FED"
+                                   Caption="{Binding StageLabel}"/>
+
+                    <!-- Главное действие вкладки, пауза и отмена — общей строкой кнопок.
+                         Пауза приходит от ViewModel и сама гаснет на разборе: он её
+                         не поддерживает. -->
+                    <c:OperationBar StartText="{loc:Loc Extract_AnalyseButton}"
+                                    StartCommand="{Binding AnalyseCommand}"
+                                    PauseCommand="{Binding TogglePauseCommand}"
+                                    CancelCommand="{Binding CancelCommand}"/>
+
+                    <!-- Остальные действия — второй строкой. Скрывать их не нужно:
+                         доступность решает CanExecute самих команд, как и везде
+                         в программе. «Разделить» просит дамп NAND, а не результат
+                         разбора, поэтому строка не спрятана за таблицей. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}" MinWidth="180"/>
                         <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
                                 Margin="8,0,0,0" MinWidth="150"/>
                         <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
                                 Margin="8,0,0,0" MinWidth="200"/>
-                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}"
-                                Margin="8,0,0,0" IsEnabled="{Binding IsBusy}"/>
                     </StackPanel>
 
                     <!-- Появляется только у прошивок Philips: только для них в дампе есть
                          модель, версия и серийный номер, из которых собирается имя. -->
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0"
                                 Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
                         <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"/>
                         <TextBlock Text="{Binding SuggestedFileName}" Margin="12,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    </StackPanel>
-
-                    <TextBlock Text="{Binding Summary}" Margin="0,12,0,0" TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-
-                    <StackPanel Margin="0,8,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="{Binding StageLabel}" FontSize="12"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                        <ProgressBar Value="{Binding Progress}" Maximum="100" Height="6" Margin="0,4,0,0"/>
+                                   FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -93,6 +136,8 @@
             <Border Style="{StaticResource CardStyle}"
                     Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
                 <StackPanel>
+                    <TextBlock Text="{loc:Loc Extract_PartitionsTitle}" Style="{StaticResource CardTitle}"/>
+
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Content="{loc:Loc Extract_SelectAllButton}" Command="{Binding SelectAllCommand}"/>
                         <Button Content="{loc:Loc Extract_SelectNoneButton}" Command="{Binding SelectNoneCommand}" Margin="8,0,0,0"/>
@@ -124,22 +169,11 @@
                 </StackPanel>
             </Border>
 
-            <!-- Журнал общий для всех вкладок. -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <Grid>
-                        <TextBlock Text="{loc:Loc Common_LogTitle}" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}"/>
-                            <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}" Margin="8,0,0,0"/>
-                            <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" Margin="8,0,0,0"/>
-                        </StackPanel>
-                    </Grid>
-                    <ListBox ItemsSource="{Binding LogLines}" MaxHeight="220" Margin="0,8,0,0"
-                             Background="Transparent" BorderThickness="0"
-                             ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
-                </StackPanel>
-            </Border>
+            <!-- Та же карточка журнала, что на остальных вкладках. Раньше здесь была своя
+                 копия её разметки: список без прилипания к последней строке, без
+                 копирования по Ctrl+C и без отложенной прокрутки — то есть без всего,
+                 что в LogCard и написано. -->
+            <c:LogCard/>
 
         </StackPanel>
     </ScrollViewer>

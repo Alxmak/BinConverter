@@ -63,6 +63,7 @@ namespace TweakFirmware.ViewModels
         [NotifyCanExecuteChangedFor(nameof(ExtractCommand))]
         [NotifyCanExecuteChangedFor(nameof(SaveUdevCommand))]
         [NotifyCanExecuteChangedFor(nameof(SplitNandCommand))]
+        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
         private bool isBusy;
 
         [ObservableProperty] private double progress;
@@ -93,7 +94,24 @@ namespace TweakFirmware.ViewModels
         /// <summary>Искать ли файловые системы внутри разделов — ответ даётся заранее.</summary>
         [ObservableProperty] private bool searchFileSystems = true;
 
+        /// <summary>
+        /// Поддерживает ли текущая работа паузу. Разбор дампа — нет: он читает файл
+        /// короткими прыжками по адресам, приостанавливать там нечего и незачем.
+        /// Извлечение и разделение пишут гигабайты подряд, и вот их остановить полезно —
+        /// ровно как в «Конвертировании» и «Сборке файла», где кнопка паузы уже есть.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
+        private bool supportsPause;
+
+        [ObservableProperty] private bool isPaused;
+
+        /// <summary>Подпись на кнопке паузы: её же меняет на «Возобновить».</summary>
+        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
+
         public bool IsNotBusy => !IsBusy;
+
+        public bool CanPause => IsBusy && SupportsPause;
 
         public bool CanAnalyse => !IsBusy && SourcePath.Length > 0;
         public bool CanUseResult => !IsBusy && HasResult;
@@ -118,8 +136,11 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(CanUseResult));
             OnPropertyChanged(nameof(CanSplitNand));
             OnPropertyChanged(nameof(CanRenameDump));
+            OnPropertyChanged(nameof(CanPause));
             RenameDumpCommand.NotifyCanExecuteChanged();
         }
+
+        partial void OnSupportsPauseChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
         partial void OnSourcePathChanged(string value)
         {
@@ -161,6 +182,67 @@ namespace TweakFirmware.ViewModels
             if (dlg.ShowDialog() == true) OutputPath = dlg.FolderName;
         }
 
+        // ---------- начало и конец любой длительной работы ----------
+
+        /// <summary>
+        /// Общее начало всех трёх длительных действий вкладки.
+        ///
+        /// Отдельно от самих команд — прежде всего из-за <see cref="OperationLockService"/>:
+        /// вкладка о своей занятости не сообщала, хотя остальные три сообщают. Пока он не
+        /// знает о работе, пункты меню остаются доступными, а кнопка установки обновления
+        /// не блокируется — то есть посреди разбора многогигабайтного дампа можно было уйти
+        /// на другую вкладку и запустить вторую операцию поверх первой или поставить
+        /// установку обновления.
+        /// </summary>
+        private void BeginOperation(bool supportsPause)
+        {
+            _cts = new CancellationTokenSource();
+            IsBusy = true;
+            SupportsPause = supportsPause;
+            Progress = 0;
+
+            OperationLockService.Instance.IsBusy = true;
+        }
+
+        /// <summary>
+        /// Конец любого из них.
+        ///
+        /// Пауза снимается всегда: контроллер один на вкладку, и если работу отменили,
+        /// не сняв паузу, следующая операция ушла бы в ожидание ещё до первого байта —
+        /// без нажатой кнопки и без объяснения.
+        /// </summary>
+        private void EndOperation()
+        {
+            _pause.Resume();
+            IsPaused = false;
+            PauseButtonText = Strings.Get("Common_PauseButton");
+
+            SupportsPause = false;
+            IsBusy = false;
+            StageLabel = "";
+            Progress = 0;
+
+            _cts?.Dispose();
+            _cts = null;
+
+            OperationLockService.Instance.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Пауза и возобновление — одна кнопка, как в «Конвертировании» и «Сборке файла».
+        /// Контроллер паузы вкладка передавала в ядро и раньше, но нажать её было негде:
+        /// команды не существовало, и остановить извлечение можно было только отменой.
+        /// </summary>
+        [RelayCommand(CanExecute = nameof(CanPause))]
+        private void TogglePause()
+        {
+            if (IsPaused) _pause.Resume();
+            else _pause.Pause();
+
+            IsPaused = _pause.IsPaused;
+            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+        }
+
         // ---------- разбор ----------
 
         [RelayCommand(CanExecute = nameof(CanAnalyse))]
@@ -173,13 +255,13 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            _cts = new CancellationTokenSource();
-            IsBusy = true;
+            // Разбор паузы не поддерживает — см. пояснение к SupportsPause.
+            BeginOperation(supportsPause: false);
+
             HasResult = false;
             CanRename = false;
             SuggestedFileName = "";
             Partitions.Clear();
-            Progress = 0;
 
             try
             {
@@ -199,11 +281,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                IsBusy = false;
-                StageLabel = "";
-                Progress = 0;
-                _cts?.Dispose();
-                _cts = null;
+                EndOperation();
             }
         }
 
@@ -331,8 +409,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanUseResult))]
         private async Task ExtractAsync()
         {
-            _cts = new CancellationTokenSource();
-            IsBusy = true;
+            BeginOperation(supportsPause: true);
 
             try
             {
@@ -352,11 +429,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                IsBusy = false;
-                StageLabel = "";
-                Progress = 0;
-                _cts?.Dispose();
-                _cts = null;
+                EndOperation();
             }
         }
 
@@ -426,8 +499,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanSplitNand))]
         private async Task SplitNandAsync()
         {
-            _cts = new CancellationTokenSource();
-            IsBusy = true;
+            BeginOperation(supportsPause: true);
 
             try
             {
@@ -447,11 +519,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                IsBusy = false;
-                StageLabel = "";
-                Progress = 0;
-                _cts?.Dispose();
-                _cts = null;
+                EndOperation();
             }
         }
 
@@ -518,6 +586,10 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         protected override void OnLanguageChanged()
         {
+            // Подпись кнопки паузы тоже собрана кодом, и её состояние надо сохранить:
+            // если сейчас пауза, после смены языка должно остаться «Возобновить».
+            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+
             if (_result is null)
             {
                 Summary = Strings.Get("Extract_NoResultYet");
