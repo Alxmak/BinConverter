@@ -350,6 +350,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_EbrOutsideDump"] = "Следующая запись EBR ({0}) находится за пределами дампа.",
             ["Extract_EbrBadRecords"] = "Записи EBR по адресу {0} не прошли проверку.",
             ["Extract_EbrChainTooLong"] = "Цепочка EBR слишком длинная — разбор остановлен.",
+            ["Extract_PartsStringFound"] = "Список разделов найден по адресу {0}:",
+            ["Extract_PartsStringRecordRejected"] = "Запись «{0}» разобрать не удалось — пропущена.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -661,6 +663,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_EbrOutsideDump"] = "The next EBR record ({0}) lies outside the dump.",
             ["Extract_EbrBadRecords"] = "EBR records at {0} failed validation.",
             ["Extract_EbrChainTooLong"] = "The EBR chain is too long — parsing stopped.",
+            ["Extract_PartsStringFound"] = "Partition list found at {0}:",
+            ["Extract_PartsStringRecordRejected"] = "Could not parse the record \u201C{0}\u201D — skipped.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",

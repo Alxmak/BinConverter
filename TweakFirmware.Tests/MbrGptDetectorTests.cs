@@ -41,7 +41,7 @@ namespace TweakFirmware.Tests
             var table = new PartitionTable();
             var detector = new MbrDetector();
 
-            var detection = detector.TryDetect(dump, context, CancellationToken.None);
+            var detection = detector.TryDetect(dump, context, host, CancellationToken.None);
             Assert.NotNull(detection);
             detector.ReadParts(detection!, table, dump, context, host, CancellationToken.None);
 
@@ -102,7 +102,7 @@ namespace TweakFirmware.Tests
             var dump = new PlainDumpReader(new MemoryStream(builder.Build()));
             var context = new DumpContext(dump);
 
-            Assert.Null(new MbrDetector().TryDetect(dump, context, CancellationToken.None));
+            Assert.Null(new MbrDetector().TryDetect(dump, context, new SilentAnalysisHost(), CancellationToken.None));
         }
 
         [Fact]
@@ -113,7 +113,7 @@ namespace TweakFirmware.Tests
             var dump = new PlainDumpReader(new MemoryStream(image));
             var context = new DumpContext(dump);
 
-            Assert.Null(new MbrDetector().TryDetect(dump, context, CancellationToken.None));
+            Assert.Null(new MbrDetector().TryDetect(dump, context, new SilentAnalysisHost(), CancellationToken.None));
         }
 
         [Fact]

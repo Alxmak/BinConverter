@@ -39,9 +39,11 @@ namespace TweakFirmware.Core.Partitions.Layouts
 
         /// <summary>
         /// Проверяет, размечен ли дамп этим способом. Не должен ничего добавлять в таблицу
-        /// разделов и не должен ничего спрашивать: это просто проверка сигнатуры.
+        /// разделов и не должен ничего спрашивать: это просто проверка сигнатуры. Хост
+        /// нужен тем детекторам, которые перебирают дамп подолгу и обязаны показывать
+        /// прогресс — иначе на дампе в несколько гигабайт программа выглядит зависшей.
         /// </summary>
-        LayoutDetection? TryDetect(IDumpReader dump, DumpContext context, CancellationToken ct);
+        LayoutDetection? TryDetect(IDumpReader dump, DumpContext context, IAnalysisHost host, CancellationToken ct);
 
         /// <summary>Читает разделы по уже найденной разметке.</summary>
         void ReadParts(

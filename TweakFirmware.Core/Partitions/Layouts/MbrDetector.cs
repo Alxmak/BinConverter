@@ -62,7 +62,7 @@ namespace TweakFirmware.Core.Partitions.Layouts
 
         public int Priority => 60;
 
-        public LayoutDetection? TryDetect(IDumpReader dump, DumpContext context, CancellationToken ct)
+        public LayoutDetection? TryDetect(IDumpReader dump, DumpContext context, IAnalysisHost host, CancellationToken ct)
         {
             const long Offset = 0;
 
