@@ -239,6 +239,30 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
+        public void ChainsFollowTheOrderOfChecksInTheOriginalScript()
+        {
+            // Порядок опроса решает, какая разметка выиграет на дампе, подходящем сразу
+            // под несколько. Здесь он записан явно — ровно так, как идут проверки
+            // в analysisDump() исходного скрипта.
+            Assert.Equal(
+                new[]
+                {
+                    "NOR FLASH", "MSTAR ANDROID", "SONY MTK EMMC", "MBR",
+                    "MTK LG", "MTK ANDROID", "MPT AMLOGIC", "ROCKCHIP PX3", "RECEIVER ANDROID"
+                },
+                PartitionAnalysisOperation.CreateCommonChain().Select(d => d.Name).ToArray());
+
+            Assert.Equal(
+                new[]
+                {
+                    "AMBARELLA", "BLUERAY", "NOVATEK", "NVT NAND", "HISILICON NAND",
+                    "DUNE HD", "QFUx.x", "LG NAND", "SAT RECEIVER",
+                    "MSTAR NAND", "MEDIATEK NAND", "SAMSUNG NAND"
+                },
+                PartitionAnalysisOperation.CreateNandChain().Select(d => d.Name).ToArray());
+        }
+
+        [Fact]
         public void EveryDetectorHasItsOwnName()
         {
             var names = PartitionAnalysisOperation.CreateCommonChain()
