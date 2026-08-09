@@ -357,6 +357,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_SonyFixedMapGn5ur"] = "Дамп Sony MediaTek eMMC, точная карта GN5UR/MT5835.",
             ["Extract_SonyFixedMapSkan"] = "Дамп Sony MediaTek eMMC, точная карта Skan_dump.",
             ["Extract_SonyFloatingMap"] = "Дамп Sony MediaTek eMMC, карта построена по найденным EXT4/FAT16/AVB.",
+            ["Extract_LgNandMapFound"] = "Карта LG NAND: {0}, адрес таблицы {1}.",
+            ["Extract_BadBlocksFound"] = "Плохих блоков в таблице: {0}.",
+            ["Extract_NandBlockSize"] = "Блоков в дампе: {0}, размер блока {1}.",
+            ["Extract_SamsungMarkers"] = "Метки Samsung: UPCH по адресу {0}, LPCH по адресу {1}.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -675,6 +679,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_SonyFixedMapGn5ur"] = "Sony MediaTek eMMC dump, fixed GN5UR/MT5835 map.",
             ["Extract_SonyFixedMapSkan"] = "Sony MediaTek eMMC dump, fixed Skan_dump map.",
             ["Extract_SonyFloatingMap"] = "Sony MediaTek eMMC dump, map built from the EXT4/FAT16/AVB anchors found.",
+            ["Extract_LgNandMapFound"] = "LG NAND map: {0}, table at {1}.",
+            ["Extract_BadBlocksFound"] = "Bad blocks in the table: {0}.",
+            ["Extract_NandBlockSize"] = "Blocks in the dump: {0}, block size {1}.",
+            ["Extract_SamsungMarkers"] = "Samsung markers: UPCH at {0}, LPCH at {1}.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
