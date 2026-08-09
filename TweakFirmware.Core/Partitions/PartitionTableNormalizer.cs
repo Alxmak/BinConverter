@@ -67,13 +67,22 @@ namespace TweakFirmware.Core.Partitions
         {
             if (table.Count == 0) return logicalSize;
 
+            // Раздел с открытым концом почти всегда последний — так его и записывают
+            // в строке параметров ядра. Но если в строке было смещение через «@», после
+            // сортировки он может оказаться и в середине, поэтому разворачиваются все
+            // такие записи: до начала следующего раздела, а последняя — до конца дампа.
+            // Оригинал чинил только последнюю запись, и незакрытая длина в середине
+            // списка уходила дальше отрицательным числом.
             var last = table[table.Count - 1];
-            if (last.HasOpenEnd)
-            {
-                if (last.Offset > logicalSize)
-                    logicalSize = NextPowerOfTwoAbove(last.Offset);
+            if (last.HasOpenEnd && last.Offset > logicalSize)
+                logicalSize = NextPowerOfTwoAbove(last.Offset);
 
-                last.Length = logicalSize - last.Offset;
+            for (int i = 0; i < table.Count; i++)
+            {
+                if (!table[i].HasOpenEnd) continue;
+
+                long end = i + 1 < table.Count ? table[i + 1].Offset : logicalSize;
+                table[i].Length = Math.Max(0, end - table[i].Offset);
             }
 
             // Число разделов запоминается заранее: дописанные промежутки сами
