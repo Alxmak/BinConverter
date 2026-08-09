@@ -154,7 +154,7 @@ namespace TweakFirmware.Core.Dump
                     if (physical + take > PhysicalSize) take = (int)(PhysicalSize - physical);
                     if (take <= 0) break;
 
-                    ReadPhysical(physical, destination.Slice(written, take));
+                    ReadRaw(physical, destination.Slice(written, take));
                     written += take;
                     consumed += run.Length;
                 }
@@ -167,7 +167,7 @@ namespace TweakFirmware.Core.Dump
             return written;
         }
 
-        private void ReadPhysical(long position, Span<byte> destination)
+        private void ReadRaw(long position, Span<byte> destination)
         {
             _stream.Position = position;
             int total = 0;
@@ -187,6 +187,22 @@ namespace TweakFirmware.Core.Dump
             return buffer;
         }
 
+        /// <summary>Читает байты как они лежат в файле, вместе со служебными областями.</summary>
+        public int ReadPhysical(long physicalOffset, Span<byte> destination)
+        {
+            if (destination.IsEmpty) return 0;
+            if (physicalOffset < 0 || physicalOffset >= PhysicalSize)
+            {
+                destination.Clear();
+                return 0;
+            }
+
+            int available = (int)Math.Min(destination.Length, PhysicalSize - physicalOffset);
+            ReadRaw(physicalOffset, destination[..available]);
+            if (available < destination.Length) destination[available..].Clear();
+            return available;
+        }
+
         /// <summary>Сколько целых физических страниц помещается в дампе.</summary>
         public long PageCount => PhysicalSize / _geometry.Page;
 
@@ -200,7 +216,7 @@ namespace TweakFirmware.Core.Dump
             if (page.Length != _geometry.Page)
                 throw new ArgumentException("Буфер должен быть размером ровно в страницу.", nameof(page));
 
-            ReadPhysical(pageIndex * _geometry.Page, page);
+            ReadRaw(pageIndex * _geometry.Page, page);
         }
 
         public void Dispose()

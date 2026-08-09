@@ -89,6 +89,10 @@ namespace TweakFirmware.Core.Dump
             }
         }
 
+        /// <summary>Физическое чтение мимо кэша: окно хранит логические байты.</summary>
+        public int ReadPhysical(long physicalOffset, Span<byte> destination) =>
+            _inner.ReadPhysical(physicalOffset, destination);
+
         public byte[] ReadBlock(long logicalOffset, int length)
         {
             var buffer = new byte[length];

@@ -361,6 +361,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_BadBlocksFound"] = "Плохих блоков в таблице: {0}.",
             ["Extract_NandBlockSize"] = "Блоков в дампе: {0}, размер блока {1}.",
             ["Extract_SamsungMarkers"] = "Метки Samsung: UPCH по адресу {0}, LPCH по адресу {1}.",
+            ["Extract_BluerayLayout"] = "Раскладка Blu-ray: подстраниц на странице {0}, хвост {1} байт.",
+            ["Extract_DuneProductId"] = "Product ID: {0}.",
+            ["Extract_DuneBoardId"] = "Board ID: {0}.",
+            ["Extract_DuneLicenseFound"] = "Найден файл лицензии, {0} байт.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -683,6 +687,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_BadBlocksFound"] = "Bad blocks in the table: {0}.",
             ["Extract_NandBlockSize"] = "Blocks in the dump: {0}, block size {1}.",
             ["Extract_SamsungMarkers"] = "Samsung markers: UPCH at {0}, LPCH at {1}.",
+            ["Extract_BluerayLayout"] = "Blu-ray layout: {0} subpages per page, {1} trailing bytes.",
+            ["Extract_DuneProductId"] = "Product ID: {0}.",
+            ["Extract_DuneBoardId"] = "Board ID: {0}.",
+            ["Extract_DuneLicenseFound"] = "License file found, {0} bytes.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",

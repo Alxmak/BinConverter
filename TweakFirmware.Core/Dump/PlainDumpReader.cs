@@ -52,6 +52,9 @@ namespace TweakFirmware.Core.Dump
             return total;
         }
 
+        /// <summary>У сплошного дампа физический адрес совпадает с логическим.</summary>
+        public int ReadPhysical(long physicalOffset, Span<byte> destination) => Read(physicalOffset, destination);
+
         public byte[] ReadBlock(long logicalOffset, int length)
         {
             var buffer = new byte[length];

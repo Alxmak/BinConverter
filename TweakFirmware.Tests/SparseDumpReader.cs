@@ -87,6 +87,9 @@ namespace TweakFirmware.Tests
             return available;
         }
 
+        /// <summary>Служебных областей здесь нет, поэтому физический адрес равен логическому.</summary>
+        public int ReadPhysical(long physicalOffset, Span<byte> destination) => Read(physicalOffset, destination);
+
         public byte[] ReadBlock(long logicalOffset, int length)
         {
             var buffer = new byte[length];
