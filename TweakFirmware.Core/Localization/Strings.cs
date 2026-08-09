@@ -325,6 +325,16 @@ namespace TweakFirmware.Core.Localization
             ["Feedback_BodyOsLine"] = "Система: {0}",
             ["Feedback_MailClientFailedLog"] = "Обратная связь: не удалось открыть почтовый клиент ({0}).",
 
+            // ===================== Извлечение разделов =====================
+            // Тексты журнала разбора дампа. Названия разметок, файловых систем и меток
+            // в дампе не переводятся — это термины, по которым ищут в поиске и на форумах.
+            ["Extract_StageNandGeometry"] = "Определение геометрии NAND",
+            ["Extract_NandDumpDetected"] = "Обнаружен дамп NAND.",
+            ["Extract_NandSearchingGeometry"] = "Определяются значения main и spare…",
+            ["Extract_NandGeometryUnknown"] = "Определить main и spare не удалось — нужен ручной выбор.",
+            ["Extract_NandGeometryFound"] = "main = {0}, spare = {1}.",
+            ["Extract_DuneHdLayoutFound"] = "Раскладка страницы Dune HD.",
+
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
             ["Placeholder_ExtractText"] = "Инструмент для поиска и извлечения разделов из дампов прошивок.",
@@ -611,6 +621,14 @@ namespace TweakFirmware.Core.Localization
             ["Feedback_BodyVersionLine"] = "Version: {0}",
             ["Feedback_BodyOsLine"] = "System: {0}",
             ["Feedback_MailClientFailedLog"] = "Feedback: could not open a mail client ({0}).",
+
+            // ===================== Extract partitions =====================
+            ["Extract_StageNandGeometry"] = "Detecting NAND geometry",
+            ["Extract_NandDumpDetected"] = "NAND dump detected.",
+            ["Extract_NandSearchingGeometry"] = "Finding values of main and spare…",
+            ["Extract_NandGeometryUnknown"] = "Could not determine main and spare — manual choice required.",
+            ["Extract_NandGeometryFound"] = "main = {0}, spare = {1}.",
+            ["Extract_DuneHdLayoutFound"] = "Dune HD page layout.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
