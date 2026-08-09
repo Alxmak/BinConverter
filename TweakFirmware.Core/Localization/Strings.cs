@@ -416,6 +416,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_LayoutNotRecognised"] = "Разметку опознать не удалось.",
             ["Extract_PartsTotal"] = "Разделов в списке: {0}.",
             ["Extract_SearchFileSystemsQuestion"] = "Искать файловые системы внутри разделов?",
+            ["Extract_NotEnoughSpace"] = "Нужно {0}, а свободно {1}.",
+            ["Extract_PartitionWritten"] = "Извлечён раздел {0}.",
+            ["Extract_StageSplitNand"] = "Разделение на main и spare",
+            ["Extract_NandSplitDone"] = "Записано: main {0:N0} байт, spare {1:N0} байт.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -793,6 +797,10 @@ namespace TweakFirmware.Core.Localization
             ["Extract_LayoutNotRecognised"] = "The layout could not be recognised.",
             ["Extract_PartsTotal"] = "Partitions in the list: {0}.",
             ["Extract_SearchFileSystemsQuestion"] = "Search for file systems inside the partitions?",
+            ["Extract_NotEnoughSpace"] = "{0} needed, {1} available.",
+            ["Extract_PartitionWritten"] = "Extracted partition {0}.",
+            ["Extract_StageSplitNand"] = "Splitting into main and spare",
+            ["Extract_NandSplitDone"] = "Written: main {0:N0} bytes, spare {1:N0} bytes.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
