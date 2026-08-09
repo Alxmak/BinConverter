@@ -7,30 +7,29 @@ namespace TweakFirmware.Tests
     /// Имя собранного файла подставляется в поле «Папка назначения» автоматически, пока
     /// пользователь его не тронул. Ошибка здесь означает запись не туда, куда ожидалось, —
     /// или перезапись самой цепочки частей.
+    ///
+    /// Пути собираются через <see cref="TestPaths"/>: имя выделяется через
+    /// <see cref="System.IO.Path"/>, а тот разбирает путь по правилам той системы,
+    /// где запущен.
     /// </summary>
     public class MergeOutputNamingTests
     {
         [Theory]
-        [InlineData(@"D:\dumps\emmc.bin", "emmc_merged.bin")]
-        [InlineData(@"C:\a b\имя с пробелами.bin", "имя с пробелами_merged.bin")]
         [InlineData("emmc.bin", "emmc_merged.bin")]
-        public void SuggestFileName_InsertsSuffixBeforeExtension(string basePath, string expected)
+        [InlineData("имя с пробелами.bin", "имя с пробелами_merged.bin")]
+        // Имя без расширения — суффикс просто дописывается в конец.
+        [InlineData("emmc", "emmc_merged")]
+        // Дампы часто называют "emmc.full.bin": суффикс встаёт перед ".bin", а не ".full".
+        [InlineData("emmc.full.bin", "emmc.full_merged.bin")]
+        // Повторная сборка уже собранного файла даёт "_merged_merged". Некрасиво, но
+        // безопасно: существующий файл не перезаписывается молча.
+        [InlineData("emmc_merged.bin", "emmc_merged_merged.bin")]
+        public void SuggestFileName_InsertsSuffixBeforeExtension(string fileName, string expected)
         {
-            Assert.Equal(expected, MergeOutputNaming.SuggestFileName(basePath));
-        }
-
-        [Fact]
-        public void SuggestFileName_NoExtension_JustAppendsSuffix()
-        {
-            Assert.Equal("emmc_merged", MergeOutputNaming.SuggestFileName(@"D:\dumps\emmc"));
-        }
-
-        [Fact]
-        public void SuggestFileName_SeveralDots_OnlyLastPartIsTreatedAsExtension()
-        {
-            // Дампы часто называют "emmc.full.bin" — суффикс должен встать перед ".bin",
-            // а не перед ".full".
-            Assert.Equal("emmc.full_merged.bin", MergeOutputNaming.SuggestFileName(@"D:\emmc.full.bin"));
+            // Результат — всегда имя файла без папки, откуда бы ни пришёл базовый путь.
+            Assert.Equal(expected, MergeOutputNaming.SuggestFileName(fileName));
+            Assert.Equal(expected, MergeOutputNaming.SuggestFileName(TestPaths.Absolute("D", "dumps", fileName)));
+            Assert.Equal(expected, MergeOutputNaming.SuggestFileName(TestPaths.Absolute("C", "a b", fileName)));
         }
 
         [Fact]
@@ -38,17 +37,7 @@ namespace TweakFirmware.Tests
         {
             // Главное свойство: имя обязано отличаться от исходного, иначе сборка писала бы
             // поверх базового файла цепочки, из которого сама же и читает.
-            const string basePath = @"D:\dumps\emmc.bin";
-            Assert.NotEqual("emmc.bin", MergeOutputNaming.SuggestFileName(basePath));
-        }
-
-        [Fact]
-        public void SuggestFileName_AlreadyMerged_GetsSuffixAgain()
-        {
-            // Фиксируем фактическое поведение: повторная сборка уже собранного файла даёт
-            // "emmc_merged_merged.bin". Некрасиво, но безопасно — существующий файл
-            // не перезаписывается молча.
-            Assert.Equal("emmc_merged_merged.bin", MergeOutputNaming.SuggestFileName(@"D:\emmc_merged.bin"));
+            Assert.NotEqual("emmc.bin", MergeOutputNaming.SuggestFileName(TestPaths.Absolute("D", "dumps", "emmc.bin")));
         }
 
         [Fact]
