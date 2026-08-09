@@ -334,6 +334,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_NandGeometryUnknown"] = "Определить main и spare не удалось — нужен ручной выбор.",
             ["Extract_NandGeometryFound"] = "main = {0}, spare = {1}.",
             ["Extract_DuneHdLayoutFound"] = "Раскладка страницы Dune HD.",
+            ["Extract_StageCheckEmpty"] = "Проверка пустых разделов",
+            ["Extract_CommentEmpty"] = "пустой",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -629,6 +631,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_NandGeometryUnknown"] = "Could not determine main and spare — manual choice required.",
             ["Extract_NandGeometryFound"] = "main = {0}, spare = {1}.",
             ["Extract_DuneHdLayoutFound"] = "Dune HD page layout.",
+            ["Extract_StageCheckEmpty"] = "Checking for empty partitions",
+            ["Extract_CommentEmpty"] = "empty",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
