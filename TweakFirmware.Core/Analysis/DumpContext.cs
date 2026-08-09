@@ -54,6 +54,13 @@ namespace TweakFirmware.Core.Analysis
         public BluerayPageLayout? BluerayLayout { get; set; }
 
         /// <summary>
+        /// Модель, версия и серийный номер, если дамп удалось опознать как прошивку
+        /// Philips. По ним предлагается имя файла — переименование остаётся действием
+        /// пользователя, разбор дампа сам ничего не переименовывает.
+        /// </summary>
+        public Partitions.Layouts.PhilipsFirmwareInfo? PhilipsInfo { get; set; }
+
+        /// <summary>
         /// Сколько шестнадцатеричных разрядов занимает размер дампа. По этому числу
         /// выравниваются все колонки с адресами, чтобы таблица разделов читалась столбиком.
         /// </summary>

@@ -365,6 +365,9 @@ namespace TweakFirmware.Core.Localization
             ["Extract_DuneProductId"] = "Product ID: {0}.",
             ["Extract_DuneBoardId"] = "Board ID: {0}.",
             ["Extract_DuneLicenseFound"] = "Найден файл лицензии, {0} байт.",
+            ["Extract_PhilipsInfo"] = "Philips: модель {0}, серийный номер {1}, версия ПО {2}.",
+            ["Extract_PhilipsInfoNotFound"] = "Модель и серийный номер в дампе не найдены.",
+            ["Extract_PhilipsEeprom"] = "EEPROM Philips 24C64: модель {0}, серийный номер {1}.",
 
             // ===================== Заглушки разделов в разработке =====================
             ["Placeholder_ExtractTitle"] = "Извлечение разделов",
@@ -691,6 +694,9 @@ namespace TweakFirmware.Core.Localization
             ["Extract_DuneProductId"] = "Product ID: {0}.",
             ["Extract_DuneBoardId"] = "Board ID: {0}.",
             ["Extract_DuneLicenseFound"] = "License file found, {0} bytes.",
+            ["Extract_PhilipsInfo"] = "Philips: model {0}, serial {1}, software version {2}.",
+            ["Extract_PhilipsInfoNotFound"] = "Model and serial number were not found in the dump.",
+            ["Extract_PhilipsEeprom"] = "Philips 24C64 EEPROM: model {0}, serial {1}.",
 
             // ===================== In-development placeholders =====================
             ["Placeholder_ExtractTitle"] = "Extract partitions",
