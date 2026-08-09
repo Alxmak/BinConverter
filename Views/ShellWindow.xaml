@@ -108,9 +108,24 @@
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
                                         TargetPageType="{x:Type views:VerifyPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Archive24}"
+                <!-- Единственный пункт с составной подписью: «Beta» надо поднять над
+                     строкой и покрасить, а одной строкой Content этого не задать.
+                     Цвет основной части берётся у самого пункта: у него он меняется
+                     вместе с темой и состоянием, а вложенному TextBlock по наследованию
+                     доезжает не всегда — про это же сказано в AppStyles.xaml.
+                     TargetPageTag задан явно: WPF-UI выводит его из Content.ToString(),
+                     и для нестроки получилось бы имя типа. -->
+                <ui:NavigationViewItem Icon="{ui:SymbolIcon Archive24}"
                                         TargetPageType="{x:Type views:ExtractPage}"
-                                        IsEnabled="{Binding IsNotBusy}"/>
+                                        TargetPageTag="extract"
+                                        IsEnabled="{Binding IsNotBusy}">
+                    <ui:NavigationViewItem.Content>
+                        <!-- Оба Run стоят вплотную намеренно: перенос строки между
+                             ними XAML превратил бы в лишний пробел. Отступ перед
+                             «Beta» задан в самом тексте. -->
+                        <TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ui:NavigationViewItem}}}"><Run Text="{loc:Loc Shell_NavExtract}"/><Run Text=" Beta" BaselineAlignment="Superscript" FontSize="8.5" Foreground="{StaticResource BetaBadgeBrush}"/></TextBlock>
+                    </ui:NavigationViewItem.Content>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Code24}"
                                         TargetPageType="{x:Type views:TerminalPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
