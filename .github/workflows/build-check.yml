@@ -38,8 +38,16 @@ jobs:
 
       # Основная цель: XAML компилируется в BAML именно на этом шаге, поэтому
       # опечатки в разметке и несуществующие имена иконок ловятся здесь.
+      #
+      # -warnaserror: предупреждение здесь роняет прогон. Причина конкретная —
+      # у этого шага и у шага тестов свои счётчики предупреждений, и «0 Warning(s)»
+      # в конце лога относится к тестам, а не к приложению. Четыре CS8602
+      # в ViewModel прожили так несколько прогонов: сборка была зелёной, счётчик
+      # в хвосте лога — нулевой, а предупреждения лежали в середине. Проект
+      # держится на нуле предупреждений, так пусть это проверяет прогон,
+      # а не внимательность читающего лог.
       - name: Собрать приложение (Release)
-        run: dotnet build TweakFirmware.csproj -c Release --no-restore
+        run: dotnet build TweakFirmware.csproj -c Release --no-restore -warnaserror
 
       - name: Прогнать тесты Core
         run: dotnet test TweakFirmware.Tests/TweakFirmware.Tests.csproj -c Release --no-restore --verbosity normal

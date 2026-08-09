@@ -194,7 +194,14 @@ namespace TweakFirmware.ViewModels
         /// на другую вкладку и запустить вторую операцию поверх первой или поставить
         /// установку обновления.
         /// </summary>
-        private void BeginOperation(bool supportsPause)
+        /// <returns>
+        /// Токен отмены — им и надо пользоваться дальше, а не полем <c>_cts</c>.
+        /// Поле обнуляется в <see cref="EndOperation"/>, то есть к моменту, когда до него
+        /// доберётся лямбда внутри <c>Task.Run</c>, там может уже не быть ничего. Читая
+        /// поле, это ещё и не проходило проверку на null (CS8602): компилятор прав, такой
+        /// код действительно небезопасен.
+        /// </returns>
+        private CancellationToken BeginOperation(bool supportsPause)
         {
             _cts = new CancellationTokenSource();
             IsBusy = true;
@@ -202,6 +209,8 @@ namespace TweakFirmware.ViewModels
             Progress = 0;
 
             OperationLockService.Instance.IsBusy = true;
+
+            return _cts.Token;
         }
 
         /// <summary>
@@ -256,7 +265,7 @@ namespace TweakFirmware.ViewModels
             }
 
             // Разбор паузы не поддерживает — см. пояснение к SupportsPause.
-            BeginOperation(supportsPause: false);
+            var ct = BeginOperation(supportsPause: false);
 
             HasResult = false;
             CanRename = false;
@@ -268,11 +277,11 @@ namespace TweakFirmware.ViewModels
                 AppLogger.Log(Strings.Format("Extract_AnalysisStarted", SourcePath));
 
                 var result = await Task.Run(() => PartitionAnalysisOperation.RunAsync(
-                    new PartitionAnalysisRequest { SourcePath = SourcePath }, this, _cts.Token));
+                    new PartitionAnalysisRequest { SourcePath = SourcePath }, this, ct));
 
                 ApplyResult(result);
                 PrepareRename(result);
-                await SaveArtifactsAsync(result, _cts.Token);
+                await SaveArtifactsAsync(result, ct);
             }
             catch (Exception ex)
             {
@@ -409,7 +418,7 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanUseResult))]
         private async Task ExtractAsync()
         {
-            BeginOperation(supportsPause: true);
+            var ct = BeginOperation(supportsPause: true);
 
             try
             {
@@ -423,7 +432,7 @@ namespace TweakFirmware.ViewModels
                 };
 
                 var outcome = await Task.Run(() => PartitionExtractOperation.RunAsync(
-                    request, _table, this, _cts.Token, _pause));
+                    request, _table, this, ct, _pause));
 
                 await ReportExtractOutcomeAsync(outcome);
             }
@@ -499,12 +508,12 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanSplitNand))]
         private async Task SplitNandAsync()
         {
-            BeginOperation(supportsPause: true);
+            var ct = BeginOperation(supportsPause: true);
 
             try
             {
                 var outcome = await Task.Run(() => NandSplitOperation.RunAsync(
-                    SourcePath, _result?.Geometry, OutputPath, this, _cts.Token, _pause));
+                    SourcePath, _result?.Geometry, OutputPath, this, ct, _pause));
 
                 if (outcome.Status == NandSplitStatus.Completed)
                 {
