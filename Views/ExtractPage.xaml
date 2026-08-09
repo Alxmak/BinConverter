@@ -3,15 +3,135 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
-      Title="{loc:Loc Placeholder_ExtractTitle}"
+      Title="{loc:Loc Extract_Title}"
       ScrollViewer.CanContentScroll="False">
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
-            <ui:SymbolIcon Symbol="Archive24" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
-            <TextBlock Text="{loc:Loc Placeholder_ExtractTitle}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-            <TextBlock Text="{loc:Loc Placeholder_ExtractText}" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
-                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,8,0,0"/>
-            <TextBlock Text="{loc:Loc Shell_Placeholder_InDevelopment}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,8,0,0"/>
+
+    <!-- Esc отменяет идущую операцию — как на остальных вкладках. -->
+    <Page.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}"/>
+    </Page.InputBindings>
+
+    <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
+
+            <!-- Пока идёт разбор или извлечение, поля недоступны. -->
+            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                <StackPanel>
+
+                    <Grid Style="{StaticResource RowGrid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Extract_DumpLabel}" Style="{StaticResource RowLabel}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                    Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"
+                                    AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
+                    </Grid>
+
+                    <Grid Style="{StaticResource RowGrid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                    Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="{loc:Loc Extract_OutputPlaceholder}"
+                                    AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
+                    </Grid>
+
+                    <!-- Второй проход дольше первого: он читает дамп целиком, а не по
+                         нескольким адресам. Поэтому спрашиваем заранее, а не в середине. -->
+                    <CheckBox Margin="0,4,0,0"
+                              Content="{loc:Loc Extract_SearchFileSystemsCheckbox}"
+                              IsChecked="{Binding SearchFileSystems}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:Loc Extract_AnalyseButton}" Command="{Binding AnalyseCommand}"
+                                Style="{StaticResource SolidButtonStyle}" MinWidth="150"/>
+                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
+                                Margin="8,0,0,0" MinWidth="180"/>
+                        <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
+                                Margin="8,0,0,0" MinWidth="150"/>
+                        <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
+                                Margin="8,0,0,0" MinWidth="200"/>
+                        <Button Content="{loc:Loc Common_CancelButton}" Command="{Binding CancelCommand}"
+                                Margin="8,0,0,0" IsEnabled="{Binding IsBusy}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding Summary}" Margin="0,12,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                    <StackPanel Margin="0,8,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding StageLabel}" FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <ProgressBar Value="{Binding Progress}" Maximum="100" Height="6" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Таблица разделов появляется только после успешного разбора. -->
+            <Border Style="{StaticResource CardStyle}"
+                    Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="{loc:Loc Extract_SelectAllButton}" Command="{Binding SelectAllCommand}"/>
+                        <Button Content="{loc:Loc Extract_SelectNoneButton}" Command="{Binding SelectNoneCommand}" Margin="8,0,0,0"/>
+
+                        <!-- Для дампа eMMC переключатель бессмыслен: координаты совпадают. -->
+                        <CheckBox Content="{loc:Loc Extract_ShowPhysicalCheckbox}"
+                                  IsChecked="{Binding ShowPhysicalAddresses}"
+                                  Margin="16,0,0,0" VerticalAlignment="Center"
+                                  Visibility="{Binding IsNandDump, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding Partitions}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              MaxHeight="420" SelectionMode="Extended"
+                              Background="Transparent" BorderThickness="0"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+                            <DataGridTextColumn Header="№" Binding="{Binding Number}" IsReadOnly="True" Width="44"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnOffset}" Binding="{Binding Offset}" IsReadOnly="True" Width="130"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnLength}" Binding="{Binding Length}" IsReadOnly="True" Width="130"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnFs}" Binding="{Binding FileSystem}" IsReadOnly="True" Width="90"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnName}" Binding="{Binding Name}" IsReadOnly="True" Width="180"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnBadBlocks}" Binding="{Binding BadBlocks}" IsReadOnly="True" Width="60"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnComment}" Binding="{Binding Comment}" IsReadOnly="True" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Журнал общий для всех вкладок. -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="{loc:Loc Common_LogTitle}" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}"/>
+                            <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}" Margin="8,0,0,0"/>
+                            <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <ListBox ItemsSource="{Binding LogLines}" MaxHeight="220" Margin="0,8,0,0"
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

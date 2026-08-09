@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -214,6 +215,38 @@ namespace TweakFirmware.Services
                 "Secondary" => DialogChoice.Secondary,
                 _ => DialogChoice.Close
             };
+        }
+
+        /// <summary>
+        /// Выбор одного варианта из списка. Нужен разбору дампа: когда размер страницы
+        /// NAND не определился сам, его приходится спрашивать, а вариантов девять —
+        /// кнопками их не покажешь.
+        ///
+        /// Возвращает номер выбранного варианта или <c>null</c>, если человек отказался.
+        /// </summary>
+        public static async Task<int?> AskChoiceAsync(string title, string message, IReadOnlyList<string> options)
+        {
+            if (options.Count == 0) return null;
+
+            var list = new ComboBox { SelectedIndex = 0, Margin = new Thickness(0, 12, 0, 0) };
+            foreach (string option in options) list.Items.Add(option);
+
+            var panel = new StackPanel();
+            panel.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(list);
+
+            var box = new MessageBox
+            {
+                Title = title,
+                Content = panel,
+                PrimaryButtonText = Strings.Get("Common_OkButton"),
+                CloseButtonText = Strings.Get("Common_CancelButton")
+            };
+
+            SetOwner(box);
+            var result = await box.ShowDialogAsync();
+
+            return result.ToString() == "Primary" ? list.SelectedIndex : null;
         }
     }
 }
