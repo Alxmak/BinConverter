@@ -846,7 +846,7 @@ namespace TweakFirmware.Core.Localization
             ["Extract_ExtractButton"] = "Extract selected",
             ["Extract_SaveUdevButton"] = "Save .udev",
             ["Extract_SplitNandButton"] = "Split into main and spare",
-            ["Extract_AnalysisProgressLabel"] = "Progress",
+            ["Extract_AnalysisProgressLabel"] = "Processing",
             ["Extract_PartitionsTitle"] = "Partitions found",
             ["Extract_SelectAllButton"] = "Select all",
             ["Extract_SelectNoneButton"] = "Select none",

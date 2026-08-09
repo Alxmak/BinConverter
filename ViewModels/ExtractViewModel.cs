@@ -63,6 +63,7 @@ namespace TweakFirmware.ViewModels
         [NotifyCanExecuteChangedFor(nameof(ExtractCommand))]
         [NotifyCanExecuteChangedFor(nameof(SaveUdevCommand))]
         [NotifyCanExecuteChangedFor(nameof(SplitNandCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
         [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
         private bool isBusy;
 
@@ -574,7 +575,7 @@ namespace TweakFirmware.ViewModels
 
         public bool CanRenameDump => !IsBusy && CanRename;
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel() => _cts?.Cancel();
 
         [RelayCommand]
