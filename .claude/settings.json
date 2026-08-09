@@ -37,7 +37,7 @@
       "Bash(python Assets/generate-icons.py)",
       "Bash(python3 Assets/generate-icons.py)",
 
-      "Read(//**)",
+      "Read",
       "Edit",
       "Write",
       "Glob",
