@@ -71,8 +71,10 @@ namespace TweakFirmware.Core.FileSystems
             if (size <= 0) return null;
 
             // К имени тома дописывается версия разметки: в дампе рядом могут лежать
-            // разделы разных версий, и по имени файла их иначе не различить.
-            string label = $"{name}.vdfs{layout:X}";
+            // разделы разных версий, и по имени файла их иначе не различить. Версия
+            // записана четырьмя печатными символами — оригинал приписывал к имени само
+            // число, хотя в комментарии рядом с проверкой указана именно строка «0001».
+            string label = $"{name}.vdfs{LayoutText(head, 0x204)}";
 
             return new VolumeInfo(FsType.Vdfs, label, offset, size)
             {
@@ -106,6 +108,20 @@ namespace TweakFirmware.Core.FileSystems
                     Strings.Format("Extract_VdfsDriver", driver, blockSize / 1024)
                 }
             };
+        }
+
+        /// <summary>
+        /// Версия разметки как текст. Если байты непечатные — а это уже не то, что автор
+        /// закладывал, — остаётся шестнадцатеричная запись, лишь бы имя тома оставалось
+        /// пригодным для имени файла.
+        /// </summary>
+        private static string LayoutText(byte[] data, int at)
+        {
+            for (int i = at; i < at + 4; i++)
+                if (data[i] < 0x20 || data[i] > 0x7E)
+                    return BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(at)).ToString("X8");
+
+            return System.Text.Encoding.ASCII.GetString(data, at, 4);
         }
 
         private static string ReadText(byte[] data, int at, int maxLength)

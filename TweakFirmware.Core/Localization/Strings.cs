@@ -459,8 +459,6 @@ namespace TweakFirmware.Core.Localization
             ["Extract_GeometryOptionNoSpare"] = "{0}. Без spare — разбирать как сплошной дамп",
 
             // ===================== Заглушки разделов в разработке =====================
-            ["Placeholder_ExtractTitle"] = "Извлечение разделов",
-            ["Placeholder_ExtractText"] = "Инструмент для поиска и извлечения разделов из дампов прошивок.",
             ["Placeholder_TerminalTitle"] = "Терминал",
             ["Placeholder_TerminalText"] = "Работа с программой из командной строки, без графического интерфейса.",
         };
@@ -877,8 +875,6 @@ namespace TweakFirmware.Core.Localization
             ["Extract_GeometryOptionNoSpare"] = "{0}. No spare — treat the dump as flat",
 
             // ===================== In-development placeholders =====================
-            ["Placeholder_ExtractTitle"] = "Extract partitions",
-            ["Placeholder_ExtractText"] = "A tool for finding and extracting partitions from firmware dumps.",
             ["Placeholder_TerminalTitle"] = "Terminal",
             ["Placeholder_TerminalText"] = "Driving the program from a command line, without the graphical interface.",
         };

@@ -243,6 +243,28 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
+        public void Vdfs_AppendsTheLayoutVersionAsTheTextItIs()
+        {
+            // Байты версии — печатные символы «0001»; оригинал приписывал к имени тома
+            // само число, хотя в комментарии у проверки указана именно строка.
+            var builder = new DumpBuilder(0x200000);
+            builder.WriteUInt32(0, 0x53464456);
+            builder.WriteUInt32(0x200, 0x53464456);
+            builder.WriteAscii(0x204, "0001");
+            builder.Write(0x209, 12);                    // логарифм размера блока: 4096
+            builder.Write(0x20A, 17);                    // логарифм LEB: 131072
+            builder.WriteUInt64(0x20B, 8);
+            builder.WriteAscii(0x237, "rootfs");
+
+            using var dump = DumpOf(builder);
+            var volume = new VdfsProbe().TryProbe(dump, 0, 0x200000);
+
+            Assert.NotNull(volume);
+            Assert.Equal("rootfs.vdfs0001", volume!.Name);
+            Assert.Equal(8 * 131072L, volume.Length);
+        }
+
+        [Fact]
         public void Vdfs_NeedsBothSignatures()
         {
             var builder = new DumpBuilder(0x200000);
@@ -271,6 +293,21 @@ namespace TweakFirmware.Tests
 
             // Два заголовка, два блока данных у первого файла и один у второго.
             Assert.Equal(512 * 5, volume.Length);
+        }
+
+        [Fact]
+        public void Tar_ASingleHeaderIsStillAnArchive()
+        {
+            // Архив из одного пустого файла — это ровно один блок. Контрольная сумма
+            // заголовка случайно не сходится, так что отбрасывать такой случай незачем.
+            var builder = new DumpBuilder(0x200000);
+            WriteTarHeader(builder, 0, "empty.txt", size: 0);
+
+            using var dump = DumpOf(builder);
+            var volume = new TarProbe().TryProbe(dump, 0, 0x200000);
+
+            Assert.NotNull(volume);
+            Assert.Equal(512, volume!.Length);
         }
 
         [Fact]

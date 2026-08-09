@@ -58,8 +58,10 @@ namespace TweakFirmware.Core.FileSystems
                 at += blocks * BlockSize;
             }
 
+            // Один сошедшийся заголовок — уже архив: контрольная сумма случайно не сходится,
+            // а архив из единственного пустого файла занимает ровно один блок.
             long length = at - offset;
-            if (length <= BlockSize) return null;
+            if (length <= 0) return null;
 
             // В именах файлов бывают косые черты — в имени раздела они не нужны.
             string label = name.Replace('/', '_');

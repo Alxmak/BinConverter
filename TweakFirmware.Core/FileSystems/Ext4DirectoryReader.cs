@@ -85,17 +85,14 @@ namespace TweakFirmware.Core.FileSystems
 
             var block = _dump.ReadBlock(at, length);
 
-            for (int i = 0; i + GroupDescriptorLength <= block.Length; i++)
+            for (int record = 0; record + GroupDescriptorLength <= block.Length; record += GroupDescriptorLength)
             {
-                uint tableBlock = BinaryPrimitives.ReadUInt32LittleEndian(
-                    block.AsSpan(i * GroupDescriptorLength + 0x08));
+                uint tableBlock = BinaryPrimitives.ReadUInt32LittleEndian(block.AsSpan(record + 0x08));
 
                 // Нулевой номер означает, что группы кончились.
                 if (tableBlock == 0) break;
 
                 _inodeTableBlocks.Add(tableBlock);
-
-                if ((i + 1) * GroupDescriptorLength + GroupDescriptorLength > block.Length) break;
             }
         }
 
