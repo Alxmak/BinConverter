@@ -197,14 +197,33 @@
                                   Visibility="{Binding IsNandDump, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
 
+                    <!-- Таблица только для чтения: править в ней нечего, а отметки
+                         разделов стоят на своём CheckBox в шаблоне колонки и правку
+                         ячейки не задействуют — см. пояснение у самой колонки. -->
                     <DataGrid ItemsSource="{Binding Partitions}" AutoGenerateColumns="False"
-                              CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               MaxHeight="420" SelectionMode="Extended"
                               Background="Transparent" BorderThickness="0"
                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+                            <!-- Колонка отметок собрана шаблоном, а не DataGridCheckBoxColumn.
+                                 У той галочка в обычной ячейке нарисована стилем, который
+                                 намеренно ставит ей IsHitTestVisible="False" и Focusable="False"
+                                 («вне правки состояние менять нельзя» — так и записано в WPF).
+                                 Щелчок до галочки не доходит: он достаётся ячейке, та выделяет
+                                 строку и переводит себя в правку, подставляя вместо картинки
+                                 настоящую галочку, — и только второй щелчок её переключает.
+                                 Отсюда и брались два клика на одну отметку. Обычный CheckBox
+                                 в шаблоне принимает щелчок сам, с первого раза. -->
+                            <DataGridTemplateColumn Width="40" SortMemberPath="Selected">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding Selected}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="№" Binding="{Binding Number}" IsReadOnly="True" Width="44"/>
                             <DataGridTextColumn Header="{loc:Loc Extract_ColumnOffset}" Binding="{Binding Offset}" IsReadOnly="True" Width="130"/>
                             <DataGridTextColumn Header="{loc:Loc Extract_ColumnLength}" Binding="{Binding Length}" IsReadOnly="True" Width="130"/>
