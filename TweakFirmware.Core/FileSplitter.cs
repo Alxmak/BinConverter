@@ -51,7 +51,18 @@ namespace TweakFirmware.Core
             if (sourceSizeBytes <= 0)
                 return 1; // пустой файл — всё равно создаётся один (пустой) базовый файл
 
-            return (int)((sourceSizeBytes + maxPartSizeBytes - 1) / maxPartSizeBytes); // деление с округлением вверх
+            long count = (sourceSizeBytes + maxPartSizeBytes - 1) / maxPartSizeBytes; // с округлением вверх
+
+            // Приведение к int раньше делалось молча. При крошечном лимите на большом файле
+            // (терабайтный образ, лимит в килобайт) число частей выходит за int, и молчаливое
+            // приведение давало отрицательное значение: интерфейс показывал «-2 147 483 648
+            // файлов», а нарезка начиналась и заполняла диск. Такой ввод надо отвергать
+            // до начала работы.
+            if (count > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(maxPartSizeBytes),
+                    $"Частей получилось бы {count} — больше, чем программа может создать.");
+
+            return (int)count;
         }
 
         public static async Task<SplitResult> SplitAsync(
@@ -98,7 +109,9 @@ namespace TweakFirmware.Core
             // программа никогда не модифицирует и не удаляет исходный BIN.
             using (var input = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, FileOptions.SequentialScan))
             {
-                var output = new FileStream(currentPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
+                // Ссылка обнуляется на время подмены файла (см. ниже) — от этого зависит
+                // блок finally: без обнуления он вызывал Flush у уже закрытого потока.
+                FileStream? output = new FileStream(currentPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
                 createdFilePaths?.Add(currentPath);
                 log(Strings.Format("Log_PartCreated", Path.GetFileName(currentPath), partIndex + 1, totalFiles));
 
@@ -121,6 +134,13 @@ namespace TweakFirmware.Core
                             {
                                 output.Flush();
                                 output.Dispose();
+                                // Обнуляем до создания следующего файла: если создать его
+                                // не выйдет (нет места, имя занято папкой, отобрали права),
+                                // finally не должен трогать уже закрытый поток. Раньше он
+                                // вызывал у него Flush и подменял настоящую причину сбоя
+                                // на ObjectDisposedException — по журналу выходило, что
+                                // программа сама у себя закрыла файл.
+                                output = null;
                                 log(Strings.Format("Log_PartFilled", Path.GetFileName(currentPath), writtenInCurrent));
 
                                 partIndex++;
@@ -160,9 +180,15 @@ namespace TweakFirmware.Core
                     // внутри OneDrive добавляет к этому начало синхронизации. Без этой
                     // строки журнал обрывался на «Создан …», и отличить «работает, но
                     // долго» от «зависло» было нельзя.
-                    log(Strings.Format("Log_ClosingFile", Path.GetFileName(currentPath)));
-                    output.Flush();
-                    output.Dispose();
+                    //
+                    // Потока может не быть: сбой мог случиться ровно между закрытием
+                    // предыдущей части и созданием следующей.
+                    if (output != null)
+                    {
+                        log(Strings.Format("Log_ClosingFile", Path.GetFileName(currentPath)));
+                        output.Flush();
+                        output.Dispose();
+                    }
                 }
             }
 

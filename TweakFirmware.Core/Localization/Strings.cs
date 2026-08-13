@@ -44,6 +44,7 @@ namespace TweakFirmware.Core.Localization
         {
             // ===================== Общее =====================
             ["Common_Error"] = "Ошибка",
+            ["Common_ErrorLog"] = "Ошибка: {0}",
             ["Common_PauseButton"] = "Приостановить",
             ["Common_ResumeButton"] = "Возобновить",
             ["Common_FileNotFoundTitle"] = "Файл не найден",
@@ -106,6 +107,7 @@ namespace TweakFirmware.Core.Localization
             // ===================== Ядро: исключения и журнал =====================
             ["Core_SourceFileNotFound"] = "Исходный файл не найден",
             ["Core_ChainBaseFileNotFound"] = "Базовый файл цепочки не найден",
+            ["Core_ChainPartMissing"] = "В цепочке нет части {0}, но есть часть {1}: собирать нечего — файл получился бы неполным.",
             ["Core_CannotDetermineDrive"] = "Не удалось определить диск для пути: {0}",
             ["Log_Created"] = "Лог создан",
             ["Log_Cleared"] = "Лог очищен",
@@ -196,7 +198,6 @@ namespace TweakFirmware.Core.Localization
             ["Convert_DoneMessage"] = "Конвертирование завершено.\n\nСоздано файлов: {0}",
             ["Convert_CancelledLog"] = "Конвертирование отменено пользователем",
             ["Convert_CancelledMessage"] = "Конвертирование отменено.\nУдалено незавершённых файлов: {0}",
-            ["Convert_ErrorLog"] = "Ошибка: {0}",
             ["Convert_DiskFullMessage"] = "На диске закончилось свободное место во время записи.\n\nОперация прервана, незавершённые файлы ({0}) удалены — освободите место и попробуйте снова.",
             ["Convert_ErrorMessage"] = "Не удалось завершить конвертирование:\n{0}\n\nНезавершённые файлы ({1}) удалены.",
             ["Convert_ResumedLog"] = "Операция возобновлена пользователем",
@@ -475,6 +476,7 @@ namespace TweakFirmware.Core.Localization
         {
             // ===================== Common =====================
             ["Common_Error"] = "Error",
+            ["Common_ErrorLog"] = "Error: {0}",
             ["Common_PauseButton"] = "Pause",
             ["Common_ResumeButton"] = "Resume",
             ["Common_FileNotFoundTitle"] = "File not found",
@@ -533,6 +535,7 @@ namespace TweakFirmware.Core.Localization
             // ===================== Core: exceptions and log =====================
             ["Core_SourceFileNotFound"] = "Source file not found",
             ["Core_ChainBaseFileNotFound"] = "Base file of the chain not found",
+            ["Core_ChainPartMissing"] = "Part {0} is missing while part {1} exists: the chain is broken and the result would be incomplete.",
             ["Core_CannotDetermineDrive"] = "Could not determine the drive for path: {0}",
             ["Log_Created"] = "Log created",
             ["Log_Cleared"] = "Log cleared",
@@ -623,7 +626,6 @@ namespace TweakFirmware.Core.Localization
             ["Convert_DoneMessage"] = "Conversion completed.\n\nFiles created: {0}",
             ["Convert_CancelledLog"] = "Conversion cancelled by the user",
             ["Convert_CancelledMessage"] = "Conversion cancelled.\nIncomplete files deleted: {0}",
-            ["Convert_ErrorLog"] = "Error: {0}",
             ["Convert_DiskFullMessage"] = "The disk ran out of space while writing.\n\nThe operation was interrupted, incomplete files ({0}) were deleted — free up space and try again.",
             ["Convert_ErrorMessage"] = "Could not finish the conversion:\n{0}\n\nIncomplete files ({1}) were deleted.",
             ["Convert_ResumedLog"] = "Operation resumed by the user",

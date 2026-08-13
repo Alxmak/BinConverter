@@ -257,7 +257,7 @@ namespace TweakFirmware.Core.Operations
             }
             catch (Exception ex)
             {
-                log(Strings.Format("Convert_ErrorLog", ex.Message));
+                log(Strings.Format("Common_ErrorLog", ex.Message));
                 IncompleteOutput.Remove(createdFiles, log);
 
                 return new ConvertOutcome
