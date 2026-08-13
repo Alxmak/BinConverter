@@ -58,12 +58,17 @@ namespace TweakFirmware.Views
         {
             if (RootNavigation.IsPaneOpen) return;
 
-            // Отступ сверху равен отступу слева. Слева он получается сам, из положения
-            // кнопки в полосе заголовка, поэтому меряем его здесь, а не записываем числом:
-            // кнопка стоит после значка и названия программы, а их ширина зависит и от
-            // языка, и от масштаба экрана.
-            double leftGap = MenuToggleButton.TranslatePoint(new Point(0, 0), this).X + MenuPeek.HorizontalOffset;
-            MenuPeek.VerticalOffset = leftGap;
+            // Отступ сверху делаем зрительно равным отступу слева: расстояние от верхнего
+            // края окна до списка — такое же, как от левого края до него же.
+            //
+            // Оба меряем на месте: слева отступ получается из положения кнопки (она стоит
+            // после значка и названия программы, а их ширина зависит от языка и масштаба),
+            // а сверху Popup отсчитывается от нижнего края кнопки, поэтому высоту полосы
+            // заголовка приходится вычитать. Без этого вычитания список уезжал вниз ровно
+            // на высоту заголовка.
+            Point button = MenuToggleButton.TranslatePoint(new Point(0, 0), this);
+            double leftGap = button.X + MenuPeek.HorizontalOffset;
+            MenuPeek.VerticalOffset = Math.Max(2, leftGap - (button.Y + MenuToggleButton.ActualHeight));
 
             BuildPeekMenu();
             MenuPeek.IsOpen = true;
