@@ -69,12 +69,19 @@
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+
+                        <!-- До разбора итог ничего не сообщает о дампе, поэтому на его месте
+                             подсказка: выбрать дамп и нажать «Анализировать». -->
+                        <c:HintBanner Text="{loc:Loc Extract_NoResultYet}"
+                                      Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
+
                         <!-- Тот же межстрочный интервал, что в информационных карточках
                              остальных вкладок: содержимое собирается кодом, и число строк
                              заранее неизвестно. -->
                         <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" FontSize="13"
                                    LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                   Visibility="{Binding HasInfo, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </Border>
 

@@ -129,20 +129,39 @@
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                     <StackPanel>
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
-                        <!-- Строки разведены межстрочным интервалом, а не отступами блоков:
-                             содержимое обоих собирается кодом и число строк заранее неизвестно,
-                             а так расстояние одинаковое между всеми — и внутри блока, и на стыке.
-                             BlockLineHeight нужен, чтобы LineHeight соблюдался точно, а не
-                             только увеличивал строку при необходимости. -->
-                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13"
-                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13"
-                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8"/>
-                        <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
-                                HorizontalAlignment="Left" FontSize="11" Padding="10,4"
-                                Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
+
+                        <!-- Пока файла нет, считать нечего, и вместо строк стоит подсказка. -->
+                        <c:HintBanner Text="{loc:Loc Common_NoFileInfoHint}"
+                                      Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
+
+                        <StackPanel Visibility="{Binding HasInfo, Converter={StaticResource BoolToVis}}">
+                            <!-- Строки разведены межстрочным интервалом, а не отступами блоков:
+                                 содержимое обоих собирается кодом и число строк заранее неизвестно,
+                                 а так расстояние одинаковое между всеми — и внутри блока, и на стыке.
+                                 BlockLineHeight нужен, чтобы LineHeight соблюдался точно, а не
+                                 только увеличивал строку при необходимости. -->
+                            <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13"
+                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            <!-- Список размеров есть не всегда (слишком много файлов, неверный
+                                 лимит), а пустой TextBlock всё равно занимал бы высоту строки. -->
+                            <TextBlock Text="{Binding DisplayedFilesText}" TextWrapping="Wrap" FontSize="13"
+                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,8">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayedFilesText}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <Button Content="{Binding ExpandButtonText}" Command="{Binding ToggleExpandCommand}"
+                                    HorizontalAlignment="Left" FontSize="11" Padding="10,4"
+                                    Visibility="{Binding ShowExpandButton, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 

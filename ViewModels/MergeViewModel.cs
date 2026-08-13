@@ -22,7 +22,20 @@ namespace TweakFirmware.ViewModels
 
         // Карточка "Общая информация" из макета: размер файла, который получится после
         // склейки. Считается по уже найденной цепочке, отдельного прохода по диску не нужно.
-        [ObservableProperty] private string resultSizeText = Strings.Format("Merge_ResultSizeLine", NoValuePlaceholder);
+        // Пусто до выбора части: карточка показывает подсказку, а не строку с прочерком
+        // вместо размера — прочерк читался как посчитанный ноль.
+        [ObservableProperty] private string resultSizeText = "";
+
+        /// <summary>
+        /// Есть ли что показать в «Общей информации»: найденная цепочка или сообщение о том,
+        /// почему её собрать не вышло. Пока путь пуст, вместо строк идёт подсказка.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
+        private bool hasInfo;
+
+        public bool ShowInfoHint => !HasInfo;
+
         [ObservableProperty] private string outputPath = "";
         [ObservableProperty] private string expectedHashText = "";
 
@@ -193,14 +206,18 @@ namespace TweakFirmware.ViewModels
         {
             if (!probe.Resolved)
             {
-                // Пустой путь — это ещё не ошибка, просто нечего показывать.
+                // Пустой путь — это ещё не ошибка, просто нечего показывать: тогда карточка
+                // показывает подсказку. А вот причину, по которой цепочку собрать не вышло,
+                // прятать за подсказкой нельзя — это ответ на выбранный файл.
                 ChainInfoText = probe.ErrorMessage.Length == 0
                     ? ""
                     : Strings.Format("Merge_ChainResolveError", probe.ErrorMessage);
-                ResultSizeText = Strings.Format("Merge_ResultSizeLine", NoValuePlaceholder);
+                HasInfo = ChainInfoText.Length > 0;
+                ResultSizeText = "";
                 return;
             }
 
+            HasInfo = true;
             ChainInfoText = Strings.Format("Merge_ChainFoundInfo",
                 probe.PartCount, SizeFormatHelper.Format(probe.TotalBytes), probe.BaseFileName);
             ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(probe.TotalBytes));
