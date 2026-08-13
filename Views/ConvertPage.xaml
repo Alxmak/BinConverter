@@ -126,27 +126,42 @@
                 </Border>
             </Grid>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+            <!-- «Прогресс» и кнопки стоят рядом в тех же двух колонках, что «Общая
+                 информация» и «Параметры» над ними: полосам вся ширина страницы не
+                 нужна, а от карточки во всю ширину кнопки уезжали вниз, дальше от
+                 полей и параметров, за которыми человек и следит перед запуском.
+                 Заголовка у правой карточки нет — три кнопки в нём не нуждаются. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <c:ProgressRow Label="{loc:Loc Convert_OverallProgressLabel}"
-                                   Value="{Binding OverallProgress}" Fill="#2F6FED"/>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
-                                   Value="{Binding CurrentFileProgress}" Fill="#16A34A"
-                                   Caption="{Binding CurrentFileLabel}"/>
+                        <c:ProgressRow Label="{loc:Loc Convert_OverallProgressLabel}"
+                                       Value="{Binding OverallProgress}" Fill="#2F6FED"/>
 
-                    <c:ProgressRow Label="{loc:Loc Convert_HashProgressLabel}"
-                                   Value="{Binding ShaProgress}" Fill="#8B5CF6"
-                                   IsEnabled="{Binding VerifyHashAfter}"/>
+                        <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
+                                       Value="{Binding CurrentFileProgress}" Fill="#16A34A"
+                                       Caption="{Binding CurrentFileLabel}"/>
 
+                        <c:ProgressRow Label="{loc:Loc Convert_HashProgressLabel}"
+                                       Value="{Binding ShaProgress}" Fill="#8B5CF6"
+                                       IsEnabled="{Binding VerifyHashAfter}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <c:OperationBar StartText="{loc:Loc Convert_StartButton}"
                                     StartCommand="{Binding StartCommand}"
                                     PauseCommand="{Binding TogglePauseCommand}"
                                     CancelCommand="{Binding CancelCommand}"/>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
 
             <c:LogCard/>
 
