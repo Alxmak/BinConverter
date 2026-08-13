@@ -91,46 +91,65 @@
                 </Border>
             </Grid>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+            <!-- Те же две колонки, что у «Общей информации» и «Параметров» выше.
+                 Все кнопки вкладки собраны в правой карточке одним столбцом: в
+                 половине ширины страницы прежние ряды («Извлечь» — «Сохранить .udev»
+                 — «Разделить NAND») не помещаются, а StackPanel не переносит их
+                 на вторую строку, а обрезает. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- Полоса та же, что на остальных вкладках. Название текущего этапа
-                         идёт подписью под ней — у ProgressRow для этого есть Caption. -->
-                    <c:ProgressRow Label="{loc:Loc Extract_AnalysisProgressLabel}"
-                                   Value="{Binding Progress}" Fill="#2F6FED"
-                                   Caption="{Binding StageLabel}"/>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <!-- Главное действие вкладки, пауза и отмена — общей строкой кнопок.
-                         Пауза приходит от ViewModel и сама гаснет на разборе: он её
-                         не поддерживает. -->
-                    <c:OperationBar StartText="{loc:Loc Extract_AnalyseButton}"
-                                    StartCommand="{Binding AnalyseCommand}"
-                                    PauseCommand="{Binding TogglePauseCommand}"
-                                    CancelCommand="{Binding CancelCommand}"/>
+                        <!-- Полоса та же, что на остальных вкладках. Название текущего этапа
+                             идёт подписью под ней — у ProgressRow для этого есть Caption. -->
+                        <c:ProgressRow Label="{loc:Loc Extract_AnalysisProgressLabel}"
+                                       Value="{Binding Progress}" Fill="#2F6FED"
+                                       Caption="{Binding StageLabel}"/>
+                    </StackPanel>
+                </Border>
 
-                    <!-- Остальные действия — второй строкой. Скрывать их не нужно:
-                         доступность решает CanExecute самих команд, как и везде
-                         в программе. «Разделить» просит дамп NAND, а не результат
-                         разбора, поэтому строка не спрятана за таблицей. -->
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}" MinWidth="180"/>
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <!-- Главное действие вкладки, пауза и отмена — общими кнопками.
+                             Пауза приходит от ViewModel и сама гаснет на разборе: он её
+                             не поддерживает. -->
+                        <c:OperationBar StartText="{loc:Loc Extract_AnalyseButton}"
+                                        StartCommand="{Binding AnalyseCommand}"
+                                        PauseCommand="{Binding TogglePauseCommand}"
+                                        CancelCommand="{Binding CancelCommand}"/>
+
+                        <!-- Остальные действия — ниже, отделены отступом от общих трёх.
+                             Скрывать их не нужно: доступность решает CanExecute самих
+                             команд, как и везде в программе. «Разделить» просит дамп
+                             NAND, а не результат разбора, поэтому кнопка не спрятана
+                             за таблицей. -->
+                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
+                                Margin="0,14,0,0"/>
                         <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
-                                Margin="8,0,0,0" MinWidth="150"/>
+                                Margin="0,8,0,0"/>
                         <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
-                                Margin="8,0,0,0" MinWidth="200"/>
-                    </StackPanel>
+                                Margin="0,8,0,0"/>
 
-                    <!-- Появляется только у прошивок Philips: только для них в дампе есть
-                         модель, версия и серийный номер, из которых собирается имя. -->
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0"
-                                Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
-                        <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"/>
-                        <TextBlock Text="{Binding SuggestedFileName}" Margin="12,0,0,0" VerticalAlignment="Center"
-                                   FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <!-- Появляется только у прошивок Philips: только для них в дампе есть
+                             модель, версия и серийный номер, из которых собирается имя.
+                             Предлагаемое имя идёт под кнопкой, а не рядом: в узкой карточке
+                             оно длиннее оставшегося места и с переносом читается целиком. -->
+                        <StackPanel Margin="0,8,0,0"
+                                    Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
+                            <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"/>
+                            <TextBlock Text="{Binding SuggestedFileName}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                       FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
 
             <!-- Таблица разделов появляется только после успешного разбора. -->
             <Border Style="{StaticResource CardStyle}"

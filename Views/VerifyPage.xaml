@@ -67,21 +67,34 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+            <!-- Колонки те же, что на остальных вкладках, хотя «Общей информации»
+                 в сравнении нет: одинаковая сборка вкладок важнее, чем экономия
+                 половины ширины под одну полосу. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <c:ProgressRow Label="{loc:Loc Verify_CompareProgressLabel}"
-                                   Value="{Binding OverallProgress}" Fill="#2F6FED"
-                                   Caption="{Binding CurrentFileLabel}"/>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <!-- Та же строка кнопок, что в Конвертировании и Сборке. PauseCommand
-                         не передаём — паузы в сравнении нет, и кнопки не будет. -->
+                        <c:ProgressRow Label="{loc:Loc Verify_CompareProgressLabel}"
+                                       Value="{Binding OverallProgress}" Fill="#2F6FED"
+                                       Caption="{Binding CurrentFileLabel}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Те же кнопки, что в Конвертировании и Сборке. PauseCommand
+                     не передаём — паузы в сравнении нет, и кнопки не будет. -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <c:OperationBar StartText="{loc:Loc Verify_CompareButton}"
                                     StartCommand="{Binding StartCommand}"
                                     CancelCommand="{Binding CancelCommand}"/>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
 
             <!-- Результат виден всегда: до первого сравнения в баннере стоит пояснение. -->
             <Border Style="{StaticResource CardStyle}">

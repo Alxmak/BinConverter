@@ -110,23 +110,36 @@
                 </Border>
             </Grid>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+            <!-- Те же две колонки, что у «Общей информации» и «Параметров» выше:
+                 вкладки собираются одинаково, и «Прогресс» с кнопками стоит на всех
+                 так же, как в «Конвертировании». -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <c:ProgressRow Label="{loc:Loc Merge_OverallProgressLabel}"
-                                   Value="{Binding OverallProgress}" Fill="#2F6FED"/>
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
-                                   Value="{Binding CurrentFileProgress}" Fill="#16A34A"
-                                   Caption="{Binding CurrentFileLabel}"/>
+                        <c:ProgressRow Label="{loc:Loc Merge_OverallProgressLabel}"
+                                       Value="{Binding OverallProgress}" Fill="#2F6FED"/>
 
+                        <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
+                                       Value="{Binding CurrentFileProgress}" Fill="#16A34A"
+                                       Caption="{Binding CurrentFileLabel}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <c:OperationBar StartText="{loc:Loc Merge_StartButton}"
                                     StartCommand="{Binding StartCommand}"
                                     PauseCommand="{Binding TogglePauseCommand}"
                                     CancelCommand="{Binding CancelCommand}"/>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
 
             <c:LogCard/>
 

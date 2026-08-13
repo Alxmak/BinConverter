@@ -10,10 +10,16 @@
          итог в диалоге и в журнале.
 
          Доступность кнопок никак не задаётся здесь: её решает CanExecute самих команд
-         во ViewModel. -->
-    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+         во ViewModel.
+
+         Кнопки идут сверху вниз и растянуты по ширине: строка кнопок стоит в своей
+         узкой карточке справа от «Прогресса», а в ряд три подписи («Начать»,
+         «Приостановить», «Отмена») в половину ширины страницы не помещаются.
+         Растянуты, а не по своей ширине, потому что подписи разной длины и
+         прижатые влево кнопки выглядели бы лесенкой. -->
+    <StackPanel>
         <Button Command="{Binding StartCommand, ElementName=Root}" Style="{StaticResource SolidButtonStyle}"
-                Background="#2F6FED" Margin="0,0,8,0">
+                Background="#2F6FED" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Play24" FontSize="14" Margin="0,0,7,0"/>
                 <TextBlock Text="{Binding StartText, ElementName=Root}"/>
@@ -24,7 +30,7 @@
              не передаёт PauseCommand, и кнопка не показывается. Подпись берётся у
              ViewModel страницы — она же меняет её на «Возобновить». -->
         <Button x:Name="PauseButton" Command="{Binding PauseCommand, ElementName=Root}"
-                Style="{StaticResource PauseButtonStyle}" Margin="0,0,8,0">
+                Style="{StaticResource PauseButtonStyle}" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Pause24" FontSize="14" Margin="0,0,7,0"/>
                 <TextBlock Text="{Binding PauseButtonText}"/>
