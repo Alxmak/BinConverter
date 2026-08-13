@@ -126,7 +126,7 @@ namespace TweakFirmware.Core.Localization
             ["Shell_NavMerge"] = "Сборка файла",
             ["Shell_NavVerify"] = "Проверка SHA-256",
             ["Shell_NavExtract"] = "Извлечение разделов",
-            ["Shell_NavTerminal"] = "Терминал",
+            ["Shell_NavPartitionMerge"] = "Объединение разделов",
             ["Shell_NavSettings"] = "Настройки",
             ["Shell_NavAbout"] = "О программе",
             ["Shell_ToolsGroupHeader"] = "ИНСТРУМЕНТЫ",
@@ -461,8 +461,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_GeometryOptionNoSpare"] = "{0}. Без spare — разбирать как сплошной дамп",
 
             // ===================== Заглушки разделов в разработке =====================
-            ["Placeholder_TerminalTitle"] = "Терминал",
-            ["Placeholder_TerminalText"] = "Работа с программой из командной строки, без графического интерфейса.",
+            ["Placeholder_PartitionMergeTitle"] = "Объединение разделов",
+            ["Placeholder_PartitionMergeText"] = "Обратная сборка дампа из разделов, вытащенных на вкладке «Извлечение разделов».",
         };
 
         private static readonly Dictionary<string, string> En = new()
@@ -547,7 +547,7 @@ namespace TweakFirmware.Core.Localization
             ["Shell_NavMerge"] = "Merge file",
             ["Shell_NavVerify"] = "Verify SHA-256",
             ["Shell_NavExtract"] = "Extract partitions",
-            ["Shell_NavTerminal"] = "Terminal",
+            ["Shell_NavPartitionMerge"] = "Merge partitions",
             ["Shell_NavSettings"] = "Settings",
             ["Shell_NavAbout"] = "About",
             ["Shell_ToolsGroupHeader"] = "TOOLS",
@@ -879,8 +879,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_GeometryOptionNoSpare"] = "{0}. No spare — treat the dump as flat",
 
             // ===================== In-development placeholders =====================
-            ["Placeholder_TerminalTitle"] = "Terminal",
-            ["Placeholder_TerminalText"] = "Driving the program from a command line, without the graphical interface.",
+            ["Placeholder_PartitionMergeTitle"] = "Merge partitions",
+            ["Placeholder_PartitionMergeText"] = "Putting a dump back together from the partitions pulled out on the Extract partitions tab.",
         };
     }
 }

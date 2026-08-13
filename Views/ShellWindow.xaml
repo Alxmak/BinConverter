@@ -126,8 +126,8 @@
                         <TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ui:NavigationViewItem}}}"><Run Text="{loc:Loc Shell_NavExtract}"/><Run Text=" Beta" BaselineAlignment="Superscript" FontSize="8.5" Foreground="{StaticResource BetaBadgeBrush}"/></TextBlock>
                     </ui:NavigationViewItem.Content>
                 </ui:NavigationViewItem>
-                <ui:NavigationViewItem Content="{loc:Loc Shell_NavTerminal}" Icon="{ui:SymbolIcon Code24}"
-                                        TargetPageType="{x:Type views:TerminalPage}"
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavPartitionMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
+                                        TargetPageType="{x:Type views:PartitionMergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItemSeparator/>
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_SystemGroupHeader}"/>
