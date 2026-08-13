@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace TweakFirmware.Views
 {
-    public partial class TerminalPage : Page
+    public partial class PartitionMergePage : Page
     {
-        public TerminalPage()
+        public PartitionMergePage()
         {
             InitializeComponent();
         }
