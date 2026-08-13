@@ -19,7 +19,10 @@
         </Style>
     </ui:FluentWindow.Resources>
 
-    <Grid>
+    <!-- Движение мыши слушаем на всём окне: подсмотренное меню прячется, когда курсор
+         уходит от него вправо, а сама панель — часть шаблона NavigationView, и добраться
+         до неё из разметки нечем. -->
+    <Grid PreviewMouseMove="Root_PreviewMouseMove">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -31,7 +34,19 @@
              вовсе при 200%. С 64-м кадром уменьшение было вчетверо и давало мыло.
              Иконка самого окна (атрибут Icon выше) остаётся 64-й: её Windows просит
              и мелкой для панели задач, и крупной для Alt+Tab. -->
-        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-32.png'}"/>
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-32.png'}">
+            <!-- Своя кнопка меню вместо встроенной. Встроенная живёт внутри самой панели,
+                 а панель теперь прячется целиком — вместе с ней исчезла бы и кнопка,
+                 и развернуть меню было бы нечем. Здесь же она видна всегда.
+                 Символ вписан текстом, а не значком WPF-UI: у гамбургера в наборе
+                 нет очевидного имени, а ☰ есть в системных шрифтах Windows. -->
+            <ui:TitleBar.Header>
+                <Button x:Name="MenuToggleButton" Content="&#x2630;" FontSize="15"
+                        Background="Transparent" BorderThickness="0" Padding="10,4" Margin="6,0,0,0"
+                        Cursor="Hand" ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
+                        Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"/>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
         <!-- Баннер автообновления: своя DataContext (UpdateManager), не зависит от
              OperationLockService, который используется остальным окном. -->
@@ -72,9 +87,14 @@
             </Grid>
         </Border>
 
+        <!-- Свёрнутое меню прячется целиком, а не остаётся столбцом значков: значки без
+             подписей всё равно ничего не говорят, а заголовки групп рядом с ними
+             превращались в обрубки. Прячет и разворачивает панель кнопка в заголовке
+             окна (IsPaneToggleVisible=False — встроенная кнопка отключена, она внутри
+             самой панели и исчезла бы вместе с ней). -->
         <ui:NavigationView Grid.Row="2" x:Name="RootNavigation"
                             IsBackButtonVisible="Collapsed"
-                            IsPaneToggleVisible="True"
+                            IsPaneToggleVisible="False"
                             OpenPaneLength="210">
 
             <ui:NavigationView.Resources>
