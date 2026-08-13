@@ -1,7 +1,13 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 using TweakFirmware.Services;
 using Wpf.Ui.Controls;
+
+// Имена контролов WPF и WPF-UI пересекаются (TextBlock, Button и другие), поэтому
+// родные берём через псевдоним, а не общим using — про эти грабли сказано в CLAUDE.md.
+using SWC = System.Windows.Controls;
 
 namespace TweakFirmware.Views
 {
@@ -29,56 +35,124 @@ namespace TweakFirmware.Views
             WindowPlacementService.Restore(this);
             Loaded += (_, _) => RootNavigation.Navigate(typeof(ConvertPage));
             Closing += (_, _) => WindowPlacementService.Save(this);
-
-            // Выбрали раздел из подсмотренного меню — меню снова прячется. Закреплённое
-            // (открытое щелчком) остаётся на месте: человек попросил его показать явно.
-            RootNavigation.Navigated += (_, _) =>
-            {
-                if (!_menuPinned) RootNavigation.IsPaneVisible = false;
-            };
         }
 
         /// <summary>
-        /// Меню открыто щелчком, а не наведением. Закреплённое не прячется само:
-        /// ни при уходе мыши, ни после выбора раздела.
+        /// Щелчок по кнопке разворачивает или прячет саму панель. Панель встроена
+        /// в раскладку, поэтому развёрнутая раздвигает страницу — так и задумано:
+        /// щелчок означает «оставить меню открытым», а не «подсмотреть».
         /// </summary>
-        private bool _menuPinned = true;
-
-        /// <summary>
-        /// Насколько правее панели должна уйти мышь, чтобы подсмотренное меню закрылось.
-        /// Без запаса меню моргало бы на границе: курсор дрожит на пиксель, и панель
-        /// то прячется, то появляется снова.
-        /// </summary>
-        private const double PeekCloseMargin = 60;
-
-        /// <summary>Щелчок по кнопке: показать меню и закрепить — или спрятать совсем.</summary>
         private void MenuToggle_Click(object sender, RoutedEventArgs e)
         {
-            _menuPinned = !_menuPinned;
-            RootNavigation.IsPaneVisible = _menuPinned;
+            MenuPeek.IsOpen = false;
+            RootNavigation.IsPaneOpen = !RootNavigation.IsPaneOpen;
         }
 
         /// <summary>
-        /// Наведение на кнопку показывает меню, не закрепляя его: это «подсмотреть»,
-        /// а не «открыть». Уберёт его либо выбор раздела, либо уход мыши вправо
-        /// (см. Root_PreviewMouseMove).
+        /// Наведение на кнопку показывает разделы всплывающим списком поверх страницы,
+        /// ничего не двигая. Если панель и так развёрнута, показывать нечего.
         /// </summary>
-        private void MenuToggle_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void MenuToggle_MouseEnter(object sender, MouseEventArgs e)
         {
-            if (!_menuPinned) RootNavigation.IsPaneVisible = true;
+            if (RootNavigation.IsPaneOpen) return;
+
+            BuildPeekMenu();
+            MenuPeek.IsOpen = true;
         }
 
-        /// <summary>
-        /// Подсмотренное меню прячется, когда мышь уходит от него в сторону содержимого.
-        /// Слушаем окно целиком, а не панель: панель — часть шаблона NavigationView,
-        /// добраться до неё из разметки нечем, а положение курсора известно и так.
-        /// </summary>
-        private void Root_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (_menuPinned || !RootNavigation.IsPaneVisible) return;
+        private void MenuPeek_MouseLeave(object sender, MouseEventArgs e) => MenuPeek.IsOpen = false;
 
-            if (e.GetPosition(this).X > RootNavigation.OpenPaneLength + PeekCloseMargin)
-                RootNavigation.IsPaneVisible = false;
+        /// <summary>
+        /// Собирает всплывающий список из тех же пунктов, что стоят в панели.
+        /// Не копия разметки, а пересборка по RootNavigation.MenuItems: второй список
+        /// разделов в XAML разошёлся бы с первым на первом же новом разделе.
+        ///
+        /// Пересобирается на каждое открытие, а не один раз: так подхватываются и смена
+        /// языка (подписи привязаны к словарю), и запрет на переключение во время
+        /// операции (IsEnabled у пунктов меняется на ходу).
+        /// </summary>
+        private void BuildPeekMenu()
+        {
+            MenuPeekItems.Children.Clear();
+
+            var lineBrush = TryFindResource("CardStrokeColorDefaultBrush") as Brush;
+            var captionBrush = TryFindResource("TextFillColorPrimaryBrush") as Brush;
+
+            foreach (object entry in RootNavigation.MenuItems)
+            {
+                switch (entry)
+                {
+                    case NavigationViewItemHeader header:
+                        MenuPeekItems.Children.Add(new SWC.TextBlock
+                        {
+                            Text = header.Text,
+                            FontSize = 11,
+                            FontWeight = FontWeights.SemiBold,
+                            Opacity = 0.7,
+                            Foreground = captionBrush,
+                            Margin = new Thickness(10, 10, 10, 4)
+                        });
+                        break;
+
+                    case NavigationViewItemSeparator:
+                        MenuPeekItems.Children.Add(new SWC.Border
+                        {
+                            Height = 1,
+                            Background = lineBrush,
+                            Margin = new Thickness(8, 6, 8, 6)
+                        });
+                        break;
+
+                    case NavigationViewItem item:
+                        MenuPeekItems.Children.Add(CreatePeekItem(item, captionBrush));
+                        break;
+                }
+            }
+        }
+
+        private SWC.Button CreatePeekItem(NavigationViewItem item, Brush? foreground)
+        {
+            var row = new SWC.StackPanel { Orientation = SWC.Orientation.Horizontal };
+
+            // Значок пересоздаём, а не переиспользуем: у элемента WPF может быть только
+            // один родитель, и перенос значка из панели во всплывающий список выдернул бы
+            // его из самой панели.
+            if (item.Icon is SymbolIcon icon)
+            {
+                row.Children.Add(new SymbolIcon
+                {
+                    Symbol = icon.Symbol,
+                    FontSize = 16,
+                    Margin = new Thickness(0, 0, 10, 0),
+                    Foreground = foreground
+                });
+            }
+
+            // Подпись «Извлечения разделов» — не строка, а TextBlock с пометкой «Beta»;
+            // из него берём готовый текст, пометка при этом теряется, и это осознанно:
+            // во всплывающем списке важно узнать раздел, а не повторить оформление.
+            string text = item.Content as string ?? (item.Content as SWC.TextBlock)?.Text ?? "";
+            row.Children.Add(new SWC.TextBlock { Text = text, Foreground = foreground });
+
+            var button = new SWC.Button
+            {
+                Content = row,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(10, 7, 10, 7),
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Cursor = Cursors.Hand,
+                IsEnabled = item.IsEnabled,
+                FontFamily = new FontFamily("Cambria, Georgia, Times New Roman")
+            };
+
+            button.Click += (_, _) =>
+            {
+                MenuPeek.IsOpen = false;
+                if (item.TargetPageType is not null) RootNavigation.Navigate(item.TargetPageType);
+            };
+
+            return button;
         }
     }
 }

@@ -19,10 +19,7 @@
         </Style>
     </ui:FluentWindow.Resources>
 
-    <!-- Движение мыши слушаем на всём окне: подсмотренное меню прячется, когда курсор
-         уходит от него вправо, а сама панель — часть шаблона NavigationView, и добраться
-         до неё из разметки нечем. -->
-    <Grid PreviewMouseMove="Root_PreviewMouseMove">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -91,10 +88,15 @@
              подписей всё равно ничего не говорят, а заголовки групп рядом с ними
              превращались в обрубки. Прячет и разворачивает панель кнопка в заголовке
              окна (IsPaneToggleVisible=False — встроенная кнопка отключена, она внутри
-             самой панели и исчезла бы вместе с ней). -->
+             самой панели и исчезла бы вместе с ней).
+
+             Ширина свёрнутой панели — 0. Это единственный работающий рычаг: свойство
+             IsPaneVisible в WPF-UI 4.3 объявлено, но ни один шаблон его не читает —
+             переключение не делало ровным счётом ничего. -->
         <ui:NavigationView Grid.Row="2" x:Name="RootNavigation"
                             IsBackButtonVisible="Collapsed"
                             IsPaneToggleVisible="False"
+                            CompactPaneLength="0"
                             OpenPaneLength="210">
 
             <ui:NavigationView.Resources>
@@ -202,5 +204,29 @@
             </ui:NavigationView.MenuItems>
 
         </ui:NavigationView>
+
+        <!-- Всплывающее меню при наведении на кнопку. Popup, а не сама панель: панель
+             встроена в раскладку окна и, открываясь, сдвигает страницу вправо, а
+             подсматривать разделы хочется поверх содержимого, ничего не двигая.
+
+             Содержимое собирается кодом из тех же RootNavigation.MenuItems (см.
+             BuildPeekMenu): второй список разделов в разметке рано или поздно разошёлся
+             бы с первым — добавили раздел в меню, забыли во всплывающем.
+
+             StaysOpen=False закрывает его по щелчку мимо, MouseLeave — когда мышь
+             ушла с него самого. -->
+        <Popup x:Name="MenuPeek" StaysOpen="False" AllowsTransparency="True"
+               PlacementTarget="{Binding ElementName=MenuToggleButton}" Placement="Bottom"
+               HorizontalOffset="4" VerticalOffset="2"
+               MouseLeave="MenuPeek_MouseLeave">
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="10" Padding="6" MinWidth="210" Margin="0,0,10,10">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.18" Color="Black"/>
+                </Border.Effect>
+                <StackPanel x:Name="MenuPeekItems"/>
+            </Border>
+        </Popup>
     </Grid>
 </ui:FluentWindow>
