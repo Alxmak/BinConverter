@@ -38,6 +38,18 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private string generalInfoText = "";
         [ObservableProperty] private string displayedFilesText = "";
+
+        /// <summary>
+        /// Есть ли что показать в «Общей информации». Пока файла нет, карточка показывает
+        /// подсказку вместо строк: раньше на месте значений стояли прочерки, и карточка
+        /// выглядела заполненной — как будто размер и количество уже посчитаны.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
+        private bool hasInfo;
+
+        public bool ShowInfoHint => !HasInfo;
+
         [ObservableProperty] private bool showExpandButton;
         [ObservableProperty] private bool showAllFiles;
         [ObservableProperty] private string expandButtonText = Strings.Get("Convert_ShowAllFilesButton");
@@ -196,8 +208,9 @@ namespace TweakFirmware.ViewModels
 
         // ============================= Предпросмотр =============================
 
-        // Пункт 5: строки всегда на экране — до выбора файла напротив них прочерк
-        // (NoValuePlaceholder — из LogHostViewModel, он общий для всех вкладок).
+        // До выбора файла строк нет вовсе: карточка показывает подсказку (HasInfo=false).
+        // Прочерки напротив подписей, которые стояли здесь раньше, читались как готовый
+        // ответ «ноль», а не как «пока нечего показать».
 
         /// <summary>
         /// Пересчёт предпросмотра — не сразу. Раньше он вызывался прямо из обработчика
@@ -236,25 +249,28 @@ namespace TweakFirmware.ViewModels
 
             if (!source.Exists)
             {
-                GeneralInfoText =
-                    Strings.Format("Convert_SourceSizeLine", NoValuePlaceholder) + "\n" +
-                    Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder);
+                HasInfo = false;
+                GeneralInfoText = "";
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
+                DisplayedFilesText = "";
                 return;
             }
 
+            HasInfo = true;
             long size = source.SizeBytes;
 
             if (limit < 1024)
             {
+                // Количество файлов не считается, пока лимит не задан, — вместо числа
+                // отдельная строка о том, что поправить. Раньше на его месте стоял
+                // прочерк с пояснением в скобках следом.
                 GeneralInfoText =
                     Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
-                    Strings.Format("Convert_ExpectedCountLine", NoValuePlaceholder) + Strings.Get("Convert_InvalidLimitSuffix");
+                    Strings.Get("Convert_InvalidLimitLine");
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
+                DisplayedFilesText = "";
                 return;
             }
 
@@ -264,10 +280,10 @@ namespace TweakFirmware.ViewModels
             {
                 GeneralInfoText =
                     Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
-                    Strings.Format("Convert_ExpectedCountLine", count.ToString("N0")) + Strings.Get("Convert_TooManyFilesSuffix");
+                    Strings.Format("Convert_ExpectedCountLine", count.ToString("N0"));
                 _expectedFileCount = count;
                 ShowExpandButton = false;
-                DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder;
+                DisplayedFilesText = Strings.Get("Convert_TooManyFilesLine");
                 return;
             }
 
@@ -286,7 +302,7 @@ namespace TweakFirmware.ViewModels
 
         private void RebuildFilesText()
         {
-            if (_expectedFileCount == 0) { DisplayedFilesText = Strings.Get("Convert_EachFileSizeHeader") + " " + NoValuePlaceholder; return; }
+            if (_expectedFileCount == 0) { DisplayedFilesText = ""; return; }
 
             int toShow = ShowAllFiles ? _expectedFileCount : Math.Min(CollapsedFileListCount, _expectedFileCount);
 

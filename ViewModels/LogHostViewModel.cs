@@ -20,9 +20,6 @@ namespace TweakFirmware.ViewModels
     /// </summary>
     public abstract partial class LogHostViewModel : LocalizedViewModel
     {
-        /// <summary>Прочерк вместо пустого места в строках, которые видны всегда.</summary>
-        protected const string NoValuePlaceholder = "—";
-
         /// <summary>Проброс общей коллекции, а не своя копия на каждую вкладку.</summary>
         public ObservableCollection<string> LogLines => LogService.Lines;
 

@@ -1,0 +1,27 @@
+<UserControl x:Class="TweakFirmware.Controls.HintBanner"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             x:Name="Root">
+
+    <!-- Подсказка вместо данных, пока показывать нечего. Раньше на месте значений
+         стояли длинные тире, и карточка выглядела заполненной: строки есть, числа
+         как будто посчитаны и равны «ничему». Отдельная плашка с подписью прямо
+         говорит, чего от человека ждут.
+
+         Своя карточка внутри карточки: подсказка должна отличаться от строк с данными,
+         иначе она читается как ещё одна строка отчёта. -->
+    <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1"
+            CornerRadius="10" Padding="18,22">
+        <StackPanel HorizontalAlignment="Center">
+            <!-- Синий тот же, что у полосы общего прогресса и кнопки «Начать»:
+                 других акцентов в программе нет. -->
+            <ui:SymbolIcon Symbol="Info24" FontSize="26" Foreground="#2F6FED"
+                           HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <TextBlock Text="{Binding Text, ElementName=Root}" TextAlignment="Center" TextWrapping="Wrap"
+                       FontSize="13" LineHeight="20" LineStackingStrategy="BlockLineHeight"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

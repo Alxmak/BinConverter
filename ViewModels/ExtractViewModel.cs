@@ -75,6 +75,16 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool hasResult;
 
         /// <summary>
+        /// Был ли разбор. Пока его не было, «Общая информация» показывает подсказку, а не
+        /// строку итога: до разбора итог всё равно ничего не сообщает о дампе.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
+        private bool hasInfo;
+
+        public bool ShowInfoHint => !HasInfo;
+
+        /// <summary>
         /// Показывать адреса так, как они лежат в дампе — вместе со служебными областями.
         /// Для eMMC переключатель бессмыслен и скрыт.
         /// </summary>
@@ -297,6 +307,9 @@ namespace TweakFirmware.ViewModels
 
         private void ApplyResult(PartitionAnalysisResult result)
         {
+            // Разбор состоялся: дальше в карточке идёт его итог — хоть разметка с числом
+            // разделов, хоть сообщение об ошибке, — и подсказка больше не нужна.
+            HasInfo = true;
             _result = result;
             _table = result.Table;
             IsNandDump = result.Geometry is not null;
@@ -327,7 +340,7 @@ namespace TweakFirmware.ViewModels
             RebuildRows();
             HasResult = Partitions.Count > 0;
 
-            Summary = Strings.Format("Extract_ResultSummary", result.MarkName ?? "—", Partitions.Count);
+            Summary = Strings.Format("Extract_ResultSummary", result.MarkName ?? Strings.Get("Extract_UnknownMark"), Partitions.Count);
         }
 
         /// <summary>
@@ -609,7 +622,7 @@ namespace TweakFirmware.ViewModels
             if (HasResult)
             {
                 RebuildRows();
-                Summary = Strings.Format("Extract_ResultSummary", _result.MarkName ?? "—", Partitions.Count);
+                Summary = Strings.Format("Extract_ResultSummary", _result.MarkName ?? Strings.Get("Extract_UnknownMark"), Partitions.Count);
             }
         }
 
