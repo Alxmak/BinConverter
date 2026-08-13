@@ -51,16 +51,18 @@ namespace TweakFirmware.Tests
         }
 
         /// <summary>
-        /// Восьмигигабайтный дамп eMMC — обычный размер для этой программы. Счёт идёт
-        /// в long: в int такой размер в байтах не помещается вовсе.
+        /// Восьмигигабайтный дамп eMMC — обычный размер для этой программы. Частей выходит
+        /// три, а не две: лимит TNM5000 — 3,87 ГиБ, то есть в 8 ГиБ он укладывается дважды
+        /// с хвостом. Счёт идёт в long: такой размер в байтах в int не помещается вовсе.
         /// </summary>
         [Fact]
-        public void TypicalEmmcDump_SplitsIntoTwoFiles()
+        public void TypicalEmmcDump_SplitsIntoThreeFiles()
         {
             long limit = FileSplitter.DefaultMaxPartSizeBytes;
             long eightGiB = 8L * 1024 * 1024 * 1024;
 
-            Assert.Equal(2, FileSplitter.CalculateExpectedPartCount(eightGiB, limit));
+            Assert.Equal(3, FileSplitter.CalculateExpectedPartCount(eightGiB, limit));
+            Assert.True(eightGiB > 2 * limit && eightGiB < 3 * limit);
         }
 
         /// <summary>
@@ -91,7 +93,11 @@ namespace TweakFirmware.Tests
             long limit = PartSizeLimit.Resolve(presetLimitBytes: null, customLimitText: "500 000 000");
 
             Assert.Equal(500_000_000L, limit);
-            Assert.Equal(3, FileSplitter.CalculateExpectedPartCount(1_500_000_001L, limit));
+            Assert.Equal(3, FileSplitter.CalculateExpectedPartCount(1_500_000_000L, limit));
+
+            // Лишний байт сверх кратного размера — это ещё один файл, в котором лежит
+            // ровно один байт.
+            Assert.Equal(4, FileSplitter.CalculateExpectedPartCount(1_500_000_001L, limit));
         }
 
         /// <summary>
