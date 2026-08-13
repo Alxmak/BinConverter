@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -128,6 +129,12 @@ namespace TweakFirmware.ViewModels
         public bool CanUseResult => !IsBusy && HasResult;
         public bool CanSplitNand => !IsBusy && IsNandDump;
 
+        /// <summary>
+        /// Извлекать нечего, пока не отмечен ни один раздел. Отдельно от CanUseResult:
+        /// сохранение .udev пишет таблицу целиком и от отметок не зависит.
+        /// </summary>
+        public bool CanExtract => CanUseResult && Partitions.Any(row => row.Selected);
+
         private CancellationTokenSource? _cts;
         private readonly PauseController _pause = new();
 
@@ -145,6 +152,7 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(IsNotBusy));
             OnPropertyChanged(nameof(CanAnalyse));
             OnPropertyChanged(nameof(CanUseResult));
+            OnPropertyChanged(nameof(CanExtract));
             OnPropertyChanged(nameof(CanSplitNand));
             OnPropertyChanged(nameof(CanRenameDump));
             OnPropertyChanged(nameof(CanPause));
@@ -162,6 +170,7 @@ namespace TweakFirmware.ViewModels
         partial void OnHasResultChanged(bool value)
         {
             OnPropertyChanged(nameof(CanUseResult));
+            OnPropertyChanged(nameof(CanExtract));
             ExtractCommand.NotifyCanExecuteChanged();
             SaveUdevCommand.NotifyCanExecuteChanged();
         }
@@ -281,7 +290,7 @@ namespace TweakFirmware.ViewModels
             HasResult = false;
             CanRename = false;
             SuggestedFileName = "";
-            Partitions.Clear();
+            ClearRows();
 
             try
             {
@@ -365,11 +374,35 @@ namespace TweakFirmware.ViewModels
                         && !string.Equals(SuggestedFileName, Path.GetFileName(SourcePath), StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Очищает таблицу, отписываясь от строк. Подписка нужна ради кнопки «Извлечь
+        /// отмеченные»: она гаснет, когда не отмечено ни одного раздела, а узнать об
+        /// этом можно только от самой строки — коллекция о смене галочки не сообщает.
+        /// </summary>
+        private void ClearRows()
+        {
+            foreach (var row in Partitions) row.PropertyChanged -= OnRowChanged;
+
+            Partitions.Clear();
+            NotifySelectionChanged();
+        }
+
+        private void OnRowChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PartitionRow.Selected)) NotifySelectionChanged();
+        }
+
+        private void NotifySelectionChanged()
+        {
+            OnPropertyChanged(nameof(CanExtract));
+            ExtractCommand.NotifyCanExecuteChanged();
+        }
+
         /// <summary>Перестраивает таблицу из текущего списка разделов.</summary>
         private void RebuildRows()
         {
             var selection = Partitions.ToDictionary(r => r.Number, r => r.Selected);
-            Partitions.Clear();
+            ClearRows();
 
             var geometry = _result?.Geometry;
             bool physical = ShowPhysicalAddresses && geometry is not null;
@@ -399,6 +432,12 @@ namespace TweakFirmware.ViewModels
 
                 number++;
             }
+
+            // Слушаем каждую строку: от снятой галочки зависит доступность кнопки
+            // «Извлечь отмеченные».
+            foreach (var row in Partitions) row.PropertyChanged += OnRowChanged;
+
+            NotifySelectionChanged();
         }
 
         /// <summary>
@@ -429,7 +468,7 @@ namespace TweakFirmware.ViewModels
 
         // ---------- действия над результатом ----------
 
-        [RelayCommand(CanExecute = nameof(CanUseResult))]
+        [RelayCommand(CanExecute = nameof(CanExtract))]
         private async Task ExtractAsync()
         {
             var ct = BeginOperation(supportsPause: true);
