@@ -97,7 +97,8 @@
             <Thumb x:Name="ResizeGrip" Grid.Row="2" Cursor="SizeNS"
                    HorizontalAlignment="Center" Margin="0,2,0,6"
                    ToolTip="{loc:Loc Common_LogResizeTooltip}"
-                   DragStarted="ResizeGrip_DragStarted" DragDelta="ResizeGrip_DragDelta">
+                   DragStarted="ResizeGrip_DragStarted" DragDelta="ResizeGrip_DragDelta"
+                   DragCompleted="ResizeGrip_DragCompleted">
                 <Thumb.Template>
                     <ControlTemplate TargetType="Thumb">
                         <!-- Прозрачная подложка вокруг полоски: в саму полоску высотой

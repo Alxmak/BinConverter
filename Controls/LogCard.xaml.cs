@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
+using TweakFirmware.Core;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.Controls
@@ -45,9 +46,16 @@ namespace TweakFirmware.Controls
         /// <summary>Высота одной строки списка. Меряется один раз на карточку.</summary>
         private double _rowHeight;
 
-        /// <summary>Высота журнала на момент нажатия на ручку и набранное с тех пор смещение.</summary>
-        private double _dragStartHeight;
-        private double _dragOffset;
+        /// <summary>Счёт высоты на время перетаскивания ручки. Вне перетаскивания — null.</summary>
+        private LogHeightDrag? _drag;
+
+        /// <summary>
+        /// Окно и положение мыши в нём на момент захвата ручки. Мышь отслеживается
+        /// относительно окна, потому что окно за время перетаскивания не двигается,
+        /// а всё, что внутри карточки, — двигается: см. ResizeGrip_DragDelta.
+        /// </summary>
+        private Window? _dragWindow;
+        private double _dragStartMouseY;
 
         /// <summary>
         /// «Липкий низ»: журнал догоняет последнюю запись, только пока пользователь и так
@@ -125,26 +133,39 @@ namespace TweakFirmware.Controls
 
         private void ResizeGrip_DragStarted(object sender, DragStartedEventArgs e)
         {
-            _dragStartHeight = LogList.ActualHeight;
-            _dragOffset = 0;
+            if (_rowHeight <= 0) _rowHeight = MeasureRowHeight();
+
+            _dragWindow = Window.GetWindow(this);
+            if (_dragWindow == null) return;
+
+            _dragStartMouseY = Mouse.GetPosition(_dragWindow).Y;
+
+            // Отсчитываем от кратной строке высоты, а не от ActualHeight: разойтись
+            // они могут только на округление, но так точка отсчёта одна и та же
+            // независимо от того, успела ли разметка отработать прошлое изменение.
+            _drag = new LogHeightDrag(_visibleLines * _rowHeight, _rowHeight, MinVisibleLines, MaxVisibleLines);
         }
 
+        /// <summary>
+        /// Высота всегда кратна строке: наполовину показанная строка внизу читается
+        /// как обрезанная, а тянуть журнал точнее, чем по строке, незачем.
+        /// </summary>
         private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
         {
-            if (_rowHeight <= 0) return;
+            if (_drag == null || _dragWindow == null) return;
 
-            _dragOffset += e.VerticalChange;
-
-            // Смещение подрезается по границам сразу, а не только итоговая высота: иначе
-            // уведённая далеко вниз мышь копила бы «долг» из десятков лишних пикселей,
-            // и обратный ход начинал двигать журнал не сразу, а после их отработки.
-            double target = Math.Clamp(_dragStartHeight + _dragOffset,
-                                       MinVisibleLines * _rowHeight, MaxVisibleLines * _rowHeight);
-            _dragOffset = target - _dragStartHeight;
-
-            // Высота всегда кратна строке: наполовину показанная строка внизу читается
-            // как обрезанная, а тянуть журнал точнее, чем по строке, незачем.
-            int lines = Math.Clamp((int)Math.Round(target / _rowHeight), MinVisibleLines, MaxVisibleLines);
+            // Смещение берём положением мыши в окне, а не полем e.VerticalChange.
+            //
+            // Thumb присылает в нём сдвиг от точки захвата, посчитанный в собственных
+            // координатах ручки, — то есть значение накопительное, а не приращение
+            // с прошлого события. Складывать такие смещения нельзя: за десяток
+            // событий из ровного хода мыши в 10 пикселей набегает под сотню.
+            //
+            // Хуже того, ручка стоит под журналом и уезжает вниз вместе с ним, так что
+            // на каждое изменение высоты это поле прыгает на целую строку назад. Вместе
+            // это и давало дрожание: журнал разворачивался на строку, следующее смещение
+            // приходило отрицательным и сворачивал обратно — и так по кругу.
+            int lines = _drag.LinesFor(Mouse.GetPosition(_dragWindow).Y - _dragStartMouseY);
             if (lines == _visibleLines) return;
 
             _visibleLines = lines;
@@ -153,6 +174,12 @@ namespace TweakFirmware.Controls
             // Тянут за нижний край: без этого уменьшенный журнал остался бы показывать
             // середину списка, хотя человек смотрел на последнюю запись.
             if (_stickToBottom) ScrollToLastEntry();
+        }
+
+        private void ResizeGrip_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            _drag = null;
+            _dragWindow = null;
         }
 
         private void OnLogChanged(object? sender, NotifyCollectionChangedEventArgs e)
