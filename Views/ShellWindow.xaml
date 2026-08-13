@@ -93,13 +93,18 @@
                      вместе с Template. Контрол без шаблона не рисует ничего: подписи групп
                      не было видно ни на светлой теме, ни на тёмной, а Margin отсюда
                      продолжал занимать место — оставались пустые промежутки.
-                     Прозрачность 0.7, а не 0.5: подпись должна читаться, а не угадываться. -->
+                     Прозрачность 0.7, а не 0.5: подпись должна читаться, а не угадываться.
+
+                     По горизонтали отступа нет намеренно: шаблон библиотеки сам ставит
+                     подпись группы в одну колонку со значками пунктов, и наши 12 слева
+                     просто сдвигали её правее значков. Осталась только вертикаль —
+                     ею разведены сами группы. -->
                 <Style TargetType="{x:Type ui:NavigationViewItemHeader}"
                        BasedOn="{StaticResource {x:Type ui:NavigationViewItemHeader}}">
                     <Setter Property="FontSize" Value="11"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
                     <Setter Property="Opacity" Value="0.7"/>
-                    <Setter Property="Margin" Value="12,14,12,4"/>
+                    <Setter Property="Margin" Value="0,14,0,4"/>
                 </Style>
             </ui:NavigationView.Resources>
 
