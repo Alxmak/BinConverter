@@ -86,10 +86,19 @@
                 <Style TargetType="{x:Type ui:NavigationViewItem}">
                     <Setter Property="FontFamily" Value="Cambria, Georgia, Times New Roman"/>
                 </Style>
-                <Style TargetType="{x:Type ui:NavigationViewItemHeader}">
+                <!-- BasedOn здесь обязателен, и это не формальность: у WPF-UI стиль
+                     заголовка группы объявлен неявным (ключ — сам тип), а у пункта меню
+                     именованным (NavigationViewItemDefaultStyle). Поэтому наш стиль пункта
+                     library-стиль не трогает, а стиль заголовка — вытеснял его целиком,
+                     вместе с Template. Контрол без шаблона не рисует ничего: подписи групп
+                     не было видно ни на светлой теме, ни на тёмной, а Margin отсюда
+                     продолжал занимать место — оставались пустые промежутки.
+                     Прозрачность 0.7, а не 0.5: подпись должна читаться, а не угадываться. -->
+                <Style TargetType="{x:Type ui:NavigationViewItemHeader}"
+                       BasedOn="{StaticResource {x:Type ui:NavigationViewItemHeader}}">
                     <Setter Property="FontSize" Value="11"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
-                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="Opacity" Value="0.7"/>
                     <Setter Property="Margin" Value="12,14,12,4"/>
                 </Style>
             </ui:NavigationView.Resources>
