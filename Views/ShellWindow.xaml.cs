@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -6,8 +7,9 @@ using TweakFirmware.Services;
 using Wpf.Ui.Controls;
 
 // Имена контролов WPF и WPF-UI пересекаются (TextBlock, Button и другие), поэтому
-// родные берём через псевдоним, а не общим using — про эти грабли сказано в CLAUDE.md.
+// родные берём через псевдонимы, а не общим using — про эти грабли сказано в CLAUDE.md.
 using SWC = System.Windows.Controls;
+using SWD = System.Windows.Documents;
 
 namespace TweakFirmware.Views
 {
@@ -131,11 +133,7 @@ namespace TweakFirmware.Views
                 });
             }
 
-            // Подпись «Извлечения разделов» — не строка, а TextBlock с пометкой «Beta»;
-            // из него берём готовый текст, пометка при этом теряется, и это осознанно:
-            // во всплывающем списке важно узнать раздел, а не повторить оформление.
-            string text = item.Content as string ?? (item.Content as SWC.TextBlock)?.Text ?? "";
-            row.Children.Add(new SWC.TextBlock { Text = text, Foreground = foreground });
+            row.Children.Add(new SWC.TextBlock { Text = TextOf(item.Content), Foreground = foreground });
 
             var button = new SWC.Button
             {
@@ -156,6 +154,32 @@ namespace TweakFirmware.Views
             };
 
             return button;
+        }
+
+        /// <summary>
+        /// Подпись пункта меню. У большинства пунктов это строка, а у «Извлечения
+        /// разделов» — TextBlock, собранный из двух Run: название и надстрочная пометка
+        /// «Beta». У такого TextBlock свойство Text пустое (текст лежит в Inlines),
+        /// поэтому раздел и пропадал из всплывающего списка — оставался один значок.
+        /// Собираем подпись из Run'ов; пометка приходит вместе с названием обычным
+        /// текстом, повторять её оформление во всплывающем списке незачем.
+        /// </summary>
+        private static string TextOf(object? content)
+        {
+            if (content is string s) return s;
+
+            if (content is SWC.TextBlock block)
+            {
+                if (!string.IsNullOrEmpty(block.Text)) return block.Text;
+
+                var parts = new StringBuilder();
+                foreach (SWD.Inline inline in block.Inlines)
+                    if (inline is SWD.Run run) parts.Append(run.Text);
+
+                return parts.ToString();
+            }
+
+            return content?.ToString() ?? "";
         }
     }
 }

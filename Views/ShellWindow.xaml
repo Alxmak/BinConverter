@@ -107,6 +107,16 @@
                      к системному/акцентному цвету темы. -->
                 <Style TargetType="{x:Type ui:NavigationViewItem}">
                     <Setter Property="FontFamily" Value="Cambria, Georgia, Times New Roman"/>
+                    <Style.Triggers>
+                        <!-- Свёрнутая панель должна исчезать целиком. Нулевой ширины для
+                             этого мало: панель не обрезает содержимое по своей границе,
+                             и значки пунктов продолжали рисоваться поверх страницы
+                             узким столбцом. Прячем сами пункты. -->
+                        <DataTrigger Value="False"
+                                     Binding="{Binding IsPaneOpen, RelativeSource={RelativeSource AncestorType={x:Type ui:NavigationView}}}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
                 <!-- BasedOn здесь обязателен, и это не формальность: у WPF-UI стиль
                      заголовка группы объявлен неявным (ключ — сам тип), а у пункта меню
