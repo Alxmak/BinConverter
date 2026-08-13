@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
 using TweakFirmware.Services;
@@ -10,16 +11,43 @@ using TweakFirmware.Services;
 namespace TweakFirmware.Controls
 {
     /// <summary>
-    /// Карточка журнала: заголовок, кнопки открыть/сохранить/очистить и сам список строк.
-    /// Одна и та же карточка стоит в «Конвертировании», «Сборке файла» и «Проверке SHA-256» —
-    /// раньше её разметка была скопирована в три страницы дословно, и любая правка отступов
-    /// требовалась в трёх местах (а сдвиг строк журнала под заголовок карточки уже
+    /// Карточка журнала: заголовок, кнопки открыть/сохранить/очистить, список строк и
+    /// ручка высоты под ним. Одна и та же карточка стоит на всех рабочих вкладках —
+    /// раньше её разметка была скопирована в страницы дословно, и любая правка отступов
+    /// требовалась в нескольких местах (а сдвиг строк журнала под заголовок карточки уже
     /// приходилось делать именно так).
     /// </summary>
     public partial class LogCard : UserControl
     {
         /// <summary>Допуск на округление при сравнении позиции прокрутки с её концом.</summary>
         private const double BottomTolerance = 1.0;
+
+        /// <summary>Сколько строк журнала видно сразу после запуска программы.</summary>
+        private const int DefaultVisibleLines = 5;
+
+        private const int MinVisibleLines = 1;
+        private const int MaxVisibleLines = 10;
+
+        /// <summary>
+        /// Запасная высота строки на случай, если измерить настоящую не вышло: журнал
+        /// должен открыться хоть какой-то высоты, а не полоской в ноль пикселей.
+        /// </summary>
+        private const double FallbackRowHeight = 36;
+
+        /// <summary>
+        /// Высота журнала общая на все вкладки: карточка на каждой странице своя (страницы
+        /// при переключении разделов создаются заново), и без общего значения растянутый
+        /// журнал схлопывался бы обратно при переходе в соседний раздел. В настройки не
+        /// пишется намеренно — при следующем запуске программы снова пять строк.
+        /// </summary>
+        private static int _visibleLines = DefaultVisibleLines;
+
+        /// <summary>Высота одной строки списка. Меряется один раз на карточку.</summary>
+        private double _rowHeight;
+
+        /// <summary>Высота журнала на момент нажатия на ручку и набранное с тех пор смещение.</summary>
+        private double _dragStartHeight;
+        private double _dragOffset;
 
         /// <summary>
         /// «Липкий низ»: журнал догоняет последнюю запись, только пока пользователь и так
@@ -46,8 +74,13 @@ namespace TweakFirmware.Controls
             LogList.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnScrollChanged));
 
             // Журнал общий и к моменту открытия раздела уже может быть непустым —
-            // показываем его конец, а не начало.
-            Loaded += (_, _) => ScrollToLastEntry();
+            // показываем его конец, а не начало. Высоту ставим до прокрутки: она
+            // решает, сколько строк видно, и прокручивать надо уже к нужному краю.
+            Loaded += (_, _) =>
+            {
+                ApplyVisibleLines();
+                ScrollToLastEntry();
+            };
 
             // Выделение строки не должно оставаться навсегда: как только фокус уходит
             // из списка (клик по любому другому элементу окна) — снимаем его.
@@ -55,6 +88,71 @@ namespace TweakFirmware.Controls
             {
                 if (!(bool)e.NewValue) LogList.SelectedIndex = -1;
             };
+        }
+
+        /// <summary>Ставит журналу высоту, кратную строке, по общему для всех вкладок числу строк.</summary>
+        private void ApplyVisibleLines()
+        {
+            if (_rowHeight <= 0) _rowHeight = MeasureRowHeight();
+
+            LogList.Height = Math.Round(_rowHeight * _visibleLines);
+        }
+
+        /// <summary>
+        /// Высота строки меряется настоящим элементом списка, а не считается из размера
+        /// шрифта: к тексту добавляются отступы ListBoxItem из темы WPF-UI (те самые 12px,
+        /// из-за которых строки журнала пришлось двигать под заголовок карточки). Число,
+        /// подобранное на глаз, разъехалось бы с ними при первом же обновлении библиотеки,
+        /// и «пять строк» перестало бы быть пятью.
+        /// </summary>
+        private double MeasureRowHeight()
+        {
+            var probe = new ListBoxItem
+            {
+                Content = "0",
+                FontFamily = LogList.FontFamily,
+                FontSize = LogList.FontSize
+            };
+
+            // Стиль ставим только если он нашёлся: без него мерка даст высоту строки
+            // со стандартными отступами — не точно, но и не ноль.
+            if (TryFindResource("LogLine") is Style rowStyle) probe.Style = rowStyle;
+
+            probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+
+            return probe.DesiredSize.Height > 0 ? probe.DesiredSize.Height : FallbackRowHeight;
+        }
+
+        private void ResizeGrip_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            _dragStartHeight = LogList.ActualHeight;
+            _dragOffset = 0;
+        }
+
+        private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (_rowHeight <= 0) return;
+
+            _dragOffset += e.VerticalChange;
+
+            // Смещение подрезается по границам сразу, а не только итоговая высота: иначе
+            // уведённая далеко вниз мышь копила бы «долг» из десятков лишних пикселей,
+            // и обратный ход начинал двигать журнал не сразу, а после их отработки.
+            double target = Math.Clamp(_dragStartHeight + _dragOffset,
+                                       MinVisibleLines * _rowHeight, MaxVisibleLines * _rowHeight);
+            _dragOffset = target - _dragStartHeight;
+
+            // Высота всегда кратна строке: наполовину показанная строка внизу читается
+            // как обрезанная, а тянуть журнал точнее, чем по строке, незачем.
+            int lines = Math.Clamp((int)Math.Round(target / _rowHeight), MinVisibleLines, MaxVisibleLines);
+            if (lines == _visibleLines) return;
+
+            _visibleLines = lines;
+            ApplyVisibleLines();
+
+            // Тянут за нижний край: без этого уменьшенный журнал остался бы показывать
+            // середину списка, хотя человек смотрел на последнюю запись.
+            if (_stickToBottom) ScrollToLastEntry();
         }
 
         private void OnLogChanged(object? sender, NotifyCollectionChangedEventArgs e)

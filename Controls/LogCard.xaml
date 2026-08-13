@@ -44,6 +44,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid Grid.Row="0" Margin="18,16,18,10">
                 <Grid.ColumnDefinitions>
@@ -61,7 +62,11 @@
                  из-за этих 6px строки журнала выпирали левее заголовка. Добираем
                  разницу отступом самого списка, чтобы текст встал на те же 18px,
                  что и содержимое всех остальных карточек. -->
-            <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogLines}" Height="180" BorderThickness="0"
+            <!-- Высота списка не задаётся здесь: её ставит код по числу видимых строк
+                 (пять при запуске, от одной до десяти ручкой внизу карточки). В разметке
+                 стояло бы число в пикселях, а строка журнала выше или ниже в зависимости
+                 от отступов ListBoxItem в теме — и «пять строк» перестало бы быть пятью. -->
+            <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogLines}" BorderThickness="0"
                      Margin="6,0,6,0" ItemContainerStyle="{StaticResource LogLine}"
                      FontFamily="Cascadia Code, Consolas" FontSize="11" Background="Transparent"
                      SelectionMode="Extended" KeyDown="LogList_KeyDown"
@@ -83,6 +88,38 @@
                     </ContextMenu>
                 </ListBox.ContextMenu>
             </ListBox>
+
+            <!-- Ручка высоты журнала: посередине под списком, как у окон с изменяемым
+                 размером. Thumb, а не кнопка: он сам захватывает мышь от нажатия до
+                 отпускания и присылает смещение, тогда как кнопке пришлось бы вручную
+                 ловить MouseDown/Move/Up и не потерять захват при уходе курсора
+                 за пределы карточки. -->
+            <Thumb x:Name="ResizeGrip" Grid.Row="2" Cursor="SizeNS"
+                   HorizontalAlignment="Center" Margin="0,2,0,6"
+                   ToolTip="{loc:Loc Common_LogResizeTooltip}"
+                   DragStarted="ResizeGrip_DragStarted" DragDelta="ResizeGrip_DragDelta">
+                <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                        <!-- Прозрачная подложка вокруг полоски: в саму полоску высотой
+                             4px попасть мышью трудно, а цель для нажатия должна быть
+                             заметно больше того, что нарисовано. -->
+                        <Border Background="Transparent" Padding="16,7">
+                            <!-- Серый с прозрачностью, а не кисть темы: одинаково
+                                 читается и на светлой карточке, и на тёмной. -->
+                            <Border x:Name="Bar" Width="36" Height="4" CornerRadius="2"
+                                    Background="#59808080" SnapsToDevicePixels="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="#99808080"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="#99808080"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Thumb.Template>
+            </Thumb>
         </Grid>
     </Border>
 </UserControl>

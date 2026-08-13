@@ -56,6 +56,7 @@ namespace TweakFirmware.Core.Localization
             ["Common_LogSaveButton"] = "Сохранить",
             ["Common_LogClearButton"] = "Очистить",
             ["Common_LogCopyButton"] = "Копировать",
+            ["Common_LogResizeTooltip"] = "Потяните, чтобы изменить высоту журнала",
             ["Common_CopyHashTooltip"] = "Скопировать хэш",
             ["Common_CopiedTooltip"] = "Скопировано",
             // Подписи хэшей в окнах с итогом. Раньше хэши были вписаны прямо в текст
@@ -481,6 +482,7 @@ namespace TweakFirmware.Core.Localization
             ["Common_LogSaveButton"] = "Save",
             ["Common_LogClearButton"] = "Clear",
             ["Common_LogCopyButton"] = "Copy",
+            ["Common_LogResizeTooltip"] = "Drag to change the log height",
             ["Common_CopyHashTooltip"] = "Copy the hash",
             ["Common_CopiedTooltip"] = "Copied",
             ["Common_HashConfirmedLabel"] = "SHA-256 confirmed:",
