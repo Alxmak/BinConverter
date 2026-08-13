@@ -123,46 +123,60 @@
                 </Border>
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                    <StackPanel>
+                    <!-- Кнопки идут двумя столбцами, строка в строку: слева запуск, пауза
+                         и отмена, справа — остальные действия вкладки. Раньше правые стояли
+                         под левыми, и карточка вытягивалась вниз вдвое.
+
+                         Строки совпадают за счёт общей минимальной высоты
+                         (ActionButtonMinHeight): столбцы независимы, а по содержимому
+                         кнопки разной высоты — у левых в подписи есть значок, у правых нет. -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
                         <!-- Главное действие вкладки, пауза и отмена — общими кнопками.
                              Пауза приходит от ViewModel и сама гаснет на разборе: он её
                              не поддерживает. -->
-                        <c:OperationBar StartText="{loc:Loc Extract_AnalyseButton}"
+                        <c:OperationBar Grid.Column="0"
+                                        StartText="{loc:Loc Extract_AnalyseButton}"
                                         StartCommand="{Binding AnalyseCommand}"
                                         PauseCommand="{Binding TogglePauseCommand}"
                                         CancelCommand="{Binding CancelCommand}"/>
 
-                        <!-- Остальные действия — ниже, отделены отступом от общих трёх.
-                             Скрывать их не нужно: доступность решает CanExecute самих
-                             команд, как и везде в программе. «Разделить» просит дамп
-                             NAND, а не результат разбора, поэтому кнопка не спрятана
-                             за таблицей.
+                        <!-- Остальные действия. Скрывать их не нужно: доступность решает
+                             CanExecute самих команд, как и везде в программе. «Разделить»
+                             просит дамп NAND, а не результат разбора, поэтому кнопка не
+                             спрятана за таблицей.
 
-                             Прижаты вправо: ширина у них своя, по подписи, и слева они
-                             висели в пустоте, а правым краем теперь встают под кнопки
-                             «Анализировать», «Приостановить» и «Отмена» — столбец
-                             читается как один, с общей границей. -->
-                        <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
-                                HorizontalAlignment="Right" Margin="0,14,0,0"/>
-                        <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
-                                HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                        <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
-                                HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                             Отступы между кнопками те же 8, что и в OperationBar, иначе
+                             столбцы разъедутся уже на второй строке. Padding уменьшен:
+                             «Разделить на main и spare» — самая длинная подпись в программе,
+                             и в половину карточки она помещается только так. -->
+                        <StackPanel Grid.Column="2">
+                            <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
+                                    MinHeight="{StaticResource ActionButtonMinHeight}" Padding="10,6" Margin="0,0,0,8"/>
+                            <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
+                                    MinHeight="{StaticResource ActionButtonMinHeight}" Padding="10,6" Margin="0,0,0,8"/>
+                            <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
+                                    MinHeight="{StaticResource ActionButtonMinHeight}" Padding="10,6"/>
 
-                        <!-- Появляется только у прошивок Philips: только для них в дампе есть
-                             модель, версия и серийный номер, из которых собирается имя.
-                             Предлагаемое имя идёт под кнопкой, а не рядом: в узкой карточке
-                             оно длиннее оставшегося места и с переносом читается целиком.
-                             Выравнивание по правому краю — как у кнопок выше. -->
-                        <StackPanel Margin="0,8,0,0"
-                                    Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
-                            <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"
-                                    HorizontalAlignment="Right"/>
-                            <TextBlock Text="{Binding SuggestedFileName}" Margin="0,6,0,0" TextWrapping="Wrap"
-                                       TextAlignment="Right"
-                                       FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <!-- Появляется только у прошивок Philips: только для них в дампе
+                                 есть модель, версия и серийный номер, из которых собирается
+                                 имя. Предлагаемое имя идёт под кнопкой, а не рядом: в узком
+                                 столбце оно длиннее оставшегося места и с переносом
+                                 читается целиком. -->
+                            <StackPanel Margin="0,8,0,0"
+                                        Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
+                                <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"
+                                        MinHeight="{StaticResource ActionButtonMinHeight}" Padding="10,6"/>
+                                <TextBlock Text="{Binding SuggestedFileName}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                           FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </Grid>
 

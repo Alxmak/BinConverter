@@ -1,11 +1,19 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Общие стили всех разделов. Раньше эти же стили были продублированы в
          Page.Resources каждой страницы; собраны сюда, чтобы значения дизайн-системы
          (скругления, отступы, размеры шрифта) задавались в одном месте. -->
 
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+    <!-- Высота кнопки действия. Ресурсом, а не отступами: в «Извлечении разделов»
+         кнопки стоят двумя столбцами (запуск/пауза/отмена слева, остальные действия
+         справа), и строки обязаны совпасть. Столбцы независимы, поэтому равнять их
+         можно только общей высотой: у левых кнопок в подписи есть значок, у правых
+         нет, и по содержимому они получаются разной высоты. -->
+    <sys:Double x:Key="ActionButtonMinHeight">38</sys:Double>
 
     <!-- Красный для пометки «Beta» у пункта меню. Своим ресурсом, а не кистью из темы
          WPF-UI: подходящего ключа там нет наверняка, а несуществующий DynamicResource
@@ -71,6 +79,7 @@
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Padding" Value="18,9"/>
+        <Setter Property="MinHeight" Value="{StaticResource ActionButtonMinHeight}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
