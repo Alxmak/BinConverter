@@ -21,14 +21,18 @@
                  назначения или пресет на ходу нельзя — параметры разойдутся с уже
                  запущенным процессом. IsEnabled наследуется вглубь, поэтому достаточно
                  поставить его на карточку целиком. -->
+            <!-- IsSharedSizeScope нужен колонке кнопок «Обзор»: по ней равняется пустая
+                 колонка в строке лимита, чтобы поле байтов кончалось там же, где поля
+                 путей над ним. Ширина кнопки зависит от языка («Обзор…» и «Browse…»
+                 разной длины), поэтому повторить её числом нельзя. -->
             <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
-                <StackPanel>
+                <StackPanel Grid.IsSharedSizeScope="True">
 
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="BrowseButton"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Convert_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
                         <!-- Перетаскивание принимает само поле, а не строка целиком.
@@ -48,7 +52,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="BrowseButton"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding OutputFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
@@ -60,29 +64,55 @@
                     <!-- Модель и лимит — в одной строке: лимит виден всегда, но правится
                          только на пользовательском пресете. У готовых моделей он фиксирован,
                          поэтому поле недоступно и просто показывает заданный лимит в байтах
-                         (значение подставляет OnSelectedPresetChanged во ViewModel). -->
+                         (значение подставляет OnSelectedPresetChanged во ViewModel).
+
+                         Колонки те же, что у «Общей информации» и «Параметров» под карточкой
+                         (`*`, 14, `*`): у карточки отступы по 18 с обеих сторон, поэтому
+                         половины внутри неё приходятся ровно на края тех карточек — модель
+                         кончается там же, где «Общая информация», а подпись лимита начинается
+                         там же, где «Параметры». Доли, а не пиксели: на узком окне страница
+                         сжимается, и подобранные числа разъехались бы с карточками. -->
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="24"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="14"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_ProgrammerModelLabel}" Style="{StaticResource RowLabel}"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
-                                  DisplayMemberPath="Name" HorizontalAlignment="Stretch"/>
-                        <TextBlock Grid.Column="3" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
-                        <!-- ui:TextBox, а не обычный: подсказка внутри поля есть только у него.
-                             Обработчики принимают его как TextBox — Wpf.Ui.Controls.TextBox
-                             от него и наследуется. -->
-                        <ui:TextBox x:Name="LimitTextBox" Grid.Column="4" ClearButtonEnabled="False"
-                                    Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
-                                    IsEnabled="{Binding IsCustomPreset}"
-                                    PlaceholderText="{loc:Loc Convert_LimitPlaceholder}"
-                                    PreviewTextInput="LimitTextBox_PreviewTextInput"
-                                    DataObject.Pasting="LimitTextBox_Pasting"
-                                    TextChanged="LimitTextBox_TextChanged"/>
+
+                        <Grid Grid.Column="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc Convert_ProgrammerModelLabel}" Style="{StaticResource RowLabel}"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
+                                      DisplayMemberPath="Name" HorizontalAlignment="Stretch"/>
+                        </Grid>
+
+                        <Grid Grid.Column="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <!-- Пустая колонка под кнопку «Обзор» соседних строк: поле
+                                     байтов должно кончаться там же, где поля путей, иначе
+                                     оно одно выпирает вправо. Ширину берёт у самой кнопки
+                                     через SharedSizeGroup — своим числом её не повторить,
+                                     кнопка шире или уже в зависимости от языка. -->
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="BrowseButton"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
+                            <!-- ui:TextBox, а не обычный: подсказка внутри поля есть только у него.
+                                 Обработчики принимают его как TextBox — Wpf.Ui.Controls.TextBox
+                                 от него и наследуется. Отступ справа тот же 8, что у полей путей:
+                                 без него правый край поля не совпал бы с ними на эти 8 пикселей. -->
+                            <ui:TextBox x:Name="LimitTextBox" Grid.Column="1" ClearButtonEnabled="False" Margin="0,0,8,0"
+                                        Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
+                                        IsEnabled="{Binding IsCustomPreset}"
+                                        PlaceholderText="{loc:Loc Convert_LimitPlaceholder}"
+                                        PreviewTextInput="LimitTextBox_PreviewTextInput"
+                                        DataObject.Pasting="LimitTextBox_Pasting"
+                                        TextChanged="LimitTextBox_TextChanged"/>
+                        </Grid>
                     </Grid>
                 </StackPanel>
             </Border>
