@@ -228,13 +228,12 @@
 
              StaysOpen=False закрывает его по щелчку мимо, MouseLeave — когда мышь
              ушла с него самого. -->
-        <!-- Отсчёт идёт от рабочей области, а не от кнопки: отступ сверху и слева тогда
-             один и тот же (12), и список стоит ровно в её углу. От кнопки он зависел бы
-             от её места в полосе заголовка — сверху получался один отступ, слева совсем
-             другой. -->
+        <!-- Список висит под кнопкой меню. Отступ сверху задаётся не здесь, а в коде
+             (MenuToggle_MouseEnter): он должен совпадать с отступом слева, а слева тот
+             получается из положения кнопки в полосе заголовка — числом его не записать. -->
         <Popup x:Name="MenuPeek" StaysOpen="False" AllowsTransparency="True"
-               PlacementTarget="{Binding ElementName=RootNavigation}" Placement="Relative"
-               HorizontalOffset="12" VerticalOffset="12"
+               PlacementTarget="{Binding ElementName=MenuToggleButton}" Placement="Bottom"
+               HorizontalOffset="4"
                MouseLeave="MenuPeek_MouseLeave">
             <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"

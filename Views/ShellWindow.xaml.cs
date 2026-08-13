@@ -58,6 +58,13 @@ namespace TweakFirmware.Views
         {
             if (RootNavigation.IsPaneOpen) return;
 
+            // Отступ сверху равен отступу слева. Слева он получается сам, из положения
+            // кнопки в полосе заголовка, поэтому меряем его здесь, а не записываем числом:
+            // кнопка стоит после значка и названия программы, а их ширина зависит и от
+            // языка, и от масштаба экрана.
+            double leftGap = MenuToggleButton.TranslatePoint(new Point(0, 0), this).X + MenuPeek.HorizontalOffset;
+            MenuPeek.VerticalOffset = leftGap;
+
             BuildPeekMenu();
             MenuPeek.IsOpen = true;
         }
