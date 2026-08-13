@@ -24,9 +24,10 @@ namespace TweakFirmware.Services
             // (на практике это давало прокрутку только над самим скроллбаром).
             page.AddHandler(Mouse.PreviewMouseWheelEvent, new MouseWheelEventHandler((_, e) =>
             {
-                // Журнал прокручивается изолированно от страницы — см. LogScrollHelper.
-                // На страницах без журнала проверка просто не находит список и возвращает false.
-                if (LogScrollHelper.TryHandleListBoxWheel(e)) return;
+                // Списки со своей прокруткой (журнал, таблица разделов) двигаются сами,
+                // изолированно от страницы — см. ListScrollHelper. Если курсор не над
+                // таким списком, проверка возвращает false, и страница листается как обычно.
+                if (ListScrollHelper.TryHandleWheel(e)) return;
 
                 scroll.ScrollToVerticalOffset(scroll.VerticalOffset - e.Delta);
                 e.Handled = true;
