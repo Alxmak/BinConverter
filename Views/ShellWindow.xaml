@@ -98,16 +98,19 @@
                  переключение раздела больше не может сорвать активный процесс.
                  Сгруппировано по образцу дизайна Claude: заголовки групп + разделитель. -->
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_ToolsGroupHeader}"/>
+                <!-- Разделы стоят парами «прямая операция — обратная»: нарезка и сборка
+                     файла в одной группе, извлечение и объединение разделов в другой.
+                     Сама по себе только проверка SHA-256 — ей отдельная группа «Разное»,
+                     иначе она оказывается в чужой паре и читается как её продолжение. -->
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_FilesGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavConvert}" Icon="{ui:SymbolIcon ArrowSplit24}"
                                         TargetPageType="{x:Type views:ConvertPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:MergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
-                <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
-                                        TargetPageType="{x:Type views:VerifyPage}"
-                                        IsEnabled="{Binding IsNotBusy}"/>
+
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_PartitionsGroupHeader}"/>
                 <!-- Единственный пункт с составной подписью: «Beta» надо поднять над
                      строкой и покрасить, а одной строкой Content этого не задать.
                      Цвет основной части берётся у самого пункта: у него он меняется
@@ -129,6 +132,12 @@
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavPartitionMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:PartitionMergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
+
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_MiscGroupHeader}"/>
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
+                                        TargetPageType="{x:Type views:VerifyPage}"
+                                        IsEnabled="{Binding IsNotBusy}"/>
+
                 <ui:NavigationViewItemSeparator/>
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_SystemGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
