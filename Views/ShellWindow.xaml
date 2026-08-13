@@ -203,7 +203,10 @@
                                         TargetPageType="{x:Type views:VerifyPage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
 
-                <ui:NavigationViewItemSeparator/>
+                <!-- Разделителя перед «Системой» больше нет: группы и так разведены
+                     заголовками, а в свёрнутой панели он оставался единственным, что
+                     рисовалось, — тонкой линией слева поверх страницы (панель не
+                     обрезает содержимое по своей нулевой ширине). -->
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_SystemGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
                                         TargetPageType="{x:Type views:SettingsPage}"
@@ -227,7 +230,7 @@
              ушла с него самого. -->
         <Popup x:Name="MenuPeek" StaysOpen="False" AllowsTransparency="True"
                PlacementTarget="{Binding ElementName=MenuToggleButton}" Placement="Bottom"
-               HorizontalOffset="4" VerticalOffset="2"
+               HorizontalOffset="4" VerticalOffset="12"
                MouseLeave="MenuPeek_MouseLeave">
             <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
