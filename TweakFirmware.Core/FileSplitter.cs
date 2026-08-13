@@ -16,7 +16,6 @@ namespace TweakFirmware.Core
         public bool HashesMatch => string.Equals(SourceHash, RecombinedHash, StringComparison.OrdinalIgnoreCase);
         public int PartsCreated { get; set; } // общее число файлов (включая базовый)
         public long TotalBytes { get; set; }
-        public string BasePath { get; set; } = "";
     }
 
     /// <summary>
@@ -94,7 +93,7 @@ namespace TweakFirmware.Core
             Directory.CreateDirectory(outputFolder);
             string basePath = Path.Combine(outputFolder, baseFileName);
 
-            var result = new SplitResult { TotalBytes = totalBytes, BasePath = basePath };
+            var result = new SplitResult { TotalBytes = totalBytes };
 
             using var sha256Source = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
