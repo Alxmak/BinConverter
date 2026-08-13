@@ -172,7 +172,7 @@ namespace TweakFirmware.Tests
         // ===================== HashHelper: поиск цепочки частей =====================
 
         [Fact]
-        public void HashHelper_FindPartChain_FindsAllPartsAndStopsAtGap()
+        public void HashHelper_FindPartChain_RefusesChainWithGap()
         {
             string outFolder = Path.Combine(_tempDir, "chain_out");
             Directory.CreateDirectory(outFolder);
@@ -181,13 +181,16 @@ namespace TweakFirmware.Tests
             File.WriteAllBytes(basePath, new byte[10]);
             File.WriteAllBytes(basePath + ".part1", new byte[10]);
             File.WriteAllBytes(basePath + ".part2", new byte[10]);
-            // .part3 намеренно не создаём, .part4 создаём — проверяем, что поиск
-            // останавливается на первом ПРОПУЩЕННОМ номере, а не идёт дальше вслепую
+            // .part3 намеренно не создаём, .part4 создаём — цепочка разорвана.
             File.WriteAllBytes(basePath + ".part4", new byte[10]);
 
-            var chain = HashHelper.FindPartChain(basePath);
+            // Раньше поиск молча останавливался на пропуске и возвращал три файла:
+            // сборка проходила «успешно» и давала укороченный файл, неотличимый на вид
+            // от целой прошивки. Теперь это отказ.
+            var error = Assert.Throws<FileNotFoundException>(() => HashHelper.FindPartChain(basePath));
 
-            Assert.Equal(3, chain.Count); // base, part1, part2 — part4 не должен попасть в цепочку
+            Assert.Contains("3", error.Message);
+            Assert.Contains("4", error.Message);
         }
 
         [Fact]
@@ -559,7 +562,7 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
-        public async Task Merge_MissingMiddlePart_StopsAtGap_ProducesTruncatedFile()
+        public async Task Merge_MissingMiddlePart_IsRefusedInsteadOfProducingTruncatedFile()
         {
             string source = CreateRandomFile("gap_source.bin", 4 * 1024 * 1024);
             string outFolder = Path.Combine(_tempDir, "gap_out");
@@ -571,13 +574,15 @@ namespace TweakFirmware.Tests
             File.Delete(Path.Combine(outFolder, "emmc.bin.part2")); // part3 остаётся, но недостижим
 
             string mergedPath = Path.Combine(_tempDir, "gap_merged.bin");
-            var mergeResult = await FileMerger.MergeAsync(Path.Combine(outFolder, "emmc.bin"), mergedPath,
-                progress: null, log: _ => { }, ct: CancellationToken.None);
 
-            Assert.Equal(2, mergeResult.PartsUsed); // base + part1, part2/part3 не попали в цепочку
-            Assert.Equal(maxPartSize * 2, mergeResult.TotalBytes);
-            Assert.True(new FileInfo(mergedPath).Length < new FileInfo(source).Length,
-                "Результат должен быть короче оригинала — часть данных пропущена");
+            // Прежнее поведение — собрать base + part1 и отчитаться об успехе — давало
+            // файл вдвое короче прошивки, который выглядит настоящим. Теперь сборка
+            // отказывается: пропуск в середине цепочки чинится только возвратом части.
+            await Assert.ThrowsAsync<FileNotFoundException>(() => FileMerger.MergeAsync(
+                Path.Combine(outFolder, "emmc.bin"), mergedPath,
+                progress: null, log: _ => { }, ct: CancellationToken.None));
+
+            Assert.False(File.Exists(mergedPath), "Файл результата не должен появиться");
         }
 
         [Fact]

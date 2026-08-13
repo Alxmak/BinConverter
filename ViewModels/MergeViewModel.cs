@@ -182,16 +182,27 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         private async void ScheduleChainProbe()
         {
-            int generation = ++_chainGeneration;
+            // Как и в «Конвертировании»: метод возвращает void, ждать его некому,
+            // и необработанное исключение отсюда уронило бы программу из-за
+            // предпросмотра цепочки.
+            try
+            {
+                int generation = ++_chainGeneration;
 
-            await Task.Delay(InputSettleDelayMs);
-            if (generation != _chainGeneration) return;
+                await Task.Delay(InputSettleDelayMs);
+                if (generation != _chainGeneration) return;
 
-            string path = SourcePath;
-            var probe = await Task.Run(() => ChainProbe.Measure(path));
-            if (generation != _chainGeneration) return;
+                string path = SourcePath;
+                var probe = await Task.Run(() => ChainProbe.Measure(path));
+                if (generation != _chainGeneration) return;
 
-            ApplyChainProbe(probe);
+                ApplyChainProbe(probe);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
+                    nameof(MergeViewModel), ex.GetType().Name, ex.Message));
+            }
         }
 
         /// <summary>Осмотреть сейчас же — когда путь задан не набором текста

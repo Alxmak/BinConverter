@@ -223,16 +223,28 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         private async void SchedulePreviewUpdate()
         {
-            int generation = ++_previewGeneration;
+            // Метод возвращает void: его вызывает обработчик изменения свойства, ждать
+            // его некому. Значит, любое исключение отсюда становится необработанным
+            // и роняет программу целиком — из-за предпросмотра, без которого можно жить.
+            // Поэтому тело закрыто целиком, а причина уходит в журнал.
+            try
+            {
+                int generation = ++_previewGeneration;
 
-            await Task.Delay(InputSettleDelayMs);
-            if (generation != _previewGeneration) return;
+                await Task.Delay(InputSettleDelayMs);
+                if (generation != _previewGeneration) return;
 
-            string path = SourcePath;
-            var probe = await Task.Run(() => FileProbe.Measure(path));
-            if (generation != _previewGeneration) return;
+                string path = SourcePath;
+                var probe = await Task.Run(() => FileProbe.Measure(path));
+                if (generation != _previewGeneration) return;
 
-            UpdatePreview(probe);
+                UpdatePreview(probe);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
+                    nameof(ConvertViewModel), ex.GetType().Name, ex.Message));
+            }
         }
 
         /// <summary>Пересчитать сейчас же — когда путь задан не набором текста
@@ -274,7 +286,26 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            int count = FileSplitter.CalculateExpectedPartCount(size, limit);
+            int count;
+            try
+            {
+                count = FileSplitter.CalculateExpectedPartCount(size, limit);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Частей вышло бы больше, чем программа может создать (крошечный лимит
+                // на огромном файле). Для предпросмотра это тот же случай, что и неверный
+                // лимит: показываем, что поправить, вместо числа. Ловим здесь, а не
+                // считаем «как-нибудь»: предпросмотр идёт из async void, и исключение
+                // отсюда стало бы необработанным и уронило бы программу.
+                GeneralInfoText =
+                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Get("Convert_InvalidLimitLine");
+                _expectedFileCount = 0;
+                ShowExpandButton = false;
+                DisplayedFilesText = "";
+                return;
+            }
 
             if (count > MaxFilesToEnumerate)
             {

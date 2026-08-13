@@ -51,7 +51,11 @@ namespace TweakFirmware.Core
             if (sourceSizeBytes <= 0)
                 return 1; // пустой файл — всё равно создаётся один (пустой) базовый файл
 
-            long count = (sourceSizeBytes + maxPartSizeBytes - 1) / maxPartSizeBytes; // с округлением вверх
+            // Округление вверх без сложения: привычное (size + limit - 1) / limit
+            // переполняет long на больших размерах и даёт отрицательный результат —
+            // именно так проверка «частей слишком много» и не срабатывала.
+            long count = sourceSizeBytes / maxPartSizeBytes;
+            if (sourceSizeBytes % maxPartSizeBytes != 0) count++;
 
             // Приведение к int раньше делалось молча. При крошечном лимите на большом файле
             // (терабайтный образ, лимит в килобайт) число частей выходит за int, и молчаливое
