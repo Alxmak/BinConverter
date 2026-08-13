@@ -231,6 +231,11 @@ namespace TweakFirmware.ViewModels
             HasInfo = true;
             ChainInfoText = Strings.Format("Merge_ChainFoundInfo",
                 probe.PartCount, SizeFormatHelper.Format(probe.TotalBytes), probe.BaseFileName);
+
+            // Неровные размеры частей — предупреждение, а не отказ: собрать такую цепочку
+            // можно, но человеку надо знать об этом до запуска, а не после.
+            if (probe.UnevenPartNumber is int uneven)
+                ChainInfoText += "\n" + Strings.Format("Merge_UnevenPartsWarning", uneven);
             ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(probe.TotalBytes));
 
             if (_outputPathIsAuto)

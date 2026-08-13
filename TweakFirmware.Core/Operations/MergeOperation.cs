@@ -99,6 +99,12 @@ namespace TweakFirmware.Core.Operations
         public bool DiskFull { get; init; }
         public int CreatedFileCount { get; init; }
 
+        /// <summary>
+        /// Номер части, размер которой выбился из остальных. Сборку это не останавливает,
+        /// но результат стоит сверить по хэшу — см. <see cref="ChainConsistency"/>.
+        /// </summary>
+        public int? UnevenPartNumber { get; init; }
+
         public bool Succeeded => Status is MergeStatus.Completed or MergeStatus.HashMatch;
     }
 
@@ -231,6 +237,12 @@ namespace TweakFirmware.Core.Operations
 
             log(Strings.Format("Merge_StartLog", request.AnyChainFilePath, outputPath));
 
+            // Неровные размеры частей — не повод отказываться (цепочку могла нарезать
+            // другая программа), но сказать об этом надо до, а не после: если часть
+            // скопировалась не полностью, результат будет испорчен с её начала.
+            int? unevenPart = ChainConsistency.FindUnevenPartNumber(chain);
+            if (unevenPart.HasValue) log(Strings.Format("Merge_UnevenPartsWarning", unevenPart.Value));
+
             var createdFiles = new List<string>();
             try
             {
@@ -260,7 +272,8 @@ namespace TweakFirmware.Core.Operations
                     TotalBytes = result.TotalBytes,
                     MergedHash = result.MergedHash,
                     ChainSizeBytes = chainSize,
-                    CreatedFileCount = createdFiles.Count
+                    CreatedFileCount = createdFiles.Count,
+                    UnevenPartNumber = unevenPart
                 };
             }
             catch (OperationCanceledException)

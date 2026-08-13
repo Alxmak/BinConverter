@@ -36,6 +36,16 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
                     </Grid>
 
+                    <!-- Правило именования нигде не было сказано, а оно жёсткое: части
+                         ищутся строго по «имя.partN» подряд с первого номера. Человек,
+                         переименовавший файлы по-своему, до этой подсказки узнавал
+                         о правиле только по тому, что цепочка «не находится».
+                         Отступ слева — под колонку полей, чтобы строка читалась
+                         как пояснение к полю, а не как отдельная подпись. -->
+                    <TextBlock Text="{loc:Loc Merge_ChainNamingHint}" TextWrapping="Wrap"
+                               Margin="190,0,0,10" FontSize="11"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
                     <Grid Style="{StaticResource RowGrid}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>

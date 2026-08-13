@@ -20,6 +20,13 @@ namespace TweakFirmware.Core.Operations
 
         /// <summary>Почему не получилось. Пусто, если <see cref="Resolved"/>.</summary>
         public string ErrorMessage { get; init; } = "";
+
+        /// <summary>
+        /// Номер части, размер которой выбивается из остальных, — см. <see cref="ChainConsistency"/>.
+        /// null, если цепочка ровная. Это не ошибка, а повод предупредить: собрать такую
+        /// цепочку можно, но результат стоит сверить по хэшу.
+        /// </summary>
+        public int? UnevenPartNumber { get; init; }
     }
 
     /// <summary>
@@ -49,7 +56,8 @@ namespace TweakFirmware.Core.Operations
                     PartCount = chain.Count,
                     TotalBytes = total,
                     BaseFileName = Path.GetFileName(chain[0]),
-                    SuggestedOutputFileName = MergeOutputNaming.SuggestFileName(basePath)
+                    SuggestedOutputFileName = MergeOutputNaming.SuggestFileName(basePath),
+                    UnevenPartNumber = ChainConsistency.FindUnevenPartNumber(chain)
                 };
             }
             catch (Exception ex)
