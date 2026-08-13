@@ -6,6 +6,24 @@
     <!-- Одна строка прогресса: подпись слева, "пилюля" по центру, проценты справа
          и необязательная строка-уточнение под баром (имя текущего файла и т.п.). -->
     <StackPanel Margin="0,0,0,16">
+        <StackPanel.Style>
+            <Style TargetType="StackPanel">
+                <Style.Triggers>
+                    <!-- Ненужную сейчас строку выключают через IsEnabled на самом
+                         контроле — так в «Конвертировании» гаснет SHA-256, пока сверка
+                         хэша не отмечена. Одного IsEnabled для этого не хватало: у
+                         TextBlock нет вида «выключен», а заливка полосы при нуле
+                         процентов не видна, и выключенная строка выглядела точно
+                         так же, как рабочая. Поэтому гасим строку целиком — подпись,
+                         полосу и проценты, — той же прозрачностью 0.45, что и у
+                         остальных выключенных частей интерфейса в AppStyles. -->
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.45"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </StackPanel.Style>
+
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
