@@ -136,22 +136,30 @@
                              Скрывать их не нужно: доступность решает CanExecute самих
                              команд, как и везде в программе. «Разделить» просит дамп
                              NAND, а не результат разбора, поэтому кнопка не спрятана
-                             за таблицей. -->
+                             за таблицей.
+
+                             Прижаты вправо: ширина у них своя, по подписи, и слева они
+                             висели в пустоте, а правым краем теперь встают под кнопки
+                             «Анализировать», «Приостановить» и «Отмена» — столбец
+                             читается как один, с общей границей. -->
                         <Button Content="{loc:Loc Extract_ExtractButton}" Command="{Binding ExtractCommand}"
-                                Margin="0,14,0,0"/>
+                                HorizontalAlignment="Right" Margin="0,14,0,0"/>
                         <Button Content="{loc:Loc Extract_SaveUdevButton}" Command="{Binding SaveUdevCommand}"
-                                Margin="0,8,0,0"/>
+                                HorizontalAlignment="Right" Margin="0,8,0,0"/>
                         <Button Content="{loc:Loc Extract_SplitNandButton}" Command="{Binding SplitNandCommand}"
-                                Margin="0,8,0,0"/>
+                                HorizontalAlignment="Right" Margin="0,8,0,0"/>
 
                         <!-- Появляется только у прошивок Philips: только для них в дампе есть
                              модель, версия и серийный номер, из которых собирается имя.
                              Предлагаемое имя идёт под кнопкой, а не рядом: в узкой карточке
-                             оно длиннее оставшегося места и с переносом читается целиком. -->
+                             оно длиннее оставшегося места и с переносом читается целиком.
+                             Выравнивание по правому краю — как у кнопок выше. -->
                         <StackPanel Margin="0,8,0,0"
                                     Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}">
-                            <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"/>
+                            <Button Content="{loc:Loc Extract_RenameButton}" Command="{Binding RenameDumpCommand}"
+                                    HorizontalAlignment="Right"/>
                             <TextBlock Text="{Binding SuggestedFileName}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                       TextAlignment="Right"
                                        FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         </StackPanel>
                     </StackPanel>
