@@ -76,7 +76,10 @@ namespace TweakFirmware.Views
             MenuPeekItems.Children.Clear();
 
             var lineBrush = TryFindResource("CardStrokeColorDefaultBrush") as Brush;
-            var captionBrush = TryFindResource("TextFillColorPrimaryBrush") as Brush;
+
+            // Запасной цвет — цвет текста самого окна: у значка WPF-UI кисть объявлена
+            // ненулевой, и передать туда «не нашлось» нельзя.
+            Brush captionBrush = TryFindResource("TextFillColorPrimaryBrush") as Brush ?? Foreground;
 
             foreach (object entry in RootNavigation.MenuItems)
             {
@@ -110,7 +113,7 @@ namespace TweakFirmware.Views
             }
         }
 
-        private SWC.Button CreatePeekItem(NavigationViewItem item, Brush? foreground)
+        private SWC.Button CreatePeekItem(NavigationViewItem item, Brush foreground)
         {
             var row = new SWC.StackPanel { Orientation = SWC.Orientation.Horizontal };
 
