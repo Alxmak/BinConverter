@@ -41,9 +41,21 @@ namespace TweakFirmware.Views
         /// </summary>
         private void Partitions_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Галочку пропускаем: щелчок по ней ставит отметку, а не выделяет строку.
-            if (IsInsideCell(e) && FindAncestor<CheckBox>(e.OriginalSource as DependencyObject) == null)
-                e.Handled = true;
+            if (!IsInsideCell(e)) return;
+
+            // Отметку переключаем сами, а щелчок гасим целиком — включая щелчок
+            // по самой галочке.
+            //
+            // Пропустить его нельзя, хотя галочка событие обрабатывает: DataGridCell
+            // вешает свой обработчик выделения через RegisterClassHandler с
+            // handledEventsToo, то есть он отрабатывает и по уже обработанному событию,
+            // а «занято» проверяет только в одной из двух своих веток. Поэтому строка
+            // выделялась именно при щелчке по галочке — и вместе с выделением
+            // содержимое строки уезжало вправо на ширину полоски выделения.
+            if (FindAncestor<CheckBox>(e.OriginalSource as DependencyObject)?.DataContext is PartitionRow row)
+                row.Selected = !row.Selected;
+
+            e.Handled = true;
         }
 
         /// <summary>

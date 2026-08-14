@@ -4,6 +4,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
       xmlns:c="clr-namespace:TweakFirmware.Controls"
+      xmlns:vm="clr-namespace:TweakFirmware.ViewModels"
       Title="{loc:Loc Extract_Title}"
       ScrollViewer.CanContentScroll="False">
 
@@ -234,13 +235,19 @@
                                          IsThreeState="False": щелчок переводит только между
                                          «все» и «ни одного», а состояние «часть» приходит
                                          от самих строк — привязка сама выставит его.
-                                         Привязка через DataGrid: шапка колонки берёт
-                                         DataContext не у страницы. -->
+
+                                         Источник указан прямо, а не взят из DataContext:
+                                         содержимое Header принадлежит колонке, а колонка
+                                         в визуальном дереве не стоит — ни DataContext
+                                         страницы, ни RelativeSource до неё не доходят,
+                                         и галочка оставалась ни к чему не привязанной.
+                                         ViewModel вкладки — singleton (см. TabViewModels),
+                                         так что ссылаться на неё напрямую можно. -->
                                     <CheckBox IsThreeState="False" Padding="0"
                                               HorizontalAlignment="Center" VerticalAlignment="Center"
                                               ToolTip="{loc:Loc Extract_SelectAllTooltip}"
-                                              IsChecked="{Binding DataContext.AllSelected,
-                                                          RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                              IsChecked="{Binding AllSelected, Mode=TwoWay,
+                                                          Source={x:Static vm:TabViewModels.ExtractTab}}"/>
                                 </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
