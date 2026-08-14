@@ -150,10 +150,14 @@ namespace TweakFirmware.Services
 
         private static object BuildContent(string message, Severity severity, HashRow[]? hashes)
         {
-            // Простой случай оставляем строкой: так окно выглядит ровно так, как его
-            // рисует библиотека, без нашей вёрстки.
-            if (severity == Severity.Info && (hashes == null || hashes.Length == 0)) return message;
-
+            // Простое сообщение раньше отдавалось в окно голой строкой — «пусть библиотека
+            // нарисует его сама». Рисовала она его по-своему: строку разворачивает
+            // в TextBlock её собственный ContentPresenter, а у него в ресурсах лежит
+            // неявный стиль с TextAlignment="Justify". Текст растягивался по ширине окна,
+            // и на пути к папке это превращалось в дыры по несколько пробелов между
+            // кусками пути — ровно там, где в именах папок есть пробелы. Свой TextBlock
+            // выравнивание задаёт явно, поэтому исключений больше нет: весь текст окон
+            // собирается здесь.
             var panel = new StackPanel();
             panel.Children.Add(BuildMessageRow(message, severity));
 

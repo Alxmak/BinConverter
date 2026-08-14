@@ -205,28 +205,58 @@
                               PreviewMouseLeftButtonDown="Partitions_PreviewMouseLeftButtonDown"
                               MouseRightButtonUp="Partitions_MouseRightButtonUp"
                               CanUserReorderColumns="False" CanUserResizeColumns="False"
-                              Margin="-3,0,0,0"
                               Background="Transparent" BorderThickness="0"
                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
 
-                        <DataGrid.Resources>
-                            <!-- Полоска слева у выделенной строки. Шаблон строки WPF-UI
-                                 рисует её всегда, когда строка выделена, и убрать её оттуда
-                                 нельзя — гасим цветом. Место она при этом занимать
-                                 продолжает, и ровно на это место рассчитаны отступы ниже. -->
-                            <SolidColorBrush x:Key="ListViewItemPillFillBrush" Color="Transparent"/>
-                        </DataGrid.Resources>
+                        <!-- Свой шаблон строки. Шаблон WPF-UI держит слева отдельную
+                             колонку под полоску выделения шириной 3px, и появлялась она
+                             только у выделенной строки. Отсюда всё сразу: строка съезжала
+                             вправо, у неё не хватало этих 3px под колонки (ширины-то
+                             общие на всю таблицу), и внизу вылезала горизонтальная полоса
+                             прокрутки ради трёх пикселей. Здесь полоски нет вовсе,
+                             а выделение — та же подложка, что и при наведении.
 
-                        <!-- Отступы слева переписаны: в стилях WPF-UI это 6px у ячейки
-                             и 8px у заголовка, из-за чего вся таблица стояла правее
-                             заголовка карточки. Расстояние между колонками держится
-                             теперь правым отступом.
+                             Шаблон свой, а не подправленный библиотечный: дотянуться
+                             до полоски снаружи нельзя, её Visibility выставляет триггер
+                             внутри шаблона. Заголовок строки и панель подробностей
+                             не нужны — заголовки строк скрыты, подробностей нет.
+                             Горизонтальные линии от шаблона не зависят: их рисует
+                             сама ячейка (DataGridCell.OnRender). -->
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridRow">
+                                            <Border x:Name="RowBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="{DynamicResource ControlCornerRadius}"
+                                                    SnapsToDevicePixels="True">
+                                                <DataGridCellsPresenter ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="RowBorder" Property="Background"
+                                                            Value="{DynamicResource ListViewItemBackgroundPointerOver}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="RowBorder" Property="Background"
+                                                            Value="{DynamicResource ListViewItemBackgroundPointerOver}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.RowStyle>
 
-                             Оставшиеся 3px слева — это место под полоску выделения строки,
-                             и вычитает их отрицательное поле самой таблицы. Так левый край
-                             совпадает с «Найденными разделами», а строка не дёргается
-                             при выделении: полоска появляется ровно в тех 3px, которые
-                             у выделенной строки снимаются с отступа ячейки.
+                        <!-- Отступ слева убран и у ячеек, и у шапки: в стилях WPF-UI это
+                             6px у ячейки и 8px у заголовка, из-за чего вся таблица стояла
+                             правее заголовка карточки. Расстояние между колонками держится
+                             теперь правым отступом, а левый край первой колонки совпадает
+                             с «Найденными разделами».
 
                              BasedOn обязателен (стиль без него вытесняет Template и контрол
                              перестаёт рисоваться), а базовые стили здесь именованные:
@@ -237,23 +267,12 @@
                              вкладки, а не при сборке. -->
                         <DataGrid.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
-                                <Setter Property="Padding" Value="3,0,12,0"/>
-                                <!-- У выделенной строки те же 3px слева уже заняты полоской
-                                     выделения, поэтому здесь они снимаются. Иначе строка
-                                     дёргалась бы вправо в момент выделения — тот самый сдвиг,
-                                     из-за которого выделение и убирали. Сумма отступов
-                                     одинаковая, 15px, чтобы текст не переносился иначе. -->
-                                <Style.Triggers>
-                                    <DataTrigger Value="True"
-                                                 Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}">
-                                        <Setter Property="Padding" Value="0,0,15,0"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
+                                <Setter Property="Padding" Value="0,0,12,0"/>
                             </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
-                                <Setter Property="Padding" Value="3,4,12,4"/>
+                                <Setter Property="Padding" Value="0,4,12,4"/>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
 
