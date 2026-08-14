@@ -4,9 +4,10 @@ using System.IO;
 namespace TweakFirmware.Services
 {
     /// <summary>
-    /// Хранит выбор пользователя насчёт папок вывода для разделов «Конвертирование»
-    /// и «Сборка файла»: либо папки по умолчанию (внутри Документы\Tweak Firmware\
-    /// New Firmware Files), либо собственные папки, указанные в настройках.
+    /// Хранит выбор пользователя насчёт папок вывода для разделов «Конвертирование»,
+    /// «Сборка файла» и «Извлечение разделов»: либо папки по умолчанию (внутри
+    /// Документы\Tweak Firmware\New Firmware Files), либо собственные папки, указанные
+    /// в настройках.
     /// Сохранение между запусками — простой текстовый файл, аналогично ThemeService.
     /// </summary>
     public static class OutputPathSettingsService
@@ -18,14 +19,17 @@ namespace TweakFirmware.Services
         // Сборки файла переключаются независимо друг от друга.
         public static bool UseDefaultConvertPath { get; private set; } = true;
         public static bool UseDefaultMergePath { get; private set; } = true;
+        public static bool UseDefaultExtractPath { get; private set; } = true;
         public static string CustomConvertFolder { get; private set; } = "";
         public static string CustomMergeFolder { get; private set; } = "";
+        public static string CustomExtractFolder { get; private set; } = "";
 
         public static string DefaultBaseFolder =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Tweak Firmware", "New Firmware Files");
 
         public static string DefaultConvertFolder => Path.Combine(DefaultBaseFolder, "Converted eMMC");
         public static string DefaultMergeFolder => Path.Combine(DefaultBaseFolder, "Merged eMMC");
+        public static string DefaultExtractFolder => Path.Combine(DefaultBaseFolder, "Extracted Partitions");
 
         static OutputPathSettingsService() => Load();
 
@@ -36,6 +40,10 @@ namespace TweakFirmware.Services
         /// <summary>Папка, которую сейчас нужно использовать по умолчанию для сборки.</summary>
         public static string GetMergeFolder() =>
             UseDefaultMergePath || string.IsNullOrWhiteSpace(CustomMergeFolder) ? DefaultMergeFolder : CustomMergeFolder;
+
+        /// <summary>Папка, которую сейчас нужно использовать по умолчанию для извлечения разделов.</summary>
+        public static string GetExtractFolder() =>
+            UseDefaultExtractPath || string.IsNullOrWhiteSpace(CustomExtractFolder) ? DefaultExtractFolder : CustomExtractFolder;
 
         public static void SetUseDefaultConvertPath(bool value)
         {
@@ -49,6 +57,12 @@ namespace TweakFirmware.Services
             Save();
         }
 
+        public static void SetUseDefaultExtractPath(bool value)
+        {
+            UseDefaultExtractPath = value;
+            Save();
+        }
+
         public static void SetCustomConvertFolder(string folder)
         {
             CustomConvertFolder = folder;
@@ -58,6 +72,12 @@ namespace TweakFirmware.Services
         public static void SetCustomMergeFolder(string folder)
         {
             CustomMergeFolder = folder;
+            Save();
+        }
+
+        public static void SetCustomExtractFolder(string folder)
+        {
+            CustomExtractFolder = folder;
             Save();
         }
 
@@ -84,11 +104,17 @@ namespace TweakFirmware.Services
                         case "UseDefault": legacyUseDefault = value == "True"; break;
                         case "UseDefaultConvert": UseDefaultConvertPath = value == "True"; break;
                         case "UseDefaultMerge": UseDefaultMergePath = value == "True"; break;
+                        case "UseDefaultExtract": UseDefaultExtractPath = value == "True"; break;
                         case "ConvertFolder": CustomConvertFolder = value; break;
                         case "MergeFolder": CustomMergeFolder = value; break;
+                        case "ExtractFolder": CustomExtractFolder = value; break;
                     }
                 }
 
+                // Старый ключ на «Извлечение разделов» не распространяется: когда файл
+                // с ним писался, этого раздела ещё не было, и снятая тогда галочка ничего
+                // не говорит о папке, которой человек не видел. Иначе у него оказался бы
+                // выключенным путь по умолчанию при пустой своей папке.
                 if (legacyUseDefault.HasValue)
                 {
                     UseDefaultConvertPath = legacyUseDefault.Value;
@@ -109,8 +135,10 @@ namespace TweakFirmware.Services
                 {
                     $"UseDefaultConvert={UseDefaultConvertPath}",
                     $"UseDefaultMerge={UseDefaultMergePath}",
+                    $"UseDefaultExtract={UseDefaultExtractPath}",
                     $"ConvertFolder={CustomConvertFolder}",
-                    $"MergeFolder={CustomMergeFolder}"
+                    $"MergeFolder={CustomMergeFolder}",
+                    $"ExtractFolder={CustomExtractFolder}"
                 });
             }
             catch { /* сохранение путей не критично для работы программы */ }

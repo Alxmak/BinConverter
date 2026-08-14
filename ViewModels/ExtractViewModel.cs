@@ -141,10 +141,35 @@ namespace TweakFirmware.ViewModels
         private PartitionAnalysisResult? _result;
         private PartitionTable _table = new();
 
+        // Папку назначения человек мог задать сам, а мог оставить как есть. Пока она
+        // «как есть», подставляем актуальный путь по умолчанию из «Настроек»: ViewModel
+        // живёт дольше страницы, поэтому сам он не перечитается. Тот же приём и по той
+        // же причине уже стоит в Конвертировании и Сборке.
+        private bool _outputPathIsAuto = true;
+        private bool _settingOutputPathInternally;
+
         public ExtractViewModel()
         {
             Progress = 0;
             Summary = Strings.Get("Extract_NoResultYet");
+            SetOutputPathAuto(OutputPathSettingsService.GetExtractFolder());
+        }
+
+        protected override void OnAttached()
+        {
+            if (_outputPathIsAuto) SetOutputPathAuto(OutputPathSettingsService.GetExtractFolder());
+        }
+
+        private void SetOutputPathAuto(string path)
+        {
+            _settingOutputPathInternally = true;
+            OutputPath = path;
+            _settingOutputPathInternally = false;
+        }
+
+        partial void OnOutputPathChanged(string value)
+        {
+            if (!_settingOutputPathInternally) _outputPathIsAuto = false;
         }
 
         partial void OnIsBusyChanged(bool value)

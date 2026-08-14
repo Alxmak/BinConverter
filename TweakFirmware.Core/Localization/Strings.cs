@@ -284,8 +284,10 @@ namespace TweakFirmware.Core.Localization
             ["Settings_UseDefaultPathCheckbox"] = "Путь по умолчанию",
             ["Settings_ChooseConvertFolderTitle"] = "Папка по умолчанию для конвертирования",
             ["Settings_ChooseMergeFolderTitle"] = "Папка по умолчанию для сборки файла",
+            ["Settings_ChooseExtractFolderTitle"] = "Папка по умолчанию для извлечения разделов",
             ["Settings_ConvertFolderTitle"] = "Папка для конвертирования",
             ["Settings_MergeFolderTitle"] = "Папка для сборки файла",
+            ["Settings_ExtractFolderTitle"] = "Папка для извлечения разделов",
             // Раньше карточка называлась «Очистить кеш» и обещала удалить временные файлы.
             // Никаких временных файлов программа не создаёт — чистится только журнал,
             // поэтому и название, и описание теперь про него.
@@ -716,8 +718,10 @@ namespace TweakFirmware.Core.Localization
             ["Settings_UseDefaultPathCheckbox"] = "Default path",
             ["Settings_ChooseConvertFolderTitle"] = "Default folder for conversion",
             ["Settings_ChooseMergeFolderTitle"] = "Default folder for merging",
+            ["Settings_ChooseExtractFolderTitle"] = "Default folder for partition extraction",
             ["Settings_ConvertFolderTitle"] = "Convert folder",
             ["Settings_MergeFolderTitle"] = "Merge folder",
+            ["Settings_ExtractFolderTitle"] = "Extract folder",
             ["Settings_ClearLogTitle"] = "Application log",
             ["Settings_ClearLogDescription"] = "Removes every log entry — both from the “Log” card on the working tabs and from the file on disk.",
             ["Settings_ClearLogButton"] = "Clear the log",

@@ -16,16 +16,19 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty]
         private string selectedLanguage;
 
-        // Пункт 5/7: «Путь по умолчанию» переключается отдельно для «Конвертирования»
-        // и для «Сборки файла».
+        // Пункт 5/7: «Путь по умолчанию» переключается отдельно для «Конвертирования»,
+        // «Сборки файла» и «Извлечения разделов».
         [ObservableProperty] private bool useDefaultConvertPath;
         [ObservableProperty] private bool useDefaultMergePath;
+        [ObservableProperty] private bool useDefaultExtractPath;
 
         [ObservableProperty] private string convertFolder = "";
         [ObservableProperty] private string mergeFolder = "";
+        [ObservableProperty] private string extractFolder = "";
 
         public bool CanEditConvertPath => !UseDefaultConvertPath;
         public bool CanEditMergePath => !UseDefaultMergePath;
+        public bool CanEditExtractPath => !UseDefaultExtractPath;
 
         public SettingsViewModel()
         {
@@ -33,6 +36,7 @@ namespace TweakFirmware.ViewModels
             selectedLanguage = LocalizationService.Instance.CurrentLanguage;
             useDefaultConvertPath = OutputPathSettingsService.UseDefaultConvertPath;
             useDefaultMergePath = OutputPathSettingsService.UseDefaultMergePath;
+            useDefaultExtractPath = OutputPathSettingsService.UseDefaultExtractPath;
             RefreshFolderDisplays();
         }
 
@@ -50,10 +54,18 @@ namespace TweakFirmware.ViewModels
             RefreshFolderDisplays();
         }
 
+        partial void OnUseDefaultExtractPathChanged(bool value)
+        {
+            OutputPathSettingsService.SetUseDefaultExtractPath(value);
+            OnPropertyChanged(nameof(CanEditExtractPath));
+            RefreshFolderDisplays();
+        }
+
         private void RefreshFolderDisplays()
         {
             ConvertFolder = OutputPathSettingsService.GetConvertFolder();
             MergeFolder = OutputPathSettingsService.GetMergeFolder();
+            ExtractFolder = OutputPathSettingsService.GetExtractFolder();
         }
 
         // Пункт: поля путей теперь редактируются свободно (можно вставлять и печатать).
@@ -67,6 +79,11 @@ namespace TweakFirmware.ViewModels
         partial void OnMergeFolderChanged(string value)
         {
             if (!UseDefaultMergePath) OutputPathSettingsService.SetCustomMergeFolder(value);
+        }
+
+        partial void OnExtractFolderChanged(string value)
+        {
+            if (!UseDefaultExtractPath) OutputPathSettingsService.SetCustomExtractFolder(value);
         }
 
         [RelayCommand]
@@ -100,6 +117,13 @@ namespace TweakFirmware.ViewModels
             if (dlg.ShowDialog() == true) SetCustomMergeFolder(dlg.FolderName);
         }
 
+        [RelayCommand]
+        private void BrowseExtractFolder()
+        {
+            var dlg = new OpenFolderDialog { Title = Strings.Get("Settings_ChooseExtractFolderTitle") };
+            if (dlg.ShowDialog() == true) SetCustomExtractFolder(dlg.FolderName);
+        }
+
         /// <summary>Используется и кнопкой "Обзор...", и вставкой пути из буфера обмена.</summary>
         public void SetCustomConvertFolder(string path)
         {
@@ -110,6 +134,12 @@ namespace TweakFirmware.ViewModels
         public void SetCustomMergeFolder(string path)
         {
             OutputPathSettingsService.SetCustomMergeFolder(path);
+            RefreshFolderDisplays();
+        }
+
+        public void SetCustomExtractFolder(string path)
+        {
+            OutputPathSettingsService.SetCustomExtractFolder(path);
             RefreshFolderDisplays();
         }
 

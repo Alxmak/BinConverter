@@ -27,6 +27,9 @@ namespace TweakFirmware.Views
         private void MergeFolderBox_DragOver(object sender, DragEventArgs e) =>
             FileDropHelper.SetEffect(e, _viewModel.CanEditMergePath);
 
+        private void ExtractFolderBox_DragOver(object sender, DragEventArgs e) =>
+            FileDropHelper.SetEffect(e, _viewModel.CanEditExtractPath);
+
         private void ConvertFolderBox_Drop(object sender, DragEventArgs e)
         {
             string? folder = ResolveDroppedFolder(e, _viewModel.CanEditConvertPath);
@@ -37,6 +40,12 @@ namespace TweakFirmware.Views
         {
             string? folder = ResolveDroppedFolder(e, _viewModel.CanEditMergePath);
             if (folder != null) _viewModel.SetCustomMergeFolder(folder);
+        }
+
+        private void ExtractFolderBox_Drop(object sender, DragEventArgs e)
+        {
+            string? folder = ResolveDroppedFolder(e, _viewModel.CanEditExtractPath);
+            if (folder != null) _viewModel.SetCustomExtractFolder(folder);
         }
 
         private static string? ResolveDroppedFolder(DragEventArgs e, bool allowed) =>
