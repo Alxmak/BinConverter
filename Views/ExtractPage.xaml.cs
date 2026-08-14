@@ -12,6 +12,9 @@ namespace TweakFirmware.Views
     {
         private readonly ExtractViewModel _viewModel = TabViewModels.ExtractTab;
 
+        /// <summary>Окно, пока страница открыта: с него снимается подписка при уходе.</summary>
+        private Window? _window;
+
         public ExtractPage()
         {
             InitializeComponent();
@@ -19,25 +22,38 @@ namespace TweakFirmware.Views
 
             // ViewModel живёт дольше страницы: разобранный список разделов должен
             // пережить переход в «Настройки» и обратно.
-            Loaded += (_, _) => _viewModel.Attach();
-            Unloaded += (_, _) => _viewModel.Detach();
+            Loaded += (_, _) =>
+            {
+                _viewModel.Attach();
+
+                // Окно одно на всю программу и переживает страницу, поэтому подписку
+                // обязательно снимать: иначе каждый заход на вкладку добавлял бы ещё
+                // один обработчик, а страница не собиралась бы сборщиком мусора.
+                _window = Window.GetWindow(this);
+                _window?.AddHandler(PreviewMouseDownEvent, new MouseButtonEventHandler(Window_PreviewMouseDown), true);
+            };
+
+            Unloaded += (_, _) =>
+            {
+                _viewModel.Detach();
+
+                _window?.RemoveHandler(PreviewMouseDownEvent, new MouseButtonEventHandler(Window_PreviewMouseDown));
+                _window = null;
+            };
 
             PageScrollHelper.AttachWheelScrolling(this, RootScroll);
         }
 
         /// <summary>
-        /// Гасит выделение строк таблицы разделов.
+        /// Щелчок по строке: отмечает раздел, если попали в галочку, и выделяет строку.
         ///
-        /// Выделение здесь ни на что не влияет — разделы отмечаются галочками, — зато
-        /// мешало дважды. В шаблоне строки WPF-UI выделенная строка получает слева полоску
-        /// шириной 3px, и стоит она в отдельной колонке сетки шириной Auto: пока полоски
-        /// нет, колонка нулевая, а как только строка выделилась — всё содержимое, вместе
-        /// с галочкой, съезжает вправо. Второе: с зажатой кнопкой мыши DataGrid «закрашивает»
-        /// строки выделением по ходу движения, чего на этой вкладке никто не просил.
+        /// Выделение ставится своим кодом, а не отдаётся таблице, потому что штатное
+        /// выделение приходит вместе с ненужным: с зажатой кнопкой DataGrid «закрашивает»
+        /// строку за строкой по ходу движения мыши, а обратный ход снимает. Здесь строка
+        /// выделяется ровно одна и ровно по щелчку.
         ///
-        /// Щелчок гасится только внутри ячейки данных и только если он не по галочке.
-        /// Заголовки колонок (сортировка) и полосы прокрутки в ячейку не входят, поэтому
-        /// их это не касается.
+        /// Щелчок гасится только внутри ячейки данных. Заголовки колонок и полосы
+        /// прокрутки в ячейку не входят, поэтому их это не касается.
         /// </summary>
         private void Partitions_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -55,7 +71,25 @@ namespace TweakFirmware.Views
             if (FindAncestor<CheckBox>(e.OriginalSource as DependencyObject)?.DataContext is PartitionRow row)
                 row.Selected = !row.Selected;
 
+            // Выделяем строку, по которой щёлкнули, — в том числе когда щёлкнули
+            // по её галочке: это тот же щелчок по строке.
+            PartitionsGrid.SelectedItem = FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject)?.Item;
+
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Щелчок мимо таблицы снимает выделение — где бы в окне он ни случился.
+        ///
+        /// Обработчик висит на окне, а не на странице: «в другом месте программы» — это
+        /// и меню разделов, и заголовок окна, а они лежат выше страницы. Ставится он
+        /// с handledEventsToo, иначе щелчки по кнопкам и полям, которые обрабатывают
+        /// их сами, проходили бы мимо и выделение оставалось бы висеть.
+        /// </summary>
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!ReferenceEquals(FindAncestor<DataGrid>(e.OriginalSource as DependencyObject), PartitionsGrid))
+                PartitionsGrid.SelectedItem = null;
         }
 
         /// <summary>

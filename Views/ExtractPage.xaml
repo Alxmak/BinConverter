@@ -198,21 +198,35 @@
                     <!-- Таблица только для чтения: править в ней нечего, а отметки
                          разделов стоят на своём CheckBox в шаблоне колонки и правку
                          ячейки не задействуют — см. пояснение у самой колонки. -->
-                    <DataGrid ItemsSource="{Binding Partitions}" AutoGenerateColumns="False"
+                    <DataGrid x:Name="PartitionsGrid" ItemsSource="{Binding Partitions}" AutoGenerateColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              MaxHeight="420"
+                              MaxHeight="420" SelectionMode="Single"
                               PreviewMouseLeftButtonDown="Partitions_PreviewMouseLeftButtonDown"
                               MouseRightButtonUp="Partitions_MouseRightButtonUp"
                               CanUserReorderColumns="False" CanUserResizeColumns="False"
+                              Margin="-3,0,0,0"
                               Background="Transparent" BorderThickness="0"
                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
 
-                        <!-- Отступ слева убран и у ячеек, и у шапки: в стилях WPF-UI он
-                             6px у ячейки и 8px у заголовка, из-за чего вся таблица стояла
-                             правее заголовка карточки. Расстояние между колонками
-                             держится теперь правым отступом, а левый край первой колонки
-                             совпадает с «Найденными разделами».
+                        <DataGrid.Resources>
+                            <!-- Полоска слева у выделенной строки. Шаблон строки WPF-UI
+                                 рисует её всегда, когда строка выделена, и убрать её оттуда
+                                 нельзя — гасим цветом. Место она при этом занимать
+                                 продолжает, и ровно на это место рассчитаны отступы ниже. -->
+                            <SolidColorBrush x:Key="ListViewItemPillFillBrush" Color="Transparent"/>
+                        </DataGrid.Resources>
+
+                        <!-- Отступы слева переписаны: в стилях WPF-UI это 6px у ячейки
+                             и 8px у заголовка, из-за чего вся таблица стояла правее
+                             заголовка карточки. Расстояние между колонками держится
+                             теперь правым отступом.
+
+                             Оставшиеся 3px слева — это место под полоску выделения строки,
+                             и вычитает их отрицательное поле самой таблицы. Так левый край
+                             совпадает с «Найденными разделами», а строка не дёргается
+                             при выделении: полоска появляется ровно в тех 3px, которые
+                             у выделенной строки снимаются с отступа ячейки.
 
                              BasedOn обязателен (стиль без него вытесняет Template и контрол
                              перестаёт рисоваться), а базовые стили здесь именованные:
@@ -223,12 +237,23 @@
                              вкладки, а не при сборке. -->
                         <DataGrid.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
-                                <Setter Property="Padding" Value="0,0,12,0"/>
+                                <Setter Property="Padding" Value="3,0,12,0"/>
+                                <!-- У выделенной строки те же 3px слева уже заняты полоской
+                                     выделения, поэтому здесь они снимаются. Иначе строка
+                                     дёргалась бы вправо в момент выделения — тот самый сдвиг,
+                                     из-за которого выделение и убирали. Сумма отступов
+                                     одинаковая, 15px, чтобы текст не переносился иначе. -->
+                                <Style.Triggers>
+                                    <DataTrigger Value="True"
+                                                 Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}">
+                                        <Setter Property="Padding" Value="0,0,15,0"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.ColumnHeaderStyle>
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
-                                <Setter Property="Padding" Value="0,4,12,4"/>
+                                <Setter Property="Padding" Value="3,4,12,4"/>
                             </Style>
                         </DataGrid.ColumnHeaderStyle>
 
