@@ -141,7 +141,7 @@
                              Пауза приходит от ViewModel и сама гаснет на разборе: он её
                              не поддерживает. -->
                         <c:OperationBar Grid.Column="0"
-                                        StartText="{loc:Loc Extract_AnalyseButton}"
+                                        StartText="{loc:Loc Extract_StartButton}"
                                         StartCommand="{Binding AnalyseCommand}"
                                         PauseCommand="{Binding TogglePauseCommand}"
                                         CancelCommand="{Binding CancelCommand}"/>
