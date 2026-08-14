@@ -52,6 +52,30 @@ namespace TweakFirmware.Services
         public readonly record struct HashRow(string Label, string Hash);
 
         /// <summary>
+        /// Текстовая строка для окна. Весь текст диалогов идёт через неё.
+        ///
+        /// Выравнивание задаётся явно, и это не придирка: MessageBox из WPF-UI кладёт
+        /// в ресурсы своего ContentPresenter неявный стиль TextBlock с
+        /// TextAlignment="Justify". Он достаётся всему, что мы кладём в окно, и текст
+        /// растягивается по ширине. На обычной фразе это почти незаметно, а на пути
+        /// к папке — «C:\Users\...\New Firmware Files\Extracted Partitions\...» —
+        /// превращалось в дыры по несколько пробелов между кусками пути: имена папок
+        /// с пробелами дают точки переноса, и выравнивание растаскивало их по всей
+        /// ширине окна.
+        /// </summary>
+        private static TextBlock BuildText(string text)
+        {
+            var block = new TextBlock
+            {
+                Text = text,
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Left
+            };
+            block.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            return block;
+        }
+
+        /// <summary>
         /// Итог с хэшами: под сообщением у каждого своя подпись и кнопка копирования.
         /// Хэш нужен не «на посмотреть» — его вписывают в поле «Ожидаемый SHA-256» при
         /// обратной сборке, а раньше 64 знака из окна оставалось только перепечатывать.
@@ -72,9 +96,7 @@ namespace TweakFirmware.Services
         {
             var block = new StackPanel { Margin = new Thickness(0, 16, 0, 0) };
 
-            var label = new TextBlock { Text = row.Label, TextWrapping = TextWrapping.Wrap };
-            label.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
-            block.Children.Add(label);
+            block.Children.Add(BuildText(row.Label));
 
             var line = new Grid { Margin = new Thickness(0, 6, 0, 0) };
             line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -82,14 +104,9 @@ namespace TweakFirmware.Services
 
             // Моноширинный и с переносами: 64 знака одной строкой в окно не влезают
             // (см. HashDisplay).
-            var hash = new TextBlock
-            {
-                Text = HashDisplay.Wrap(row.Hash),
-                TextWrapping = TextWrapping.Wrap,
-                FontFamily = new FontFamily("Cascadia Code, Consolas"),
-                FontSize = 12
-            };
-            hash.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            var hash = BuildText(HashDisplay.Wrap(row.Hash));
+            hash.FontFamily = new FontFamily("Cascadia Code, Consolas");
+            hash.FontSize = 12;
             Grid.SetColumn(hash, 0);
             line.Children.Add(hash);
 
@@ -153,8 +170,7 @@ namespace TweakFirmware.Services
         /// </summary>
         private static UIElement BuildMessageRow(string message, Severity severity)
         {
-            var text = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-            text.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+            var text = BuildText(message);
 
             if (severity == Severity.Info) return text;
 
@@ -198,7 +214,9 @@ namespace TweakFirmware.Services
             var box = new MessageBox
             {
                 Title = title,
-                Content = message,
+                // Не сама строка, а TextBlock: голую строку окно оформляет своим
+                // неявным стилем и растягивает по ширине — см. BuildText.
+                Content = BuildText(message),
                 PrimaryButtonText = primaryText,
                 CloseButtonText = closeText
             };
@@ -232,7 +250,7 @@ namespace TweakFirmware.Services
             foreach (string option in options) list.Items.Add(option);
 
             var panel = new StackPanel();
-            panel.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+            panel.Children.Add(BuildText(message));
             panel.Children.Add(list);
 
             var box = new MessageBox
