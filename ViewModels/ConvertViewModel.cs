@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -527,10 +526,7 @@ namespace TweakFirmware.ViewModels
 
         private void OpenResultFolder(string folder)
         {
-            if (!OpenFolderAfter) return;
-
-            try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
-            catch (Exception ex) { AppLogger.Log(Strings.Format("Common_OpenFolderFailedLog", ex.Message)); }
+            if (OpenFolderAfter) ResultFolder.Open(folder);
         }
 
         [RelayCommand(CanExecute = nameof(IsBusy))]

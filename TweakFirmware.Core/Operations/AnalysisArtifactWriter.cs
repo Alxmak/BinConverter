@@ -81,6 +81,10 @@ namespace TweakFirmware.Core.Operations
             }
             catch (OperationCanceledException)
             {
+                // Отмена посреди записи оставляет обрезанный файл: выглядит он настоящим,
+                // а внутри половина — и build.prop, прочитанный из такого, соврёт про
+                // прошивку. Убираем так же, как за прерванным извлечением.
+                IncompleteOutput.Remove(new[] { path }, message => host.Log(message, AnalysisLogLevel.Warning));
                 throw;
             }
             catch (Exception ex)

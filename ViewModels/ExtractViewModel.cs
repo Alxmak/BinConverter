@@ -106,6 +106,13 @@ namespace TweakFirmware.ViewModels
         /// <summary>Искать ли файловые системы внутри разделов — ответ даётся заранее.</summary>
         [ObservableProperty] private bool searchFileSystems = true;
 
+        // Оба параметра относятся к «Извлечь отмеченные» — единственной операции вкладки,
+        // которая пишет столько, что место на диске стоит считать заранее, и оставляет
+        // после себя папку, которую хочется открыть. Значения по умолчанию те же, что
+        // в Конвертировании и Сборке.
+        [ObservableProperty] private bool checkDiskSpace = true;
+        [ObservableProperty] private bool openFolderAfter = true;
+
         /// <summary>
         /// Поддерживает ли текущая работа паузу. Разбор дампа — нет: он читает файл
         /// короткими прыжками по адресам, приостанавливать там нечего и незачем.
@@ -533,7 +540,7 @@ namespace TweakFirmware.ViewModels
                     OutputFolder = OutputPath,
                     Source = SearchFileSystems ? ExtractionSource.FileSystems : ExtractionSource.PartitionTable,
                     Geometry = _result?.Geometry,
-                    CheckDiskSpace = true
+                    CheckDiskSpace = CheckDiskSpace
                 };
 
                 var outcome = await Task.Run(() => PartitionExtractOperation.RunAsync(
@@ -555,6 +562,10 @@ namespace TweakFirmware.ViewModels
                     await DialogService.ShowInfoAsync(
                         Strings.Get("Common_DoneTitle"),
                         Strings.Format("Extract_ExtractDone", outcome.ExtractedCount, outcome.OutputFolder));
+
+                    // После окна, а не до: иначе проводник открывается поверх диалога,
+                    // и человек читает итог уже из-под чужого окна.
+                    if (OpenFolderAfter) ResultFolder.Open(outcome.OutputFolder);
                     break;
 
                 case PartitionExtractStatus.NothingSelected:

@@ -94,7 +94,17 @@
                              а не диалогом посреди работы. -->
                         <CheckBox Style="{StaticResource CardCheckBox}"
                                   Content="{loc:Loc Extract_SearchFileSystemsCheckbox}"
-                                  IsChecked="{Binding SearchFileSystems}"/>
+                                  IsChecked="{Binding SearchFileSystems}" Margin="0,0,0,10"/>
+
+                        <!-- Оба параметра относятся к «Извлечь отмеченные»: только она
+                             пишет столько, что место стоит считать заранее, и оставляет
+                             после себя папку. -->
+                        <CheckBox Style="{StaticResource CardCheckBox}"
+                                  Content="{loc:Loc Common_CheckDiskSpaceCheckbox}"
+                                  IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}"
+                                  Content="{loc:Loc Common_OpenFolderCheckbox}"
+                                  IsChecked="{Binding OpenFolderAfter}"/>
                     </StackPanel>
                 </Border>
             </Grid>

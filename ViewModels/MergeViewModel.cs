@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -401,10 +400,7 @@ namespace TweakFirmware.ViewModels
             if (!OpenFolderAfter) return;
 
             string? folder = Path.GetDirectoryName(outputPath);
-            if (string.IsNullOrEmpty(folder)) return;
-
-            try { Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true }); }
-            catch (Exception ex) { AppLogger.Log(Strings.Format("Common_OpenFolderFailedLog", ex.Message)); }
+            if (!string.IsNullOrEmpty(folder)) ResultFolder.Open(folder);
         }
         [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel()
