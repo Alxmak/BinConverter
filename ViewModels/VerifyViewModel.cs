@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -60,7 +62,12 @@ namespace TweakFirmware.ViewModels
 
         public string MaxFilesNote => Strings.Format("Verify_MaxFilesNote", VerifyRequest.MaxFiles);
 
-        public bool CanStart => !IsBusy;
+        /// <summary>
+        /// Сравнивать можно, когда заполнены все строки: пустая строка — это не выбранный
+        /// файл, и до правки нажатие на «Сравнить» с такой строкой заканчивалось окном
+        /// «файл не найден» с пустым путём в списке.
+        /// </summary>
+        public bool CanStart => !IsBusy && Files.All(slot => slot.Path.Length > 0);
 
         /// <summary>Пока идёт сравнение, поля вкладки недоступны.</summary>
         public bool IsNotBusy => !IsBusy;
@@ -79,8 +86,36 @@ namespace TweakFirmware.ViewModels
 
         public VerifyViewModel()
         {
+            // Доступность «Сравнить» зависит от путей в строках, а меняются они по-разному:
+            // кнопкой «Обзор», вводом с клавиатуры и перетаскиванием. Подписка на сами
+            // строки ловит все три случая разом; подписка на коллекцию нужна потому, что
+            // строки добавляются и убираются кнопками.
+            Files.CollectionChanged += OnFilesChanged;
+
             for (int i = 0; i < VerifyRequest.MinFiles; i++) Files.Add(new VerifyFileSlot());
             RenumberFiles();
+        }
+
+        private void OnFilesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+                foreach (VerifyFileSlot slot in e.OldItems) slot.PropertyChanged -= OnSlotChanged;
+
+            if (e.NewItems != null)
+                foreach (VerifyFileSlot slot in e.NewItems) slot.PropertyChanged += OnSlotChanged;
+
+            NotifyCanStartChanged();
+        }
+
+        private void OnSlotChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(VerifyFileSlot.Path)) NotifyCanStartChanged();
+        }
+
+        private void NotifyCanStartChanged()
+        {
+            OnPropertyChanged(nameof(CanStart));
+            StartCommand.NotifyCanExecuteChanged();
         }
 
         protected override void OnLanguageChanged()

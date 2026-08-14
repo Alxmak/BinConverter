@@ -15,7 +15,12 @@ namespace TweakFirmware.ViewModels
 {
     public partial class MergeViewModel : LogHostViewModel
     {
-        [ObservableProperty] private string sourcePath = "";
+        // Пока часть цепочки не выбрана, собирать нечего: кнопка «Начать» гаснет,
+        // а не встречает нажатие сообщением об ошибке.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanStart))]
+        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+        private string sourcePath = "";
         // Пусто до выбора файла: подсказку про перетаскивание убрали из карточки
         // "Общая информация" — там место для сведений о цепочке, а не для инструкции.
         [ObservableProperty] private string chainInfoText = "";
@@ -56,7 +61,7 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
 
-        public bool CanStart => !IsBusy;
+        public bool CanStart => !IsBusy && SourcePath.Length > 0;
 
         /// <summary>Сборку можно ставить на паузу всё время, пока она идёт: отдельной
         /// фазы проверки хэша, как в Конвертировании, здесь нет.</summary>

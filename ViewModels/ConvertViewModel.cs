@@ -30,7 +30,13 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private ProgrammerPreset selectedPreset = null!;
 
-        [ObservableProperty] private string sourcePath = "";
+        // Пока файл не выбран, запускать нечего: кнопка «Начать» гаснет, а не встречает
+        // нажатие сообщением об ошибке.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanStart))]
+        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
+        private string sourcePath = "";
+
         [ObservableProperty] private string outputFolder = "";
         [ObservableProperty] private string baseFileName = "emmc.bin";
 
@@ -78,7 +84,7 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private double currentFileProgress;
         [ObservableProperty] private double shaProgress;
 
-        public bool CanStart => !IsBusy;
+        public bool CanStart => !IsBusy && SourcePath.Length > 0;
         public bool CanPause => IsBusy && !IsVerifying;
 
         /// <summary>Пока идёт операция, поля и параметры вкладки недоступны — менять их
