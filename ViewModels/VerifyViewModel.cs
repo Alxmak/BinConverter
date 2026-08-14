@@ -63,11 +63,12 @@ namespace TweakFirmware.ViewModels
         public string MaxFilesNote => Strings.Format("Verify_MaxFilesNote", VerifyRequest.MaxFiles);
 
         /// <summary>
-        /// Сравнивать можно, когда заполнены все строки: пустая строка — это не выбранный
-        /// файл, и до правки нажатие на «Сравнить» с такой строкой заканчивалось окном
-        /// «файл не найден» с пустым путём в списке.
+        /// Сравнивать можно, как только выбраны хотя бы два файла: меньше — сравнивать
+        /// не с чем. Лишние пустые строки запуску не мешают, их отбрасывает StartAsync —
+        /// иначе забытая пустая строка держала бы кнопку серой при двух выбранных файлах.
         /// </summary>
-        public bool CanStart => !IsBusy && Files.All(slot => slot.Path.Length > 0);
+        public bool CanStart =>
+            !IsBusy && Files.Count(slot => slot.Path.Length > 0) >= VerifyRequest.MinFiles;
 
         /// <summary>Пока идёт сравнение, поля вкладки недоступны.</summary>
         public bool IsNotBusy => !IsBusy;
@@ -215,7 +216,9 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanStart))]
         private async Task StartAsync()
         {
-            var paths = Files.Select(f => f.Path).ToArray();
+            // Пустые строки в сравнение не идут: их можно добавить кнопкой и не заполнить,
+            // а операция считает пустой путь ненайденным файлом и отвечает окном ошибки.
+            var paths = Files.Select(f => f.Path).Where(path => path.Length > 0).ToArray();
             var request = new VerifyRequest { FilePaths = paths };
 
             _cts = new CancellationTokenSource();
