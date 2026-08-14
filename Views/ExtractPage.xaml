@@ -186,16 +186,13 @@
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Extract_PartitionsTitle}" Style="{StaticResource CardTitle}"/>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="{loc:Loc Extract_SelectAllButton}" Command="{Binding SelectAllCommand}"/>
-                        <Button Content="{loc:Loc Extract_SelectNoneButton}" Command="{Binding SelectNoneCommand}" Margin="8,0,0,0"/>
-
-                        <!-- Для дампа eMMC переключатель бессмыслен: координаты совпадают. -->
-                        <CheckBox Content="{loc:Loc Extract_ShowPhysicalCheckbox}"
-                                  IsChecked="{Binding ShowPhysicalAddresses}"
-                                  Margin="16,0,0,0" VerticalAlignment="Center"
-                                  Visibility="{Binding IsNandDump, Converter={StaticResource BoolToVis}}"/>
-                    </StackPanel>
+                    <!-- Для дампа eMMC переключатель бессмыслен: координаты совпадают.
+                         Кнопок «Отметить все» и «Снять отметки» здесь больше нет — их
+                         заменяет общая галочка в шапке таблицы. -->
+                    <CheckBox Content="{loc:Loc Extract_ShowPhysicalCheckbox}"
+                              IsChecked="{Binding ShowPhysicalAddresses}"
+                              Margin="0,0,0,8"
+                              Visibility="{Binding IsNandDump, Converter={StaticResource BoolToVis}}"/>
 
                     <!-- Таблица только для чтения: править в ней нечего, а отметки
                          разделов стоят на своём CheckBox в шаблоне колонки и правку
@@ -226,7 +223,25 @@
                                  неявный стиль библиотеки лежит в Application.Resources
                                  (в ресурсах окна или страницы он бы внутрь шаблона данных
                                  не достал). -->
-                            <DataGridTemplateColumn Width="40" SortMemberPath="Selected">
+                            <!-- Сортировки у колонки нет намеренно. Пока она была, щелчок
+                                 по пустой шапке переставлял разделы по отметкам — и таблица,
+                                 которая читается только по возрастанию адреса, оказывалась
+                                 перемешанной, а колонка «Номер» переставала совпадать
+                                 с порядком строк. -->
+                            <DataGridTemplateColumn Width="40" CanUserSort="False">
+                                <DataGridTemplateColumn.Header>
+                                    <!-- Общая отметка вместо двух кнопок над таблицей.
+                                         IsThreeState="False": щелчок переводит только между
+                                         «все» и «ни одного», а состояние «часть» приходит
+                                         от самих строк — привязка сама выставит его.
+                                         Привязка через DataGrid: шапка колонки берёт
+                                         DataContext не у страницы. -->
+                                    <CheckBox IsThreeState="False" Padding="0"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              ToolTip="{loc:Loc Extract_SelectAllTooltip}"
+                                              IsChecked="{Binding DataContext.AllSelected,
+                                                          RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <!-- Padding обнулён: у CheckBox из WPF-UI он по умолчанию

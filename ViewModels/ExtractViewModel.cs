@@ -135,6 +135,32 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         public bool CanExtract => CanUseResult && Partitions.Any(row => row.Selected);
 
+        /// <summary>
+        /// Общая отметка в шапке таблицы. Раньше на её месте были две кнопки, «Отметить
+        /// все» и «Снять отметки»; галочка делает то же самое и заодно показывает,
+        /// в каком состоянии таблица.
+        ///
+        /// Тип с null намеренно: три состояния — все отмечены, ни один не отмечен и
+        /// «часть» (галочка рисуется чёрточкой). Само значение null галочке не выставить,
+        /// у неё IsThreeState="False": щелчок переводит только между «все» и «ни одного»,
+        /// а «часть» приходит от самих строк.
+        /// </summary>
+        public bool? AllSelected
+        {
+            get
+            {
+                if (Partitions.Count == 0) return false;
+
+                int selected = Partitions.Count(row => row.Selected);
+                if (selected == 0) return false;
+                return selected == Partitions.Count ? true : null;
+            }
+            set
+            {
+                if (value.HasValue) SetAllSelected(value.Value);
+            }
+        }
+
         private CancellationTokenSource? _cts;
         private readonly PauseController _pause = new();
 
@@ -420,6 +446,7 @@ namespace TweakFirmware.ViewModels
         private void NotifySelectionChanged()
         {
             OnPropertyChanged(nameof(CanExtract));
+            OnPropertyChanged(nameof(AllSelected));
             ExtractCommand.NotifyCanExecuteChanged();
         }
 
@@ -654,12 +681,6 @@ namespace TweakFirmware.ViewModels
 
         [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel() => _cts?.Cancel();
-
-        [RelayCommand]
-        private void SelectAll() => SetAllSelected(true);
-
-        [RelayCommand]
-        private void SelectNone() => SetAllSelected(false);
 
         private void SetAllSelected(bool value)
         {
