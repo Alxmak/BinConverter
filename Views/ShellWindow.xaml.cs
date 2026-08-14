@@ -89,7 +89,7 @@ namespace TweakFirmware.Views
 
             // Пока список открыт, подсказка кнопки не нужна: она говорит ровно то же,
             // что и сам список, и всплывала бы поверх него.
-            ToolTipService.SetIsEnabled(MenuToggleButton, false);
+            SWC.ToolTipService.SetIsEnabled(MenuToggleButton, false);
         }
 
         private void MenuToggle_MouseLeave(object sender, MouseEventArgs e) => SchedulePeekClose();
@@ -115,7 +115,7 @@ namespace TweakFirmware.Views
         {
             _peekCloseTimer.Stop();
             MenuPeek.IsOpen = false;
-            ToolTipService.SetIsEnabled(MenuToggleButton, true);
+            SWC.ToolTipService.SetIsEnabled(MenuToggleButton, true);
         }
 
         /// <summary>
