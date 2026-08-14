@@ -41,12 +41,32 @@ namespace TweakFirmware.Views
         /// </summary>
         private void Partitions_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.OriginalSource is not DependencyObject source) return;
-            if (FindAncestor<DataGridCell>(source) == null) return;
-            if (FindAncestor<CheckBox>(source) != null) return;
-
-            e.Handled = true;
+            // Галочку пропускаем: щелчок по ней ставит отметку, а не выделяет строку.
+            if (IsInsideCell(e) && FindAncestor<CheckBox>(e.OriginalSource as DependencyObject) == null)
+                e.Handled = true;
         }
+
+        /// <summary>
+        /// Правая кнопка выделяла строку и после того, как левую погасили, — потому что
+        /// делает это не обработчик мыши, а <c>DataGrid.OnContextMenuOpening</c>: он
+        /// намеренно выделяет ячейку под курсором, чтобы контекстное меню открывалось
+        /// для неё. Меню у этой таблицы нет, а выделение оставалось.
+        ///
+        /// Гасится это отпусканием правой кнопки, а не нажатием: событие открытия меню
+        /// поднимает <c>PopupControlService</c> уже на отпускании и только если оно
+        /// не обработано. Отключить меню через <c>ContextMenuService.IsEnabled</c> нельзя —
+        /// эта проверка идёт позже, когда строка уже выделена.
+        ///
+        /// Галочка здесь без исключения: правой кнопкой она ничего не делает, а выделять
+        /// строку щелчком по ней тем более незачем.
+        /// </summary>
+        private void Partitions_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (IsInsideCell(e)) e.Handled = true;
+        }
+
+        private static bool IsInsideCell(RoutedEventArgs e) =>
+            FindAncestor<DataGridCell>(e.OriginalSource as DependencyObject) != null;
 
         private static T? FindAncestor<T>(DependencyObject? source) where T : DependencyObject
         {

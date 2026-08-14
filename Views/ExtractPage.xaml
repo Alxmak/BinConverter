@@ -205,6 +205,7 @@
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               MaxHeight="420"
                               PreviewMouseLeftButtonDown="Partitions_PreviewMouseLeftButtonDown"
+                              MouseRightButtonUp="Partitions_MouseRightButtonUp"
                               Background="Transparent" BorderThickness="0"
                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
                         <DataGrid.Columns>
