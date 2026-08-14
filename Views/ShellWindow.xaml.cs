@@ -3,6 +3,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using TweakFirmware.Services;
 using Wpf.Ui.Controls;
 
@@ -15,10 +16,21 @@ namespace TweakFirmware.Views
 {
     public partial class ShellWindow : FluentWindow
     {
+        /// <summary>Сколько ждать после ухода мыши, прежде чем убрать всплывающий список.</summary>
+        private static readonly TimeSpan PeekCloseDelay = TimeSpan.FromMilliseconds(400);
+
+        private readonly DispatcherTimer _peekCloseTimer = new() { Interval = PeekCloseDelay };
+
         public ShellWindow()
         {
             InitializeComponent();
             DataContext = OperationLockService.Instance;
+
+            _peekCloseTimer.Tick += (_, _) => ClosePeek();
+
+            // Уход из окна мышь не отслеживает: переключились на другую программу — списку
+            // висеть поверх неё незачем.
+            Deactivated += (_, _) => ClosePeek();
 
             // Mica — эффект DWM из Windows 11; на более старых системах (в т.ч. Windows 10)
             // используем Acrylic. Выбор подложки живёт в ThemeService, чтобы он не разъезжался
@@ -46,7 +58,7 @@ namespace TweakFirmware.Views
         /// </summary>
         private void MenuToggle_Click(object sender, RoutedEventArgs e)
         {
-            MenuPeek.IsOpen = false;
+            ClosePeek();
             RootNavigation.IsPaneOpen = !RootNavigation.IsPaneOpen;
         }
 
@@ -71,10 +83,40 @@ namespace TweakFirmware.Views
             MenuPeek.VerticalOffset = Math.Max(2, leftGap - (button.Y + MenuToggleButton.ActualHeight));
 
             BuildPeekMenu();
+
+            _peekCloseTimer.Stop();
             MenuPeek.IsOpen = true;
+
+            // Пока список открыт, подсказка кнопки не нужна: она говорит ровно то же,
+            // что и сам список, и всплывала бы поверх него.
+            ToolTipService.SetIsEnabled(MenuToggleButton, false);
         }
 
-        private void MenuPeek_MouseLeave(object sender, MouseEventArgs e) => MenuPeek.IsOpen = false;
+        private void MenuToggle_MouseLeave(object sender, MouseEventArgs e) => SchedulePeekClose();
+
+        private void MenuPeek_MouseEnter(object sender, MouseEventArgs e) => _peekCloseTimer.Stop();
+
+        private void MenuPeek_MouseLeave(object sender, MouseEventArgs e) => SchedulePeekClose();
+
+        /// <summary>
+        /// Закрытие откладывается, а не делается сразу: между кнопкой и списком есть зазор,
+        /// и мышь по дороге к списку успевает уйти с обоих. Без задержки список закрывался бы
+        /// прямо под курсором на полпути.
+        /// </summary>
+        private void SchedulePeekClose()
+        {
+            if (!MenuPeek.IsOpen) return;
+
+            _peekCloseTimer.Stop();
+            _peekCloseTimer.Start();
+        }
+
+        private void ClosePeek()
+        {
+            _peekCloseTimer.Stop();
+            MenuPeek.IsOpen = false;
+            ToolTipService.SetIsEnabled(MenuToggleButton, true);
+        }
 
         /// <summary>
         /// Собирает всплывающий список из тех же пунктов, что стоят в панели.
@@ -161,7 +203,7 @@ namespace TweakFirmware.Views
 
             button.Click += (_, _) =>
             {
-                MenuPeek.IsOpen = false;
+                ClosePeek();
                 if (item.TargetPageType is not null) RootNavigation.Navigate(item.TargetPageType);
             };
 

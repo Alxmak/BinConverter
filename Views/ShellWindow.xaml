@@ -41,7 +41,8 @@
                 <Button x:Name="MenuToggleButton" Content="&#x2630;" FontSize="15"
                         Background="Transparent" BorderThickness="0" Padding="10,4" Margin="6,0,0,0"
                         Cursor="Hand" ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
-                        Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"/>
+                        Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"
+                        MouseLeave="MenuToggle_MouseLeave"/>
             </ui:TitleBar.Header>
         </ui:TitleBar>
 
@@ -226,15 +227,21 @@
              BuildPeekMenu): второй список разделов в разметке рано или поздно разошёлся
              бы с первым — добавили раздел в меню, забыли во всплывающем.
 
-             StaysOpen=False закрывает его по щелчку мимо, MouseLeave — когда мышь
-             ушла с него самого. -->
+             Закрывается он по уходу мыши — и с кнопки, и с себя, — а также по щелчку
+             по пункту, по кнопке и при уходе из окна. -->
         <!-- Список висит под кнопкой меню. Отступ сверху задаётся не здесь, а в коде
              (MenuToggle_MouseEnter): он должен совпадать с отступом слева, а слева тот
-             получается из положения кнопки в полосе заголовка — числом его не записать. -->
-        <Popup x:Name="MenuPeek" StaysOpen="False" AllowsTransparency="True"
+             получается из положения кнопки в полосе заголовка — числом его не записать.
+
+             StaysOpen="True" обязательно. При False всплывающее окно захватывает мышь,
+             чтобы ловить щелчки мимо себя, — и события мыши перестают доходить до кнопки.
+             Из-за этого кнопка не получала MouseLeave (список оставался висеть навсегда),
+             а всплывающая подсказка кнопки не получала сигнала закрыться: она появлялась
+             с опозданием уже там, куда мышь успела уехать, и оставалась на экране. -->
+        <Popup x:Name="MenuPeek" StaysOpen="True" AllowsTransparency="True"
                PlacementTarget="{Binding ElementName=MenuToggleButton}" Placement="Bottom"
                HorizontalOffset="4"
-               MouseLeave="MenuPeek_MouseLeave">
+               MouseEnter="MenuPeek_MouseEnter" MouseLeave="MenuPeek_MouseLeave">
             <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
                     CornerRadius="10" Padding="6" MinWidth="210" Margin="0,0,10,10">
