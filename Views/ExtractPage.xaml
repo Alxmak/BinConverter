@@ -203,7 +203,8 @@
                     <DataGrid ItemsSource="{Binding Partitions}" AutoGenerateColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                              MaxHeight="420" SelectionMode="Extended"
+                              MaxHeight="420"
+                              PreviewMouseLeftButtonDown="Partitions_PreviewMouseLeftButtonDown"
                               Background="Transparent" BorderThickness="0"
                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
                         <DataGrid.Columns>
@@ -237,7 +238,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="№" Binding="{Binding Number}" IsReadOnly="True" Width="44"/>
+                            <DataGridTextColumn Header="{loc:Loc Extract_ColumnNumber}" Binding="{Binding Number}" IsReadOnly="True" Width="70"/>
                             <DataGridTextColumn Header="{loc:Loc Extract_ColumnOffset}" Binding="{Binding Offset}" IsReadOnly="True" Width="130"/>
                             <DataGridTextColumn Header="{loc:Loc Extract_ColumnLength}" Binding="{Binding Length}" IsReadOnly="True" Width="130"/>
                             <DataGridTextColumn Header="{loc:Loc Extract_ColumnFs}" Binding="{Binding FileSystem}" IsReadOnly="True" Width="90"/>
