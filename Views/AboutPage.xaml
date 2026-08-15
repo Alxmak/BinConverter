@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
       Title="{loc:Loc About_Title}"
       ScrollViewer.CanContentScroll="False">
 
@@ -11,10 +12,12 @@
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
             <!-- Шапка тоже карточка: раньше она висела «в воздухе» над остальными
-                 и выбивалась из ряда. -->
+                 и выбивалась из ряда. Значок и отступы — как у плитки в AboutCard,
+                 чтобы заголовок программы стоял на одной вертикали с заголовками
+                 карточек под ним. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Assets/AppIcon-256.png" Width="44" Height="44" Margin="0,0,14,0" Stretch="Uniform"/>
+                    <Image Source="pack://application:,,,/Assets/AppIcon-256.png" Width="46" Height="46" Margin="0,0,16,0" Stretch="Uniform"/>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Tweak Firmware" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                         <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
@@ -22,124 +25,117 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc About_UpdatesTitle}" Style="{StaticResource CardTitle}"/>
-                    <Button Content="{loc:Loc About_CheckUpdatesButton}" Command="{Binding CheckForUpdatesCommand}"
-                            HorizontalAlignment="Left"/>
-                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,10,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc About_DevelopmentTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{loc:Loc About_DevelopmentText}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{loc:Loc About_PersonalUseText}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Обратная связь: письмо составляет программа, отправляет почтовый клиент
-                 пользователя. Поэтому ни сервера, ни домена для этой карточки не нужно,
-                 и введённое здесь никуда не уходит, пока человек сам не нажмёт
-                 "Отправить" уже в своей почте. -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc Feedback_Title}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock Text="{loc:Loc Feedback_Intro}" TextWrapping="Wrap" FontSize="13"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <!-- Адрес кликабельный, как ссылки в «Источниках»: именно его чаще
-                         всего и хотят нажать, а он был обычным текстом. -->
-                    <TextBlock FontSize="13" Margin="0,4,0,16" FontFamily="Cascadia Code, Consolas">
-                        <Hyperlink NavigateUri="{Binding ContactMailtoUri}" RequestNavigate="Hyperlink_RequestNavigate">
-                            <TextBlock Text="{Binding ContactEmail}"/>
-                        </Hyperlink>
-                    </TextBlock>
-
-                    <Grid Style="{StaticResource RowGrid}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_NameLabel}" Style="{StaticResource RowLabel}"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1"
-                                    Text="{Binding FeedbackName, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{loc:Loc Feedback_NamePlaceholder}"/>
-                    </Grid>
-
-                    <Grid Style="{StaticResource RowGrid}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_ReplyToLabel}" Style="{StaticResource RowLabel}"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1"
-                                    Text="{Binding FeedbackReplyTo, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{loc:Loc Feedback_ReplyToPlaceholder}"/>
-                    </Grid>
-
-                    <!-- Метка сообщения стоит над полем, а не слева: текст многострочный,
-                         и подпись напротив первой строки смотрелась бы висящей в воздухе. -->
-                    <Grid Style="{StaticResource RowGrid}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Feedback_MessageLabel}" Style="{StaticResource RowLabel}"
-                                   VerticalAlignment="Top" Margin="0,8,16,0"/>
-                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1"
-                                    Text="{Binding FeedbackMessage, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{loc:Loc Feedback_MessagePlaceholder}"
-                                    AcceptsReturn="True" TextWrapping="Wrap" SpellCheck.IsEnabled="True"
-                                    MinHeight="96" MaxHeight="220" VerticalScrollBarVisibility="Auto"/>
-                    </Grid>
-
-                    <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding SendFeedbackCommand}" Style="{StaticResource SolidButtonStyle}"
-                                Background="#2F6FED" Margin="0,0,8,0">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Mail24" FontSize="14" Margin="0,0,7,0"/>
-                                <TextBlock Text="{loc:Loc Feedback_SendButton}"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Content="{loc:Loc Feedback_CopyButton}" Command="{Binding CopyFeedbackCommand}"
-                                VerticalAlignment="Stretch"/>
-                    </StackPanel>
-
-                    <TextBlock Text="{loc:Loc Feedback_Hint}" TextWrapping="Wrap" FontSize="11" Margin="0,10,0,0"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-
-                    <!-- Итог последнего действия. Пока ничего не нажимали — строки нет,
+            <c:AboutCard Symbol="CloudArrowDown24" Accent="#2F6FED"
+                         Title="{loc:Loc About_UpdatesTitle}"
+                         Description="{loc:Loc About_UpdatesDescription}">
+                <c:AboutCard.Action>
+                    <Button Command="{Binding CheckForUpdatesCommand}" MinHeight="{StaticResource ActionButtonMinHeight}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{loc:Loc About_CheckUpdatesButton}" VerticalAlignment="Center"/>
+                            <!-- Уголок как у пунктов, ведущих дальше: нажатие уходит
+                                 наружу, к списку релизов, а не меняет что-то на месте. -->
+                            <ui:SymbolIcon Symbol="ChevronRight24" FontSize="12" Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </StackPanel>
+                    </Button>
+                </c:AboutCard.Action>
+                <c:AboutCard.Extra>
+                    <!-- Итог последней проверки. Пока не нажимали — строки нет,
                          иначе она занимала бы высоту пустым местом. -->
-                    <TextBlock Text="{Binding FeedbackStatusText}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"
+                    <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding FeedbackStatusText}" Value="">
+                                    <DataTrigger Binding="{Binding UpdateStatusText}" Value="">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </StackPanel>
-            </Border>
+                </c:AboutCard.Extra>
+            </c:AboutCard>
 
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
-                <StackPanel>
-                    <TextBlock Text="{loc:Loc About_SourcesTitle}" Style="{StaticResource CardTitle}"/>
-                    <TextBlock FontSize="13" Margin="0,0,0,6">
-                        <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
-                    </TextBlock>
-                    <TextBlock FontSize="13" Margin="0,0,0,6">
-                        <Hyperlink NavigateUri="https://mslw.com/bb/index.php" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com/bb/index.php</Hyperlink>
-                    </TextBlock>
-                    <TextBlock FontSize="13">
-                        <Hyperlink NavigateUri="https://teleservis.net" RequestNavigate="Hyperlink_RequestNavigate">https://teleservis.net</Hyperlink>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+            <c:AboutCard Symbol="Code24" Accent="#16A34A"
+                         Title="{loc:Loc About_DevelopmentTitle}"
+                         Description="{loc:Loc About_DevelopmentText}">
+                <c:AboutCard.Extra>
+                    <TextBlock Text="{loc:Loc About_PersonalUseText}" TextWrapping="Wrap" FontSize="13" Margin="0,4,0,0"
+                               LineHeight="19" LineStackingStrategy="BlockLineHeight"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                </c:AboutCard.Extra>
+            </c:AboutCard>
+
+            <!-- Обратная связь: письмо открывает почтовый клиент пользователя, своего
+                 сервера у программы нет. Раньше здесь стояла форма из трёх полей —
+                 имя, обратный адрес и сообщение, — то есть почтовый клиент внутри
+                 почтового клиента: набранное всё равно уезжало в письмо, которое
+                 человек дописывал и отправлял уже у себя. Осталось то, ради чего
+                 форма и была: открыть письмо и узнать адрес. -->
+            <c:AboutCard Symbol="Chat24" Accent="#6366F1"
+                         Title="{loc:Loc Feedback_Title}"
+                         Description="{loc:Loc Feedback_Intro}">
+                <c:AboutCard.Extra>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Command="{Binding WriteFeedbackCommand}" Margin="0,0,8,0"
+                                    MinHeight="{StaticResource ActionButtonMinHeight}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Mail24" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc Feedback_WriteButton}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding CopyEmailCommand}" MinHeight="{StaticResource ActionButtonMinHeight}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Copy24" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc Feedback_CopyAddressButton}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Адрес виден и кликабелен: почтовый клиент есть не у всех,
+                             и переписать адрес глазами должно быть можно. -->
+                        <TextBlock FontSize="12" Margin="0,10,0,0" FontFamily="Cascadia Code, Consolas">
+                            <Hyperlink NavigateUri="{Binding ContactMailtoUri}" RequestNavigate="Hyperlink_RequestNavigate">
+                                <TextBlock Text="{Binding ContactEmail}"/>
+                            </Hyperlink>
+                        </TextBlock>
+
+                        <TextBlock Text="{Binding FeedbackStatusText}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FeedbackStatusText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </c:AboutCard.Extra>
+            </c:AboutCard>
+
+            <c:AboutCard Symbol="Globe24" Accent="#0D9488"
+                         Title="{loc:Loc About_SourcesTitle}"
+                         Description="{loc:Loc About_SourcesDescription}">
+                <c:AboutCard.Extra>
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock FontSize="13" Margin="0,0,0,6">
+                            <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
+                        </TextBlock>
+                        <TextBlock FontSize="13" Margin="0,0,0,6">
+                            <Hyperlink NavigateUri="https://mslw.com/bb/index.php" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com/bb/index.php</Hyperlink>
+                        </TextBlock>
+                        <TextBlock FontSize="13">
+                            <Hyperlink NavigateUri="https://teleservis.net" RequestNavigate="Hyperlink_RequestNavigate">https://teleservis.net</Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+                </c:AboutCard.Extra>
+            </c:AboutCard>
 
         </StackPanel>
     </ScrollViewer>
