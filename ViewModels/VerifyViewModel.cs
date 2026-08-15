@@ -65,9 +65,6 @@ namespace TweakFirmware.ViewModels
         /// <summary>Строки о выбранных файлах: сколько их и какого они размера.</summary>
         [ObservableProperty] private string filesInfoText = "";
 
-        /// <summary>Замечание о разных размерах — есть не всегда, поэтому отдельной строкой.</summary>
-        [ObservableProperty] private string sizeMismatchNote = "";
-
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
         private bool hasInfo;
@@ -201,14 +198,12 @@ namespace TweakFirmware.ViewModels
             {
                 HasInfo = false;
                 FilesInfoText = "";
-                SizeMismatchNote = "";
                 return;
             }
 
             var sb = new StringBuilder();
             sb.AppendLine(Strings.Format("Verify_FilesSelectedLine", _infoPaths.Length));
 
-            var knownSizes = new List<long>();
             for (int i = 0; i < _infoPaths.Length; i++)
             {
                 // Имя пустое, если в поле путь к папке или он оборван на разделителе, —
@@ -216,27 +211,12 @@ namespace TweakFirmware.ViewModels
                 string name = Path.GetFileName(_infoPaths[i]);
                 if (name.Length == 0) name = _infoPaths[i];
 
-                if (_infoProbes[i].Exists)
-                {
-                    knownSizes.Add(_infoProbes[i].SizeBytes);
-                    sb.AppendLine(Strings.Format("Verify_InfoFileLine", name, SizeFormatHelper.Format(_infoProbes[i].SizeBytes)));
-                }
-                else
-                {
-                    sb.AppendLine(Strings.Format("Verify_InfoFileMissingLine", name));
-                }
+                sb.AppendLine(_infoProbes[i].Exists
+                    ? Strings.Format("Verify_InfoFileLine", name, SizeFormatHelper.Format(_infoProbes[i].SizeBytes))
+                    : Strings.Format("Verify_InfoFileMissingLine", name));
             }
 
             FilesInfoText = sb.ToString().TrimEnd();
-
-            // Разные размеры — готовый ответ ещё до чтения: файлы разной длины одинаковую
-            // сумму дать не могут. Сказать об этом сразу дешевле, чем после получаса
-            // чтения с диска, — но только когда размеры известны у всех, иначе вывод
-            // был бы сделан по неполным данным.
-            SizeMismatchNote = knownSizes.Count == _infoPaths.Length && knownSizes.Count > 1 && knownSizes.Distinct().Count() > 1
-                ? Strings.Get("Verify_SizesDifferNote")
-                : "";
-
             HasInfo = true;
         }
 
@@ -409,7 +389,7 @@ namespace TweakFirmware.ViewModels
                 {
                     Title = single
                         ? Strings.Get("Verify_SingleGroupTitle")
-                        : Strings.Format("Verify_GroupTitle", i + 1, group.FileCount),
+                        : Strings.Format("Verify_GroupTitle", i + 1, group.FileCount, PluralForms.Files(group.FileCount)),
                     Hash = group.Hash,
                     FileNames = string.Join("\n", group.FilePaths.Select(Path.GetFileName))
                 });
@@ -427,16 +407,26 @@ namespace TweakFirmware.ViewModels
             IsResultGood = allSame;
             ResultHeadline = Strings.Get(allSame ? "Verify_AllIdenticalHeadline" : "Verify_DifferenceHeadline");
 
+            // Форма слова «файл» зависит от числа: 2 файла, но 5 файлов (см. PluralForms).
+            string files = PluralForms.Files(outcome.FileCount);
+
             if (allSame)
             {
-                ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount);
+                ResultSubline = Strings.Format("Verify_AllIdenticalSubline", outcome.FileCount, files);
+            }
+            else if (outcome.LargestGroupSize > 1)
+            {
+                // Когда совпавших пар нет вовсе, «1 из 5 идентичны» звучало бы странно.
+                ResultSubline = Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount);
             }
             else
             {
-                // Когда совпавших пар нет вовсе, «1 из 5 идентичны» звучало бы странно.
-                ResultSubline = outcome.LargestGroupSize > 1
-                    ? Strings.Format("Verify_DifferenceSubline", outcome.LargestGroupSize, outcome.FileCount)
-                    : Strings.Format("Verify_AllDifferentSubline", outcome.FileCount);
+                // При двух файлах «Все 2 файла различаются» звучит как пересчёт по головам:
+                // «всех» там ровно столько, сколько файлов вообще может быть. С трёх и
+                // больше «Все» уже к месту.
+                ResultSubline = outcome.FileCount > 2
+                    ? Strings.Format("Verify_AllDifferentSubline", outcome.FileCount, files)
+                    : Strings.Format("Verify_BothDifferentSubline", outcome.FileCount, files);
             }
 
             HasResult = true;
@@ -465,7 +455,11 @@ namespace TweakFirmware.ViewModels
 
                 case VerifyStatus.Different:
                     ApplyResultTexts(outcome);
-                    await DialogService.ShowErrorAsync(Strings.Get("Common_VerifyErrorTitle"), BuildResultMessage());
+                    // Заголовок тот же, что при совпадении: сравнение прошло как надо,
+                    // просто файлы разные. «Ошибка проверки» здесь читалась так, будто
+                    // не сработала сама проверка, — а её итог как раз и есть ответ.
+                    // Что файлы разошлись, видно по красной карточке результата.
+                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), BuildResultMessage());
                     break;
 
                 case VerifyStatus.Cancelled:

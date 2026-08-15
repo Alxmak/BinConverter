@@ -78,29 +78,13 @@
                     <c:HintBanner Text="{loc:Loc Verify_SelectFilesHint}"
                                   Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
 
-                    <StackPanel Visibility="{Binding HasInfo, Converter={StaticResource BoolToVis}}">
-                        <!-- Тот же межстрочный интервал, что в информационных карточках
-                             остальных вкладок: строки собираются кодом, и сколько их
-                             будет, заранее неизвестно. -->
-                        <TextBlock Text="{Binding FilesInfoText}" TextWrapping="Wrap" FontSize="13"
-                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-
-                        <!-- Замечание о разных размерах есть не всегда, а пустой TextBlock
-                             всё равно занимал бы высоту строки. -->
-                        <TextBlock Text="{Binding SizeMismatchNote}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SizeMismatchNote}" Value="">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
+                    <!-- Тот же межстрочный интервал, что в информационных карточках
+                         остальных вкладок: строки собираются кодом, и сколько их
+                         будет, заранее неизвестно. -->
+                    <TextBlock Text="{Binding FilesInfoText}" TextWrapping="Wrap" FontSize="13"
+                               LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               Visibility="{Binding HasInfo, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </Border>
 
