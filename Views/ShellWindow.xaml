@@ -176,6 +176,11 @@
                      версия библиотеки закреплена в csproj. -->
                 <Style x:Key="BetaGroupHeaderStyle" TargetType="{x:Type ui:NavigationViewItemHeader}"
                        BasedOn="{StaticResource GroupHeaderStyle}">
+                    <!-- Приглушение переезжает с заголовка на его подпись. Прозрачность
+                         действует на всё поддерево, и плашка выцветала вместе с текстом:
+                         рядом с такой же плашкой версии в «О программе» она выглядела
+                         блёклой. Подпись остаётся приглушённой, как у остальных групп. -->
+                    <Setter Property="Opacity" Value="1"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="{x:Type ui:NavigationViewItemHeader}">
@@ -194,7 +199,7 @@
                                                       TextElement.FontSize="{TemplateBinding FontSize}"
                                                       TextElement.Foreground="{TemplateBinding Foreground}"/>
 
-                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.7"
                                                FontSize="{TemplateBinding FontSize}"
                                                Foreground="{TemplateBinding Foreground}"
                                                Text="{TemplateBinding Text}"/>

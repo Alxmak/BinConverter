@@ -36,11 +36,15 @@
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                             <!-- Номер версии плашкой рядом с названием, а не строкой под ним:
                                  строка читалась как часть описания, хотя описанию там и место.
-                                 Ровно по середине названия: подгонять её отступом сверху
-                                 нельзя — высота строки зависит от шрифта, и на другом
-                                 масштабе экрана подгонка разъехалась бы. -->
+
+                                 Отступ сверху в 2 пикселя — не подгонка на глаз, а поправка
+                                 на то, как устроена строка текста. Выравнивание по центру
+                                 считает высоту всей строки, включая место под хвосты букв
+                                 (у «g», «p»), а в «Tweak Firmware» таких букв нет: видимые
+                                 буквы стоят в верхней части строки, и плашка ровно по центру
+                                 читается задранной. -->
                             <c:Badge Text="{Binding VersionText}" ToolTip="{Binding VersionTooltip}"
-                                     Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                     Margin="10,2,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBlock Text="{loc:Loc About_TaglineText}" TextWrapping="Wrap" FontSize="13" Margin="0,6,0,0"
                                    LineHeight="19" LineStackingStrategy="BlockLineHeight"
