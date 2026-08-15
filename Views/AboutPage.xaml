@@ -27,10 +27,32 @@
                  карточек под ним. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Assets/AppIcon-256.png" Width="46" Height="46" Margin="0,0,16,0" Stretch="Uniform"/>
+                    <Image Source="pack://application:,,,/Assets/AppIcon-256.png" Width="46" Height="46" Margin="0,0,16,0"
+                           Stretch="Uniform" VerticalAlignment="Center"/>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Tweak Firmware" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Tweak Firmware" FontSize="20" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            <!-- Номер версии плашкой рядом с названием, а не строкой под ним:
+                                 строка читалась как часть описания, хотя описанию там и место.
+                                 Заливка — акцентный синий с прозрачностью 0x24 (те же 14%, что
+                                 у плиток со значками): один цвет годится и для светлой темы,
+                                 и для тёмной. Сам номер чуть светлее нашего #2F6FED: тот
+                                 на тёмной заливке уже сливается с ней, а этот оттенок
+                                 читается в обеих темах — тот же приём, что у BetaBadgeBrush.
+                                 Кисти «акцентного текста» в теме WPF-UI для этого нет,
+                                 есть только AccentTextFillColorDisabled. -->
+                            <Border Background="#242F6FED" CornerRadius="8" Padding="8,2,8,3"
+                                    Margin="10,2,0,0" VerticalAlignment="Center"
+                                    ToolTip="{Binding VersionTooltip}">
+                                <TextBlock Text="{Binding VersionText}" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="#4C86F0"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{loc:Loc About_TaglineText}" TextWrapping="Wrap" FontSize="13" Margin="0,6,0,0"
+                                   LineHeight="19" LineStackingStrategy="BlockLineHeight"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

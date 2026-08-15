@@ -12,7 +12,14 @@ namespace TweakFirmware.ViewModels
 {
     public partial class AboutViewModel : LocalizedViewModel
     {
-        [ObservableProperty] private string versionText;
+        /// <summary>Номер версии для плашки рядом с названием — без слова «Версия»:
+        /// в плашке оно и так подразумевается, а места занимает больше самого номера.</summary>
+        public string VersionText => UpdateService.GetCurrentVersion();
+
+        /// <summary>А вот всплывающая подсказка к плашке слово «Версия» проговаривает:
+        /// иначе непонятно, номер это чего.</summary>
+        [ObservableProperty] private string versionTooltip;
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CanCheck))]
         [NotifyCanExecuteChangedFor(nameof(CheckForUpdatesCommand))]
@@ -24,16 +31,17 @@ namespace TweakFirmware.ViewModels
 
         public AboutViewModel()
         {
-            versionText = BuildVersionText();
+            versionTooltip = BuildVersionTooltip();
         }
 
-        private static string BuildVersionText() =>
+        private static string BuildVersionTooltip() =>
             Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
 
-        /// <summary>Строка «Версия N» собирается кодом, разметка её не обновит.
+        /// <summary>Подсказка «Версия N» собирается кодом, разметка её не обновит
+        /// (сам номер в плашке от языка не зависит и пересборки не требует).
         /// Итоги проверки обновлений и отправки письма не трогаем: это результат
         /// конкретного нажатия, он относится к моменту, когда его показали.</summary>
-        protected override void OnLanguageChanged() => VersionText = BuildVersionText();
+        protected override void OnLanguageChanged() => VersionTooltip = BuildVersionTooltip();
 
         // Пункт 5: та же логика, что и фоновая ежедневная проверка — если обновление
         // найдено, дальше им занимается общий баннер в ShellWindow (скачивание и тихая

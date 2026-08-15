@@ -298,6 +298,7 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== О программе =====================
             ["About_Title"] = "О программе",
+            ["About_TaglineText"] = "Программа для работы с прошивками: конвертирование и сборка дампов, извлечение и объединение разделов, проверка хэш-сумм.",
             ["About_UpdatesTitle"] = "Обновления",
             ["About_UpdatesDescription"] = "Проверяйте наличие новых версий программы.",
             ["About_CheckUpdatesButton"] = "Проверить обновления",
@@ -722,6 +723,7 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== About =====================
             ["About_Title"] = "About",
+            ["About_TaglineText"] = "A program for working with firmware: converting and reassembling dumps, extracting and merging partitions, checking hash sums.",
             ["About_UpdatesTitle"] = "Updates",
             ["About_UpdatesDescription"] = "Check whether a newer version of the program is available.",
             ["About_CheckUpdatesButton"] = "Check for updates",
