@@ -30,7 +30,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Extract_DumpLabel}" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
                         <!-- Перетаскивание принимает само поле, а не строка целиком —
                              см. подробное пояснение в «Конвертировании». -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"

@@ -71,6 +71,7 @@ namespace TweakFirmware.Core.Localization
             ["Common_OverwriteChoice"] = "Перезаписать",
             ["Common_CancelChoice"] = "Отмена",
             ["Common_DigitsOnly"] = "Разрешены только цифры",
+            ["Common_SourceFileLabel"] = "Исходный файл",
             ["Common_DestinationFolderLabel"] = "Папка назначения",
             // С упоминанием перетаскивания: сама возможность есть с самого начала,
             // но подсказки о ней не было нигде — и о ней просто не догадывались.
@@ -165,7 +166,6 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== Конвертирование =====================
             ["Convert_Title"] = "Конвертирование",
-            ["Convert_SourceFileLabel"] = "Исходный файл .bin",
             ["Convert_ProgrammerModelLabel"] = "Модель программатора",
             ["Convert_LimitLabel"] = "Лимит на один файл",
             ["Convert_LimitPlaceholder"] = "Указывается в байтах",
@@ -435,7 +435,6 @@ namespace TweakFirmware.Core.Localization
             ["Extract_StageSplitNand"] = "Разделение на main и spare",
             ["Extract_NandSplitDone"] = "Записано: main {0:N0} байт, spare {1:N0} байт.",
             ["Extract_Title"] = "Извлечение разделов",
-            ["Extract_DumpLabel"] = "Дамп прошивки",
             ["Extract_OutputPlaceholder"] = "Не выбрана — рядом с дампом",
             ["Extract_SearchFileSystemsCheckbox"] = "Искать файловые системы внутри разделов",
             ["Extract_StartButton"] = "Начать",
@@ -509,6 +508,7 @@ namespace TweakFirmware.Core.Localization
             ["Common_OverwriteChoice"] = "Overwrite",
             ["Common_CancelChoice"] = "Cancel",
             ["Common_DigitsOnly"] = "Digits only are allowed",
+            ["Common_SourceFileLabel"] = "Source file",
             ["Common_DestinationFolderLabel"] = "Destination folder",
             ["Common_NoFileSelected"] = "No file selected — you can drag one here",
             ["Common_NoFolderSelected"] = "No folder selected — you can drag one here",
@@ -599,7 +599,6 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== Convert =====================
             ["Convert_Title"] = "Convert",
-            ["Convert_SourceFileLabel"] = "Source .bin file",
             ["Convert_ProgrammerModelLabel"] = "Programmer model",
             ["Convert_LimitLabel"] = "Limit per file",
             ["Convert_LimitPlaceholder"] = "In bytes",
@@ -866,7 +865,6 @@ namespace TweakFirmware.Core.Localization
             ["Extract_StageSplitNand"] = "Splitting into main and spare",
             ["Extract_NandSplitDone"] = "Written: main {0:N0} bytes, spare {1:N0} bytes.",
             ["Extract_Title"] = "Extract partitions",
-            ["Extract_DumpLabel"] = "Firmware dump",
             ["Extract_OutputPlaceholder"] = "Not set — next to the dump",
             ["Extract_SearchFileSystemsCheckbox"] = "Search for file systems inside partitions",
             ["Extract_StartButton"] = "Start",

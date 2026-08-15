@@ -34,7 +34,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="BrowseButton"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{loc:Loc Convert_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Common_SourceFileLabel}" Style="{StaticResource RowLabel}"/>
                         <!-- Перетаскивание принимает само поле, а не строка целиком.
                              Именно поле и есть цель, о которой говорит подсказка внутри
                              него; раньше AllowDrop стоял на строке, и файл принимался
