@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TweakFirmware.Core;
@@ -67,15 +68,17 @@ namespace TweakFirmware.ViewModels
         // пользователя, а отправляет его он сам. Ни хостинга, ни домена, ни ключей для
         // этого не нужно — и без его нажатия «Отправить» уже в почте никуда ничего не уходит.
 
-        /// <summary>Адрес показывается в карточке, чтобы написать можно было и вручную.</summary>
-        public string ContactEmail => FeedbackLetter.ContactEmail;
-
-        /// <summary>Ссылка под этим адресом: нажатие открывает пустое письмо в почтовом
-        /// клиенте. Отдельно от <see cref="ContactEmail"/>, потому что показывать в тексте
-        /// «mailto:» незачем.</summary>
-        public string ContactMailtoUri => "mailto:" + FeedbackLetter.ContactEmail;
+        /// <summary>Сколько кнопка держит подпись «Адрес скопирован», прежде чем
+        /// вернуться к обычной. Двух секунд хватает, чтобы заметить ответ на нажатие,
+        /// и мало, чтобы принять изменившуюся подпись за постоянную.</summary>
+        private static readonly TimeSpan CopiedCaptionDelay = TimeSpan.FromSeconds(2);
 
         [ObservableProperty] private string feedbackStatusText = "";
+
+        /// <summary>Кнопка «Скопировать адрес» показывает сейчас подтверждение.</summary>
+        [ObservableProperty] private bool addressCopied;
+
+        private DispatcherTimer? _copiedResetTimer;
 
         /// <summary>
         /// Открывает письмо в почтовом клиенте. Формы из трёх полей здесь больше нет:
@@ -115,13 +118,43 @@ namespace TweakFirmware.ViewModels
             FeedbackStatusText = Strings.Get("Feedback_OpenedStatus");
         }
 
-        /// <summary>Запасной путь для тех, у кого почта в браузере: адрес в буфер обмена.</summary>
+        /// <summary>
+        /// Запасной путь для тех, у кого почта в браузере: адрес в буфер обмена.
+        /// Об удаче говорит сама кнопка — её подпись ненадолго меняется. Отдельной
+        /// строки под карточкой для этого не нужно: она появлялась навсегда и после
+        /// одного нажатия оставалась висеть до конца работы программы.
+        /// </summary>
         [RelayCommand]
         private void CopyEmail()
         {
-            FeedbackStatusText = ClipboardHelper.TryCopy(FeedbackLetter.ContactEmail)
-                ? Strings.Format("Feedback_AddressCopiedStatus", FeedbackLetter.ContactEmail)
-                : Strings.Get("Feedback_CopyFailedStatus");
+            if (!ClipboardHelper.TryCopy(FeedbackLetter.ContactEmail))
+            {
+                // Про занятый буфер обмена кнопкой не скажешь: там нужно объяснение
+                // и предложение повторить, поэтому остаётся строка под карточкой.
+                AddressCopied = false;
+                FeedbackStatusText = Strings.Get("Feedback_CopyFailedStatus");
+                return;
+            }
+
+            FeedbackStatusText = "";
+            AddressCopied = true;
+
+            // Таймер один на все нажатия: повторное нажатие продлевает подпись, а не
+            // заводит второй возврат, который снял бы её раньше времени.
+            _copiedResetTimer ??= CreateCopiedResetTimer();
+            _copiedResetTimer.Stop();
+            _copiedResetTimer.Start();
+        }
+
+        private DispatcherTimer CreateCopiedResetTimer()
+        {
+            var timer = new DispatcherTimer { Interval = CopiedCaptionDelay };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                AddressCopied = false;
+            };
+            return timer;
         }
     }
 }
