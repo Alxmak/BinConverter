@@ -124,9 +124,9 @@
                     </StackPanel>
                 </c:AboutCard.Action>
                 <c:AboutCard.Extra>
-                    <!-- Здесь остаётся только то, о чём кнопка сказать не может:
-                         что письмо открылось в почтовом клиенте (его окно могло
-                         уехать за программу) и что буфер обмена занят. -->
+                    <!-- Единственное, о чём кнопкой не скажешь: буфер обмена занят
+                         другим приложением. Об удачном нажатии карточка молчит —
+                         почтовый клиент открывается сам и виден без подписи. -->
                     <TextBlock Text="{Binding FeedbackStatusText}" TextWrapping="Wrap" FontSize="12" Margin="0,8,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                         <TextBlock.Style>
@@ -151,9 +151,7 @@
                             <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
                         </TextBlock>
                         <TextBlock FontSize="13" Margin="0,0,0,6">
-                            <!-- Без /index.php: адрес сам ведёт на ту же страницу форума
-                                 (перенаправлением на /bb/), а в списке читается короче. -->
-                            <Hyperlink NavigateUri="https://mslw.com/bb" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com/bb</Hyperlink>
+                            <Hyperlink NavigateUri="https://mslw.com" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com</Hyperlink>
                         </TextBlock>
                         <TextBlock FontSize="13">
                             <Hyperlink NavigateUri="https://teleservis.net" RequestNavigate="Hyperlink_RequestNavigate">https://teleservis.net</Hyperlink>

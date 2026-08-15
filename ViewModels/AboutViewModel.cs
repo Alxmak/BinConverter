@@ -115,7 +115,9 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            FeedbackStatusText = Strings.Get("Feedback_OpenedStatus");
+            // Об удачном открытии письма карточка молчит: почтовый клиент показывается
+            // сам, а строка «Письмо открыто…» после этого висела бы в карточке до конца
+            // работы программы, уже ничего не сообщая.
         }
 
         /// <summary>

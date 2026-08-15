@@ -32,7 +32,11 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
 
-            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <!-- Вверху, а не по центру, и по той же причине, что плитка: высоту
+                 карточки задаёт самая высокая колонка (в «Обратной связи» это две
+                 кнопки справа), и текст, выровненный по центру, уезжал от значка
+                 к середине карточки. -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Top">
                 <TextBlock Text="{Binding Title, ElementName=Root}" FontSize="15" FontWeight="SemiBold"
                            TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
