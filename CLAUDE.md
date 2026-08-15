@@ -179,6 +179,14 @@ dotnet test TweakFirmware.Tests/TweakFirmware.Tests.csproj -c Release
   не разбирается, только прогоном ряда смещений.
 - **`AsyncRelayCommand` по умолчанию пробрасывает исключение наружу** — оно
   становится необработанным и валит программу.
+- **`[RelayCommand(CanExecute = nameof(X))]` сам ничего не перепроверяет.** В отличие
+  от обычных команд WPF, `RelayCommand` из CommunityToolkit не слушает
+  `CommandManager.RequerySuggested`: пока кто-нибудь не позовёт
+  `NotifyCanExecuteChanged` (обычно — через `[NotifyCanExecuteChangedFor]` на
+  свойстве-гейте), кнопка живёт с тем состоянием, которое посчиталось при создании
+  ViewModel. Так «Отмена» в «Проверке SHA-256» была серой всегда: у `IsBusy` были
+  перечислены три команды из четырёх, и на неё уведомление не приходило никогда.
+  Добавляя команду с `CanExecute`, надо сразу проверить, кто её будит.
 - **`using Wpf.Ui.Controls;` целиком ставить нельзя**: `TextBlock`, `Grid` и
   другие имена конфликтуют с `System.Windows.Controls`. Нужны псевдонимы вида
   `using UiTextBox = Wpf.Ui.Controls.TextBox;`.

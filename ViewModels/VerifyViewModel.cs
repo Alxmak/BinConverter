@@ -50,6 +50,12 @@ namespace TweakFirmware.ViewModels
         [NotifyCanExecuteChangedFor(nameof(StartCommand))]
         [NotifyCanExecuteChangedFor(nameof(AddFileCommand))]
         [NotifyCanExecuteChangedFor(nameof(RemoveFileCommand))]
+        // Без этой строки «Отмена» не включалась никогда. RelayCommand из
+        // CommunityToolkit не слушает CommandManager.RequerySuggested, как обычные
+        // команды WPF: пока не позвать NotifyCanExecuteChanged, кнопка остаётся с тем
+        // CanExecute, что был посчитан при создании, — а при создании IsBusy равен false.
+        // На остальных вкладках эта строка есть, здесь её забыли.
+        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
         private bool isBusy;
 
         [ObservableProperty] private bool hasResult;
