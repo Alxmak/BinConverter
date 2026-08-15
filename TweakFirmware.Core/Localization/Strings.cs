@@ -72,6 +72,9 @@ namespace TweakFirmware.Core.Localization
             ["Common_CancelChoice"] = "Отмена",
             ["Common_DigitsOnly"] = "Разрешены только цифры",
             ["Common_SourceFileLabel"] = "Исходный файл",
+            // Пометка у группы «Работа с разделами». Не переводится, но лежит здесь:
+            // литералов в разметке в проекте нет, и слово должно быть в одном месте.
+            ["Common_BetaBadge"] = "Beta",
             ["Common_DestinationFolderLabel"] = "Папка назначения",
             // С упоминанием перетаскивания: сама возможность есть с самого начала,
             // но подсказки о ней не было нигде — и о ней просто не догадывались.
@@ -317,7 +320,7 @@ namespace TweakFirmware.Core.Localization
             ["About_UpToDate"] = "У вас последняя версия.",
             ["About_CheckUpdatesTitle"] = "Проверка обновлений",
             ["About_DevelopmentTitle"] = "Разработка",
-            ["About_DevelopmentText"] = "Alxmak и несколько чат-ботов.",
+            ["About_DevelopmentText"] = "Claude Code, ChatGPT и @alxmak.",
             ["About_PersonalUseText"] = "Программа создавалась для использования в личных целях.",
             ["About_SourcesTitle"] = "Источники информации",
             ["About_SourcesDescription"] = "Форумы и сайты, материалы которых помогли в работе над программой.",
@@ -509,6 +512,7 @@ namespace TweakFirmware.Core.Localization
             ["Common_CancelChoice"] = "Cancel",
             ["Common_DigitsOnly"] = "Digits only are allowed",
             ["Common_SourceFileLabel"] = "Source file",
+            ["Common_BetaBadge"] = "Beta",
             ["Common_DestinationFolderLabel"] = "Destination folder",
             ["Common_NoFileSelected"] = "No file selected — you can drag one here",
             ["Common_NoFolderSelected"] = "No folder selected — you can drag one here",
@@ -749,7 +753,7 @@ namespace TweakFirmware.Core.Localization
             ["About_UpToDate"] = "You have the latest version.",
             ["About_CheckUpdatesTitle"] = "Check for updates",
             ["About_DevelopmentTitle"] = "Development",
-            ["About_DevelopmentText"] = "Alxmak and a few chatbots.",
+            ["About_DevelopmentText"] = "Claude Code, ChatGPT and @alxmak.",
             ["About_PersonalUseText"] = "This program was created for personal use.",
             ["About_SourcesTitle"] = "Sources",
             ["About_SourcesDescription"] = "Forums and sites whose materials helped in the work on the program.",

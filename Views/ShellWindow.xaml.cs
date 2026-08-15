@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -211,29 +211,19 @@ namespace TweakFirmware.Views
         }
 
         /// <summary>
-        /// Подпись пункта меню. У большинства пунктов это строка, а у «Извлечения
-        /// разделов» — TextBlock, собранный из двух Run: название и надстрочная пометка
+        /// Подпись пункта меню. Сейчас у всех пунктов это строка, но так было не всегда:
+        /// у «Извлечения разделов» подпись собиралась из двух Run — название и пометка
         /// «Beta». У такого TextBlock свойство Text пустое (текст лежит в Inlines),
-        /// поэтому раздел и пропадал из всплывающего списка — оставался один значок.
-        /// Собираем подпись из Run'ов; пометка приходит вместе с названием обычным
-        /// текстом, повторять её оформление во всплывающем списке незачем.
+        /// и раздел пропадал из всплывающего списка, оставляя один значок. Пометка
+        /// переехала к заголовку группы, но проверка нестроки остаётся: подпись
+        /// из чего-нибудь составного здесь дешевле пережить, чем потерять пункт.
         /// </summary>
-        private static string TextOf(object? content)
+        private static string TextOf(object? content) => content switch
         {
-            if (content is string s) return s;
-
-            if (content is SWC.TextBlock block)
-            {
-                if (!string.IsNullOrEmpty(block.Text)) return block.Text;
-
-                var parts = new StringBuilder();
-                foreach (SWD.Inline inline in block.Inlines)
-                    if (inline is SWD.Run run) parts.Append(run.Text);
-
-                return parts.ToString();
-            }
-
-            return content?.ToString() ?? "";
-        }
+            string s => s,
+            SWC.TextBlock block when !string.IsNullOrEmpty(block.Text) => block.Text,
+            SWC.TextBlock block => string.Concat(block.Inlines.OfType<SWD.Run>().Select(run => run.Text)),
+            _ => content?.ToString() ?? ""
+        };
     }
 }

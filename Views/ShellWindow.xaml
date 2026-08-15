@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:views="clr-namespace:TweakFirmware.Views"
+                 xmlns:c="clr-namespace:TweakFirmware.Controls"
                  xmlns:services="clr-namespace:TweakFirmware.Services"
                  xmlns:loc="clr-namespace:TweakFirmware.Services"
                  Title="{loc:Loc Shell_WindowTitle}"
@@ -133,7 +134,7 @@
                      значка пункта нельзя. Известны две точки: с 12 подпись вставала правее
                      значков, без отступа — заметно левее. Правка отступа влияет только на
                      подписи групп: у пунктов меню свой отступ, из шаблона библиотеки. -->
-                <Style TargetType="{x:Type ui:NavigationViewItemHeader}"
+                <Style x:Key="GroupHeaderStyle" TargetType="{x:Type ui:NavigationViewItemHeader}"
                        BasedOn="{StaticResource {x:Type ui:NavigationViewItemHeader}}">
                     <Setter Property="FontSize" Value="11"/>
                     <Setter Property="FontWeight" Value="SemiBold"/>
@@ -158,6 +159,60 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
+
+                <!-- Тот же стиль без ключа — чтобы применялся ко всем заголовкам сам. -->
+                <Style TargetType="{x:Type ui:NavigationViewItemHeader}" BasedOn="{StaticResource GroupHeaderStyle}"/>
+
+                <!-- Заголовок группы с пометкой «Beta» — сейчас это «Работа с разделами».
+                     Пометка стояла у самого пункта «Извлечение разделов» надстрочным
+                     красным текстом; у группы она заметнее и не ломает подпись пункта
+                     на два куска (из-за этого раздел когда-то пропадал из всплывающего
+                     списка — см. TextOf в ShellWindow.xaml.cs).
+
+                     Заголовок — не ContentControl: у него есть только Text и Icon,
+                     положить рядом что-то своё можно лишь своим шаблоном. Шаблон
+                     повторяет библиотечный (WPF-UI 4.3.0) — те же колонки и привязки,
+                     добавлена третья колонка под плашку. Расходиться ему не с чем:
+                     версия библиотеки закреплена в csproj. -->
+                <Style x:Key="BetaGroupHeaderStyle" TargetType="{x:Type ui:NavigationViewItemHeader}"
+                       BasedOn="{StaticResource GroupHeaderStyle}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ui:NavigationViewItemHeader}">
+                                <Grid Margin="{TemplateBinding Margin}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalAlignment}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <ContentPresenter x:Name="IconElement" Grid.Column="0" Margin="0,0,4,0"
+                                                      VerticalAlignment="Center"
+                                                      Content="{TemplateBinding Icon}"
+                                                      TextElement.FontSize="{TemplateBinding FontSize}"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}"/>
+
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               FontSize="{TemplateBinding FontSize}"
+                                               Foreground="{TemplateBinding Foreground}"
+                                               Text="{TemplateBinding Text}"/>
+
+                                    <c:Badge Grid.Column="2" Text="{loc:Loc Common_BetaBadge}"
+                                             FontSize="9" Padding="5,1,5,2"
+                                             Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="Icon" Value="{x:Null}">
+                                        <Setter TargetName="IconElement" Property="Margin" Value="0"/>
+                                        <Setter TargetName="IconElement" Property="Visibility" Value="Collapsed"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
             </ui:NavigationView.Resources>
 
             <!-- Пункт 5: пока где-то идёт операция (IsNotBusy=false), пункты меню недоступны —
@@ -176,25 +231,17 @@
                                         TargetPageType="{x:Type views:MergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>
 
-                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_PartitionsGroupHeader}"/>
-                <!-- Единственный пункт с составной подписью: «Beta» надо поднять над
-                     строкой и покрасить, а одной строкой Content этого не задать.
-                     Цвет основной части берётся у самого пункта: у него он меняется
-                     вместе с темой и состоянием, а вложенному TextBlock по наследованию
-                     доезжает не всегда — про это же сказано в AppStyles.xaml.
-                     TargetPageTag задан явно: WPF-UI выводит его из Content.ToString(),
-                     и для нестроки получилось бы имя типа. -->
-                <ui:NavigationViewItem Icon="{ui:SymbolIcon Archive24}"
+                <!-- Пометка «Beta» — у всей группы, а не у одного пункта: проверять
+                     на настоящих дампах надо и извлечение, и обратное объединение. -->
+                <ui:NavigationViewItemHeader Text="{loc:Loc Shell_PartitionsGroupHeader}"
+                                             Style="{StaticResource BetaGroupHeaderStyle}"/>
+                <!-- TargetPageTag здесь больше не нужен: он задавался вручную, пока
+                     подпись была не строкой, а TextBlock из двух Run (WPF-UI выводит
+                     тег из Content.ToString(), и получалось имя типа). Переходов
+                     по тегу в программе нет — навигация идёт по типу страницы. -->
+                <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Archive24}"
                                         TargetPageType="{x:Type views:ExtractPage}"
-                                        TargetPageTag="extract"
-                                        IsEnabled="{Binding IsNotBusy}">
-                    <ui:NavigationViewItem.Content>
-                        <!-- Оба Run стоят вплотную намеренно: перенос строки между
-                             ними XAML превратил бы в лишний пробел. Отступ перед
-                             «Beta» задан в самом тексте. -->
-                        <TextBlock Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ui:NavigationViewItem}}}"><Run Text="{loc:Loc Shell_NavExtract}"/><Run Text=" Beta" BaselineAlignment="Superscript" FontSize="8.5" Foreground="{StaticResource BetaBadgeBrush}"/></TextBlock>
-                    </ui:NavigationViewItem.Content>
-                </ui:NavigationViewItem>
+                                        IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavPartitionMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:PartitionMergePage}"
                                         IsEnabled="{Binding IsNotBusy}"/>

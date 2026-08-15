@@ -1,0 +1,24 @@
+<UserControl x:Class="TweakFirmware.Controls.Badge"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root"
+             FontSize="12" Padding="8,2,8,3">
+
+    <!-- Короткая пометка рядом с заголовком: номер версии в «О программе»,
+         «Beta» у группы разделов в меню. Одним контролом, чтобы обе выглядели
+         одинаково: разъехаться им проще всего цветом и скруглением.
+
+         Заливка — акцентный синий с прозрачностью 0x24 (те же 14%, что у плиток
+         со значками): один цвет годится и для светлой темы, и для тёмной. Текст
+         чуть светлее нашего #2F6FED — тот на тёмной заливке сливается с ней,
+         а этот оттенок читается в обеих темах. Кисти «акцентного текста» в теме
+         WPF-UI для этого нет: там есть только AccentTextFillColorDisabled.
+
+         Размер задаётся снаружи через FontSize и Padding самого контрола —
+         в шапке «О программе» пометка крупнее, чем в подписи группы меню. -->
+    <Border Background="#242F6FED" CornerRadius="8" Padding="{Binding Padding, ElementName=Root}">
+        <TextBlock Text="{Binding Text, ElementName=Root}"
+                   FontSize="{Binding FontSize, ElementName=Root}"
+                   FontWeight="SemiBold" Foreground="#4C86F0"/>
+    </Border>
+</UserControl>
