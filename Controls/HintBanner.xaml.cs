@@ -15,10 +15,22 @@ namespace TweakFirmware.Controls
             DependencyProperty.Register(nameof(Text), typeof(string), typeof(HintBanner),
                 new PropertyMetadata(""));
 
+        /// <summary>Уточнение под основной строкой. Есть не у всех вкладок: в «Сборке
+        /// файла» это правило именования частей, в остальных подсказка одна.</summary>
+        public static readonly DependencyProperty NoteProperty =
+            DependencyProperty.Register(nameof(Note), typeof(string), typeof(HintBanner),
+                new PropertyMetadata(""));
+
         public string Text
         {
             get => (string)GetValue(TextProperty);
             set => SetValue(TextProperty, value);
+        }
+
+        public string Note
+        {
+            get => (string)GetValue(NoteProperty);
+            set => SetValue(NoteProperty, value);
         }
 
         public HintBanner()

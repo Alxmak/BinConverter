@@ -37,11 +37,46 @@ namespace TweakFirmware.ViewModels
         private static string BuildVersionTooltip() =>
             Strings.Format("About_VersionText", UpdateService.GetCurrentVersion());
 
-        /// <summary>Подсказка «Версия N» собирается кодом, разметка её не обновит
-        /// (сам номер в плашке от языка не зависит и пересборки не требует).
-        /// Итоги проверки обновлений и отправки письма не трогаем: это результат
-        /// конкретного нажатия, он относится к моменту, когда его показали.</summary>
-        protected override void OnLanguageChanged() => VersionTooltip = BuildVersionTooltip();
+        /// <summary>Тексты, собранные кодом: подсказка «Версия N» и строки итогов.
+        /// Разметка их не обновит — она знает только про ключи, а эти строки собраны
+        /// уже готовыми. Сам номер версии в плашке от языка не зависит.</summary>
+        protected override void OnLanguageChanged()
+        {
+            VersionTooltip = BuildVersionTooltip();
+
+            // Итоги проверки обновлений и копирования адреса собраны кодом, поэтому
+            // сами не переведутся. Раньше их намеренно не трогали — «это результат
+            // конкретного нажатия», — но выглядело это как непереведённая строка:
+            // проверил обновления по-русски, переключил язык, и посреди английской
+            // вкладки осталось «У вас последняя версия».
+            UpdateStatusText = BuildUpdateStatusText();
+            FeedbackStatusText = BuildFeedbackStatusText();
+        }
+
+        // ===================== Строка под «Обновлениями» =====================
+
+        /// <summary>Что показывать под «Обновлениями». Хранится не готовой строкой,
+        /// а тем, из чего она собирается, — иначе при смене языка строка остаётся
+        /// на прежнем языке (см. <see cref="OnLanguageChanged"/>).</summary>
+        private enum UpdateStatus { None, Checking, UpToDate, Available }
+
+        private UpdateStatus _updateStatus = UpdateStatus.None;
+        private string _latestVersion = "";
+
+        private void SetUpdateStatus(UpdateStatus status, string latestVersion = "")
+        {
+            _updateStatus = status;
+            _latestVersion = latestVersion;
+            UpdateStatusText = BuildUpdateStatusText();
+        }
+
+        private string BuildUpdateStatusText() => _updateStatus switch
+        {
+            UpdateStatus.Checking => Strings.Get("About_Checking"),
+            UpdateStatus.UpToDate => Strings.Get("About_UpToDate"),
+            UpdateStatus.Available => Strings.Format("About_UpdateAvailable", _latestVersion),
+            _ => ""
+        };
 
         // Пункт 5: та же логика, что и фоновая ежедневная проверка — если обновление
         // найдено, дальше им занимается общий баннер в ShellWindow (скачивание и тихая
@@ -50,7 +85,7 @@ namespace TweakFirmware.ViewModels
         private async System.Threading.Tasks.Task CheckForUpdatesAsync()
         {
             IsChecking = true;
-            UpdateStatusText = Strings.Get("About_Checking");
+            SetUpdateStatus(UpdateStatus.Checking);
 
             var result = await UpdateManager.Instance.CheckNowAsync();
 
@@ -60,14 +95,15 @@ namespace TweakFirmware.ViewModels
 
             if (result.ErrorMessage != null)
             {
-                UpdateStatusText = "";
+                // Сообщение об ошибке приходит из UpdateService уже собранным и в окне
+                // же и остаётся: под карточкой в этом случае не показываем ничего.
+                SetUpdateStatus(UpdateStatus.None);
                 await DialogService.ShowWarningAsync(Strings.Get("About_CheckUpdatesTitle"), result.ErrorMessage);
                 return;
             }
 
-            UpdateStatusText = result.UpdateAvailable
-                ? Strings.Format("About_UpdateAvailable", result.LatestVersion ?? "")
-                : Strings.Get("About_UpToDate");
+            if (result.UpdateAvailable) SetUpdateStatus(UpdateStatus.Available, result.LatestVersion ?? "");
+            else SetUpdateStatus(UpdateStatus.UpToDate);
         }
 
         // ============================= Обратная связь =============================
@@ -87,6 +123,14 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool addressCopied;
 
         private DispatcherTimer? _copiedResetTimer;
+
+        /// <summary>Как и статус обновлений, хранится не строкой, а причиной: строку
+        /// собирает <see cref="BuildFeedbackStatusText"/> — тогда она переводится
+        /// вместе с остальным интерфейсом.</summary>
+        private bool _clipboardFailed;
+
+        private string BuildFeedbackStatusText() =>
+            _clipboardFailed ? Strings.Get("Feedback_CopyFailedStatus") : "";
 
         /// <summary>
         /// Открывает письмо в почтовом клиенте. Формы из трёх полей здесь больше нет:
@@ -142,10 +186,12 @@ namespace TweakFirmware.ViewModels
                 // Про занятый буфер обмена кнопкой не скажешь: там нужно объяснение
                 // и предложение повторить, поэтому остаётся строка под карточкой.
                 AddressCopied = false;
-                FeedbackStatusText = Strings.Get("Feedback_CopyFailedStatus");
+                _clipboardFailed = true;
+                FeedbackStatusText = BuildFeedbackStatusText();
                 return;
             }
 
+            _clipboardFailed = false;
             FeedbackStatusText = "";
             AddressCopied = true;
 

@@ -72,8 +72,8 @@
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
 
                         <!-- До разбора итог ничего не сообщает о дампе, поэтому на его месте
-                             подсказка: выбрать дамп и нажать «Анализировать». -->
-                        <c:HintBanner Text="{loc:Loc Extract_NoResultYet}"
+                             подсказка — та же, что в остальных разделах. -->
+                        <c:HintBanner Text="{loc:Loc Common_SelectFileHint}"
                                       Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
 
                         <!-- Тот же межстрочный интервал, что в информационных карточках

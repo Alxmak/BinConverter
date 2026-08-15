@@ -384,31 +384,40 @@ namespace TweakFirmware.ViewModels
             switch (result.Status)
             {
                 case PartitionAnalysisStatus.SourceNotFound:
-                    Summary = Strings.Get("Common_FileNotFoundTitle");
-                    return;
-
                 case PartitionAnalysisStatus.Cancelled:
-                    Summary = Strings.Get("Common_CancelledTitle");
-                    return;
-
                 case PartitionAnalysisStatus.Failed:
-                    Summary = result.ErrorMessage;
-                    return;
-
                 case PartitionAnalysisStatus.EepromRecognised:
-                    Summary = Strings.Format("Extract_PhilipsEeprom", result.Eeprom!.Model, result.Eeprom.Serial);
-                    return;
-
                 case PartitionAnalysisStatus.LayoutNotRecognised:
-                    Summary = Strings.Get("Extract_LayoutNotRecognised");
+                    Summary = BuildSummary(result);
                     return;
             }
 
             RebuildRows();
             HasResult = Partitions.Count > 0;
 
-            Summary = Strings.Format("Extract_ResultSummary", result.MarkName ?? Strings.Get("Extract_UnknownMark"), Partitions.Count);
+            Summary = BuildSummary(result);
         }
+
+        /// <summary>
+        /// Итог разбора одной строкой. Отдельным методом, потому что вызывается дважды:
+        /// когда разбор закончился и заново при смене языка. Раньше пересборка была
+        /// только для удачного разбора, и «Разметка не опознана» или «Отменено»
+        /// оставались на прежнем языке.
+        ///
+        /// Единственное, что перевести нельзя, — <see cref="PartitionAnalysisResult.ErrorMessage"/>:
+        /// его собирает Core в момент разбора, и без повторного разбора взять его
+        /// на другом языке неоткуда.
+        /// </summary>
+        private string BuildSummary(PartitionAnalysisResult result) => result.Status switch
+        {
+            PartitionAnalysisStatus.SourceNotFound => Strings.Get("Common_FileNotFoundTitle"),
+            PartitionAnalysisStatus.Cancelled => Strings.Get("Common_CancelledTitle"),
+            PartitionAnalysisStatus.Failed => result.ErrorMessage,
+            PartitionAnalysisStatus.EepromRecognised =>
+                Strings.Format("Extract_PhilipsEeprom", result.Eeprom!.Model, result.Eeprom.Serial),
+            PartitionAnalysisStatus.LayoutNotRecognised => Strings.Get("Extract_LayoutNotRecognised"),
+            _ => Strings.Format("Extract_ResultSummary", result.MarkName ?? Strings.Get("Extract_UnknownMark"), Partitions.Count)
+        };
 
         /// <summary>
         /// Побочные находки — build.prop и файл лицензии Dune HD — сохраняются рядом с
@@ -715,11 +724,10 @@ namespace TweakFirmware.ViewModels
                 return;
             }
 
-            if (HasResult)
-            {
-                RebuildRows();
-                Summary = Strings.Format("Extract_ResultSummary", _result.MarkName ?? Strings.Get("Extract_UnknownMark"), Partitions.Count);
-            }
+            // Таблицу пересобираем только когда она есть, а сводку — всегда: у разбора,
+            // который ничем не кончился (не опознан, отменён, EEPROM), она тоже своя.
+            if (HasResult) RebuildRows();
+            Summary = BuildSummary(_result);
         }
 
         // ---------- IAnalysisHost ----------

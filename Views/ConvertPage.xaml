@@ -131,7 +131,7 @@
                         <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
 
                         <!-- Пока файла нет, считать нечего, и вместо строк стоит подсказка. -->
-                        <c:HintBanner Text="{loc:Loc Common_NoFileInfoHint}"
+                        <c:HintBanner Text="{loc:Loc Common_SelectFileHint}"
                                       Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
 
                         <StackPanel Visibility="{Binding HasInfo, Converter={StaticResource BoolToVis}}">

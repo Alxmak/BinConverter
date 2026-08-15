@@ -60,6 +60,32 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string resultHeadline = Strings.Get("Verify_NoResultYet");
         [ObservableProperty] private string resultSubline = "";
 
+        // ===================== Карточка «Общая информация» =====================
+
+        /// <summary>Строки о выбранных файлах: сколько их и какого они размера.</summary>
+        [ObservableProperty] private string filesInfoText = "";
+
+        /// <summary>Замечание о разных размерах — есть не всегда, поэтому отдельной строкой.</summary>
+        [ObservableProperty] private string sizeMismatchNote = "";
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
+        private bool hasInfo;
+
+        /// <summary>Пока не выбрано ни одного файла, показывать нечего — вместо строк подсказка.</summary>
+        public bool ShowInfoHint => !HasInfo;
+
+        /// <summary>Как в «Конвертировании»: спрашивать файловую систему на каждую нажатую
+        /// клавишу нельзя — на сетевом пути окно подвисало бы на каждую букву.</summary>
+        private const int InputSettleDelayMs = 250;
+
+        private int _infoGeneration;
+
+        /// <summary>Последний ответ файловой системы: из него собираются строки
+        /// карточки, в том числе заново после смены языка.</summary>
+        private string[] _infoPaths = Array.Empty<string>();
+        private FileProbeResult[] _infoProbes = Array.Empty<FileProbeResult>();
+
         public string MaxFilesNote => Strings.Format("Verify_MaxFilesNote", VerifyRequest.MaxFiles);
 
         /// <summary>
@@ -106,11 +132,17 @@ namespace TweakFirmware.ViewModels
                 foreach (VerifyFileSlot slot in e.NewItems) slot.PropertyChanged += OnSlotChanged;
 
             NotifyCanStartChanged();
+
+            // Убранная строка могла быть заполненной — в карточке её больше быть не должно.
+            ScheduleFilesInfoUpdate();
         }
 
         private void OnSlotChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VerifyFileSlot.Path)) NotifyCanStartChanged();
+            if (e.PropertyName != nameof(VerifyFileSlot.Path)) return;
+
+            NotifyCanStartChanged();
+            ScheduleFilesInfoUpdate();
         }
 
         private void NotifyCanStartChanged()
@@ -119,11 +151,107 @@ namespace TweakFirmware.ViewModels
             StartCommand.NotifyCanExecuteChanged();
         }
 
+        // ===================== «Общая информация» =====================
+
+        /// <summary>
+        /// Пересчёт с задержкой — для набора пути с клавиатуры. Счётчик поколений
+        /// отбрасывает устаревшие ответы: пока ждали или ходили на диск, путь мог
+        /// смениться ещё раз, и старый размер затёр бы новый. Тот же приём, что
+        /// в предпросмотре «Конвертирования».
+        /// </summary>
+        private async void ScheduleFilesInfoUpdate()
+        {
+            // Метод возвращает void — ждать его некому, и любое исключение отсюда
+            // стало бы необработанным и уронило программу из-за одной строки в карточке.
+            try
+            {
+                int generation = ++_infoGeneration;
+
+                await Task.Delay(InputSettleDelayMs);
+                if (generation != _infoGeneration) return;
+
+                string[] paths = Files.Select(f => f.Path).Where(p => p.Length > 0).ToArray();
+                var probes = await Task.Run(() => paths.Select(FileProbe.Measure).ToArray());
+                if (generation != _infoGeneration) return;
+
+                ApplyFilesInfo(paths, probes);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
+                    nameof(VerifyViewModel), ex.GetType().Name, ex.Message));
+            }
+        }
+
+        private void ApplyFilesInfo(string[] paths, FileProbeResult[] probes)
+        {
+            _infoPaths = paths;
+            _infoProbes = probes;
+            RenderFilesInfo();
+        }
+
+        /// <summary>
+        /// Собрать строки из последнего ответа файловой системы. Отдельно от опроса диска,
+        /// потому что при смене языка меняются подписи, а не размеры: спрашивать диск
+        /// заново незачем, тем более в потоке интерфейса.
+        /// </summary>
+        private void RenderFilesInfo()
+        {
+            if (_infoPaths.Length == 0)
+            {
+                HasInfo = false;
+                FilesInfoText = "";
+                SizeMismatchNote = "";
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine(Strings.Format("Verify_FilesSelectedLine", _infoPaths.Length));
+
+            var knownSizes = new List<long>();
+            for (int i = 0; i < _infoPaths.Length; i++)
+            {
+                // Имя пустое, если в поле путь к папке или он оборван на разделителе, —
+                // тогда показываем то, что введено, а не пустое место.
+                string name = Path.GetFileName(_infoPaths[i]);
+                if (name.Length == 0) name = _infoPaths[i];
+
+                if (_infoProbes[i].Exists)
+                {
+                    knownSizes.Add(_infoProbes[i].SizeBytes);
+                    sb.AppendLine(Strings.Format("Verify_InfoFileLine", name, SizeFormatHelper.Format(_infoProbes[i].SizeBytes)));
+                }
+                else
+                {
+                    sb.AppendLine(Strings.Format("Verify_InfoFileMissingLine", name));
+                }
+            }
+
+            FilesInfoText = sb.ToString().TrimEnd();
+
+            // Разные размеры — готовый ответ ещё до чтения: файлы разной длины одинаковую
+            // сумму дать не могут. Сказать об этом сразу дешевле, чем после получаса
+            // чтения с диска, — но только когда размеры известны у всех, иначе вывод
+            // был бы сделан по неполным данным.
+            SizeMismatchNote = knownSizes.Count == _infoPaths.Length && knownSizes.Count > 1 && knownSizes.Distinct().Count() > 1
+                ? Strings.Get("Verify_SizesDifferNote")
+                : "";
+
+            HasInfo = true;
+        }
+
+        /// <summary>Файл мог смениться на диске, пока смотрели другой раздел.</summary>
+        protected override void OnAttached() => ScheduleFilesInfoUpdate();
+
         protected override void OnLanguageChanged()
         {
             // Подписи «Файл 1»/«Файл 2» и заметка про предел файлов.
             RenumberFiles();
             OnPropertyChanged(nameof(MaxFilesNote));
+
+            // Строки «Общей информации» тоже собраны кодом — пересобираем, иначе
+            // размеры остаются подписанными на прежнем языке.
+            RenderFilesInfo();
 
             if (_lastOutcome is { HasResult: true } outcome)
             {
@@ -211,6 +339,7 @@ namespace TweakFirmware.ViewModels
             }
 
             RenumberFiles();
+            ScheduleFilesInfoUpdate();
         }
 
         [RelayCommand(CanExecute = nameof(CanStart))]

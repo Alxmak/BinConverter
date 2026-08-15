@@ -22,6 +22,27 @@
             <TextBlock Text="{Binding Text, ElementName=Root}" TextAlignment="Center" TextWrapping="Wrap"
                        FontSize="13" LineHeight="20" LineStackingStrategy="BlockLineHeight"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+            <!-- Второй строкой — то, что относится к конкретной вкладке (например,
+                 правило именования частей в «Сборке файла»). Мельче и бледнее первой:
+                 главное здесь — что сделать, а это уточнение. Пустое уточнение
+                 сворачиваем, иначе оно занимает высоту строки. -->
+            <TextBlock Text="{Binding Note, ElementName=Root}" TextAlignment="Center" TextWrapping="Wrap"
+                       FontSize="12" LineHeight="18" LineStackingStrategy="BlockLineHeight" Margin="0,6,0,0"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Note, ElementName=Root}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Note, ElementName=Root}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </StackPanel>
     </Border>
 </UserControl>

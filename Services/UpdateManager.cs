@@ -74,6 +74,13 @@ namespace TweakFirmware.Services
                     _flow.SetOperationRunning(OperationLockService.Instance.IsBusy);
             };
 
+            // Текст баннера собран кодом, а не привязкой {loc:Loc}, поэтому сам он при
+            // смене языка не переведётся — надо попросить разметку перечитать его.
+            // Случай не редкий: язык переключают в «Настройках», а баннер висит над
+            // всеми разделами и виден как раз в этот момент. Отписка не нужна —
+            // и служба локализации, и этот менеджер живут всё время работы программы.
+            LocalizationService.Instance.LanguageChanged += () => OnPropertyChanged(nameof(BannerText));
+
             RestoreDownloadedInstaller();
         }
 
