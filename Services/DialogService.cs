@@ -145,10 +145,12 @@ namespace TweakFirmware.Services
             var button = new Button
             {
                 Content = icon,
-                Padding = new Thickness(8, 6, 8, 6),
                 Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Top,
-                ToolTip = Strings.Get("Common_CopyHashTooltip")
+                ToolTip = Strings.Get("Common_CopyHashTooltip"),
+                // Кнопка из одного значка: стандартная раскраска WPF-UI в тёмной теме
+                // даёт почти невидимый квадрат — см. IconButtonStyle в AppStyles.
+                Style = (Style)Application.Current.FindResource("IconButtonStyle")
             };
 
             button.Click += (_, _) =>

@@ -122,6 +122,51 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Маленькая кнопка из одного значка — сейчас это копирование хэша в окне с итогом.
+
+         Своя раскраска, а не библиотечная, потому что палитра WPF-UI для такой кнопки
+         не рассчитана: в тёмной теме фон кнопки — ControlFillColorDefault, то есть
+         белый с прозрачностью 6%, а рамка — 7%. Широкой кнопке с подписью этого хватает
+         (её читают по тексту), а квадрат со значком из таких величин не собирается —
+         в тёмной теме он сливался с окном. В светлой теме та же кнопка получает 70%
+         белого и потому видна.
+
+         Цвета — полупрозрачный серый, один набор на обе темы: он темнее светлого фона
+         и светлее тёмного, поэтому пары кистей под каждую тему не нужно (тот же приём,
+         что у пунктов всплывающего меню в ShellWindow). Форму задаёт рамка: заливкой
+         одинаково приподнять квадрат в обеих темах нельзя — серый в светлой теме
+         темнее фона, а в тёмной светлее. -->
+    <Style x:Key="IconButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="#26808080" BorderBrush="#59808080" BorderThickness="1"
+                            CornerRadius="8" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#40808080"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#59808080"/>
+                        </Trigger>
+                        <!-- Свой шаблон отменяет стандартную рамку фокуса, а пройти к этой
+                             кнопке табом можно — иначе было бы не видно, где ты. Синий тот же,
+                             что у остальных акцентов программы. -->
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#2F6FED"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Прогресс-бар "пилюлей": и трек, и заливка скруглены полностью, поэтому
          движущийся край всегда круглый, а не срезанный.
 
