@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using TweakFirmware.Core.Analysis;
@@ -284,6 +285,52 @@ namespace TweakFirmware.Tests
             var spare = File.ReadAllBytes(outcome.SparePath);
             Assert.Equal(Spare * 6, spare.Length);
             Assert.All(spare, b => Assert.Equal(0xCD, b));
+        }
+
+        [Fact]
+        public async Task Split_RebuiltFromMainAndSpareGivesBackTheOriginalDumpByteForByte()
+        {
+            // Разрезание — единственная операция, которая разбирает дамп на два потока,
+            // и ошибка в шаге страницы здесь не видна глазами: файлы получаются нужного
+            // размера, а данные в них смещены. Единственная надёжная проверка — собрать
+            // обратно и сверить хэш с исходным файлом.
+            const int Main = 512, Spare = 16, Pages = 37;
+
+            byte[] logical = new DumpBuilder(Main * Pages).Pattern(0, Main * Pages, seed: 3).Build();
+
+            // Служебные области заполняются по-разному от страницы к странице: с одной
+            // и той же заливкой перепутанные местами страницы дали бы тот же файл.
+            byte[] physical = new byte[(Main + Spare) * Pages];
+            for (int page = 0; page < Pages; page++)
+            {
+                Array.Copy(logical, page * Main, physical, page * (Main + Spare), Main);
+                for (int i = 0; i < Spare; i++)
+                    physical[page * (Main + Spare) + Main + i] = (byte)(page * 7 + i);
+            }
+
+            string path = WriteDump(physical);
+            string outputFolder = Path.Combine(_folder, "roundtrip");
+
+            var outcome = await NandSplitOperation.RunAsync(
+                path, new NandGeometry(Main, Spare, 0x20, 0x01), outputFolder,
+                new SilentAnalysisHost(), CancellationToken.None);
+
+            Assert.Equal(NandSplitStatus.Completed, outcome.Status);
+
+            byte[] main = File.ReadAllBytes(outcome.MainPath);
+            byte[] spare = File.ReadAllBytes(outcome.SparePath);
+
+            Assert.Equal(Main * Pages, main.Length);
+            Assert.Equal(Spare * Pages, spare.Length);
+
+            byte[] rebuilt = new byte[physical.Length];
+            for (int page = 0; page < Pages; page++)
+            {
+                Array.Copy(main, page * Main, rebuilt, page * (Main + Spare), Main);
+                Array.Copy(spare, page * Spare, rebuilt, page * (Main + Spare) + Main, Spare);
+            }
+
+            Assert.Equal(SHA256.HashData(physical), SHA256.HashData(rebuilt));
         }
 
         [Fact]

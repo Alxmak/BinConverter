@@ -425,7 +425,13 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         private async Task SaveArtifactsAsync(PartitionAnalysisResult result, CancellationToken ct)
         {
-            if (result.Android is null && !result.DuneLicense.Found) return;
+            // Отчёт о разборе (analysis.json) пишется и тогда, когда находок не было:
+            // он сам по себе находка — пара килобайт, по которым видно, что программа
+            // увидела в дампе, вместо самого дампа на несколько гигабайт.
+            bool reportWorthWriting =
+                result.Status is PartitionAnalysisStatus.Completed or PartitionAnalysisStatus.LayoutNotRecognised;
+
+            if (result.Android is null && !result.DuneLicense.Found && !reportWorthWriting) return;
 
             await AnalysisArtifactWriter.WriteAsync(result, SourcePath, OutputPath, this, ct);
         }

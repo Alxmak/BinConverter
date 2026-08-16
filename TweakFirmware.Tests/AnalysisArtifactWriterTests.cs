@@ -1,11 +1,13 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TweakFirmware.Core.Analysis;
 using TweakFirmware.Core.Dump;
 using TweakFirmware.Core.Operations;
+using TweakFirmware.Core.Partitions;
 using TweakFirmware.Core.Partitions.Layouts;
 using Xunit;
 
@@ -129,6 +131,121 @@ namespace TweakFirmware.Tests
 
             Assert.Contains(Path.Combine(_folder, AnalysisArtifactWriter.BuildPropFileName), artifacts.Files);
             Assert.DoesNotContain(Path.Combine(_folder, AnalysisArtifactWriter.DuneLicenseFileName), artifacts.Files);
+        }
+
+        // ---------- отчёт о разборе ----------
+
+        [Fact]
+        public async Task WritesTheAnalysisReportNextToTheDump()
+        {
+            // Отчёт нужен для одного: прислать пару килобайт вместо дампа на гигабайты.
+            // Поэтому проверяется не «файл создан», а то, что в нём есть всё, по чему
+            // можно понять разбор, не открывая сам дамп.
+            string path = WriteDump(new DumpBuilder(0x4000).Build());
+
+            var table = new PartitionTable();
+            table.Add("boot", 0x1000, 0x1000, FsType.Ext4, comment: "первый");
+            table.Add("data", 0x2000, 0x9000);
+
+            var result = new PartitionAnalysisResult
+            {
+                Status = PartitionAnalysisStatus.Completed,
+                Table = table,
+                MarkName = "MBR",
+                LogicalSize = 0x4000,
+                Geometry = new NandGeometry(2048, 64, 0x20, 0x01),
+                Android = new AndroidInfo { Brand = "Sony", Model = "KD-43", Release = "9", Platform = "mt5891" },
+                Issues = PartitionTableValidator.Validate(table, 0x4000)
+            };
+
+            var artifacts = await AnalysisArtifactWriter.WriteAsync(
+                result, path, _folder, new SilentAnalysisHost(), CancellationToken.None);
+
+            string reportPath = Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName);
+            Assert.Contains(reportPath, artifacts.Files);
+
+            using var json = JsonDocument.Parse(File.ReadAllText(reportPath));
+            var root = json.RootElement;
+
+            Assert.Equal(AnalysisArtifactWriter.AnalysisSchemaVersion, root.GetProperty("schema").GetInt32());
+            // Только имя файла: полный путь содержит имя пользователя, а пересылать отчёт
+            // будут посторонним.
+            Assert.Equal("dump.bin", root.GetProperty("dump").GetString());
+            Assert.Equal("Completed", root.GetProperty("status").GetString());
+            Assert.Equal("MBR", root.GetProperty("detector").GetString());
+            Assert.Equal(2048, root.GetProperty("nand").GetProperty("main").GetInt32());
+            Assert.Equal("Sony", root.GetProperty("android").GetProperty("brand").GetString());
+
+            var partitions = root.GetProperty("partitions");
+            Assert.Equal(2, partitions.GetArrayLength());
+            Assert.Equal("boot", partitions[0].GetProperty("name").GetString());
+            Assert.Equal(0x1000, partitions[0].GetProperty("offset").GetInt64());
+            Assert.Equal("Ext4", partitions[0].GetProperty("fileSystem").GetString());
+
+            // Раздел data уходит за конец дампа — замечание об этом тоже в отчёте,
+            // и записано именем причины, а не переведённой строкой.
+            var issues = root.GetProperty("issues");
+            Assert.Equal(1, issues.GetArrayLength());
+            Assert.Equal(nameof(PartitionIssueKind.EndsBeyondDump), issues[0].GetProperty("kind").GetString());
+            Assert.Equal("data", issues[0].GetProperty("name").GetString());
+        }
+
+        [Fact]
+        public async Task WritesTheReportEvenWhenNoLayoutWasRecognised()
+        {
+            // Как раз этот случай и присылают: программа ничего не нашла, и надо понять
+            // почему. Отчёт здесь — единственное, что можно посмотреть вместо дампа.
+            string path = WriteDump(new DumpBuilder(0x4000).Build());
+
+            var result = new PartitionAnalysisResult
+            {
+                Status = PartitionAnalysisStatus.LayoutNotRecognised,
+                LogicalSize = 0x4000
+            };
+
+            var artifacts = await AnalysisArtifactWriter.WriteAsync(
+                result, path, _folder, new SilentAnalysisHost(), CancellationToken.None);
+
+            string reportPath = Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName);
+            Assert.Contains(reportPath, artifacts.Files);
+
+            using var json = JsonDocument.Parse(File.ReadAllText(reportPath));
+
+            Assert.Equal("LayoutNotRecognised", json.RootElement.GetProperty("status").GetString());
+            Assert.Equal(0, json.RootElement.GetProperty("partitions").GetArrayLength());
+            Assert.Equal(JsonValueKind.Null, json.RootElement.GetProperty("detector").ValueKind);
+        }
+
+        [Fact]
+        public async Task NoReportForAnInterruptedAnalysis()
+        {
+            // Отменённый разбор ничего не выяснил: отчёт о нём только сбивал бы с толку.
+            string path = WriteDump(new DumpBuilder(0x4000).Build());
+
+            var artifacts = await AnalysisArtifactWriter.WriteAsync(
+                new PartitionAnalysisResult { Status = PartitionAnalysisStatus.Cancelled },
+                path, _folder, new SilentAnalysisHost(), CancellationToken.None);
+
+            Assert.DoesNotContain(Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName), artifacts.Files);
+        }
+
+        [Fact]
+        public async Task ReportKeepsCyrillicNamesReadable()
+        {
+            // Имя раздела может прийти из таблицы как угодно; экранированное в \uXXXX
+            // оно превращает отчёт в нечитаемый, а его читают глазами.
+            string path = WriteDump(new DumpBuilder(0x4000).Build());
+
+            var table = new PartitionTable();
+            table.Add("раздел", 0, 0x1000);
+
+            await AnalysisArtifactWriter.WriteAsync(
+                new PartitionAnalysisResult { Status = PartitionAnalysisStatus.Completed, Table = table, LogicalSize = 0x4000 },
+                path, _folder, new SilentAnalysisHost(), CancellationToken.None);
+
+            string text = File.ReadAllText(Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName));
+
+            Assert.Contains("раздел", text);
         }
 
         [Fact]

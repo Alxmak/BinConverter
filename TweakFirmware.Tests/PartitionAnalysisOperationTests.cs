@@ -274,6 +274,83 @@ namespace TweakFirmware.Tests
             Assert.Equal(21, names.Count);
         }
 
+        [Fact]
+        public async Task WhenTwoLayoutsMatch_TheEarlierOneInTheChainWins()
+        {
+            // Дамп, подходящий сразу под две разметки: настоящая таблица MSTAR ANDROID
+            // и рядом обычная запись MBR. В цепочке MSTAR стоит раньше MBR, и решает
+            // именно это — первое совпадение останавливает перебор.
+            var both = new DumpBuilder(0x400000);
+            WriteChinaRecord(both, 0, addrSectors: 0x1000, sizeSectors: 0x400, name: "MBOOT");
+            WriteChinaRecord(both, 1, addrSectors: 0x1400, sizeSectors: 0x400, name: "MPOOL");
+            WriteMbrRecord(both, 0, 0x83, startSector: 2, sectorCount: 100);
+            both.WriteUInt16(0x1FE, 0xAA55);
+
+            var result = await Run(WriteDump(both.Build(), "both.bin"), new SilentAnalysisHost());
+
+            Assert.Equal(PartitionAnalysisStatus.Completed, result.Status);
+            Assert.Equal("MSTAR ANDROID", result.MarkName);
+            Assert.Contains(result.Table, p => p.Name == "MBOOT");
+            Assert.DoesNotContain(result.Table, p => p.Name == "part_00");
+
+            // Тот же MBR без таблицы MSTAR выигрывает — значит, дело именно в порядке,
+            // а не в том, что MBR здесь почему-то не опознаётся.
+            var mbrOnly = new DumpBuilder(0x400000);
+            WriteMbrRecord(mbrOnly, 0, 0x83, startSector: 2, sectorCount: 100);
+            mbrOnly.WriteUInt16(0x1FE, 0xAA55);
+
+            var second = await Run(WriteDump(mbrOnly.Build(), "mbr.bin"), new SilentAnalysisHost());
+
+            Assert.Equal("MBR", second.MarkName);
+        }
+
+        [Fact]
+        public async Task PartitionRunningPastTheEndOfTheDumpIsReported()
+        {
+            // Запись MBR заявляет 8 МиБ в файле на 4 МиБ — так выглядит и обрезанный
+            // дамп, и подпорченная таблица. Извлечение прочитает столько, сколько есть,
+            // и запишет файл короче заявленного, ничего не сказав; здесь об этом
+            // сообщается заранее.
+            var builder = new DumpBuilder(0x400000);
+            WriteMbrRecord(builder, 0, 0x83, startSector: 2, sectorCount: 0x4000);
+            builder.WriteUInt16(0x1FE, 0xAA55);
+
+            var host = new SilentAnalysisHost();
+            var result = await Run(WriteDump(builder.Build(), "short.bin"), host);
+
+            Assert.Equal(PartitionAnalysisStatus.Completed, result.Status);
+
+            var issue = Assert.Single(result.Issues, i => i.Kind == PartitionIssueKind.EndsBeyondDump);
+            Assert.Equal(0x400, issue.Offset);
+
+            // И то же самое сказано в журнале — иначе замечание увидел бы только код.
+            Assert.Contains(host.Messages, m => m.Level == AnalysisLogLevel.Warning);
+        }
+
+        [Fact]
+        public async Task CleanDumpProducesNoNotes()
+        {
+            // Обратная сторона проверки: на обычном дампе она обязана молчать, иначе
+            // предупреждения перестанут читать.
+            var builder = new DumpBuilder(0x400000);
+            WriteMbrRecord(builder, 0, 0x83, startSector: 2, sectorCount: 100);
+            WriteMbrRecord(builder, 1, 0x83, startSector: 1000, sectorCount: 200);
+            builder.WriteUInt16(0x1FE, 0xAA55);
+
+            var result = await Run(WriteDump(builder.Build(), "clean.bin"), new SilentAnalysisHost());
+
+            Assert.Empty(result.Issues);
+        }
+
+        private static void WriteChinaRecord(DumpBuilder builder, int index, uint addrSectors, uint sizeSectors, string name)
+        {
+            long record = 0x200 + index * 0x200;
+            builder.WriteUInt16(record, 0x5840);
+            builder.WriteUInt32(record + 0x08, addrSectors);
+            builder.WriteUInt32(record + 0x0C, sizeSectors);
+            builder.WriteAscii(record + 0x10, name);
+        }
+
         private static void WriteMbrRecord(DumpBuilder builder, int index, byte type, uint startSector, uint sectorCount)
         {
             long record = 0x1BE + index * 16;

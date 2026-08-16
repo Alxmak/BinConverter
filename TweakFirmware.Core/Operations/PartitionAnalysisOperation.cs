@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,6 +73,13 @@ namespace TweakFirmware.Core.Operations
 
         /// <summary>Место файла лицензии Dune HD в дампе, если он нашёлся.</summary>
         public DuneLicense DuneLicense { get; init; }
+
+        /// <summary>
+        /// Замечания к готовой таблице: границы за концом дампа, перекрытия, повторы.
+        /// Ничего не исправлено — это то, что стоит знать до извлечения, потому что
+        /// извлечение обрежет чтение молча.
+        /// </summary>
+        public IReadOnlyList<PartitionIssue> Issues { get; init; } = Array.Empty<PartitionIssue>();
 
         public string ErrorMessage { get; init; } = "";
     }
@@ -232,6 +240,11 @@ namespace TweakFirmware.Core.Operations
                 android = AndroidInfoReader.TryRead(dump, table, host, ct);
             }
 
+            // Проверка идёт последней и по размеру самого дампа: к этому моменту таблица
+            // уже окончательная, а извлечение будет читать именно из файла.
+            var issues = PartitionTableValidator.Validate(table, dump.LogicalSize);
+            LogIssues(issues, host);
+
             return new PartitionAnalysisResult
             {
                 Status = PartitionAnalysisStatus.Completed,
@@ -241,8 +254,30 @@ namespace TweakFirmware.Core.Operations
                 LogicalSize = context.LogicalSize,
                 Android = android,
                 Philips = context.PhilipsInfo,
-                DuneLicense = context.DuneLicense
+                DuneLicense = context.DuneLicense,
+                Issues = issues
             };
+        }
+
+        /// <summary>Сколько замечаний печатается в журнал целиком.</summary>
+        private const int MaxLoggedIssues = 25;
+
+        /// <summary>
+        /// Пишет замечания в журнал. Сначала их число, потом сами строки: на битой
+        /// таблице замечание может быть у каждой записи, и без общего счёта было бы
+        /// непонятно, всё ли показано.
+        /// </summary>
+        private static void LogIssues(IReadOnlyList<PartitionIssue> issues, IAnalysisHost host)
+        {
+            if (issues.Count == 0) return;
+
+            host.Log(Strings.Format("Extract_IssuesFound", issues.Count), AnalysisLogLevel.Warning);
+
+            foreach (var issue in issues.Take(MaxLoggedIssues))
+                host.Log(issue.Describe(), AnalysisLogLevel.Warning);
+
+            if (issues.Count > MaxLoggedIssues)
+                host.Log(Strings.Format("Extract_IssuesTruncated", MaxLoggedIssues), AnalysisLogLevel.Warning);
         }
 
         /// <summary>
