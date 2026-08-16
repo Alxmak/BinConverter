@@ -101,15 +101,17 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
-        public async Task NothingToSaveIsNotAnError()
+        public async Task AnalysisWithoutFindingsSavesOnlyTheReport()
         {
+            // Ни build.prop, ни лицензии в дампе не нашлось — сохранять нечего, кроме
+            // самого отчёта о разборе. Раньше в этом случае не создавалось ничего.
             string path = WriteDump(new DumpBuilder(0x1000).Build());
 
             var artifacts = await AnalysisArtifactWriter.WriteAsync(
                 new PartitionAnalysisResult { Status = PartitionAnalysisStatus.Completed },
                 path, "", new SilentAnalysisHost(), CancellationToken.None);
 
-            Assert.False(artifacts.Any);
+            Assert.Equal(new[] { Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName) }, artifacts.Files);
         }
 
         [Fact]
@@ -226,7 +228,8 @@ namespace TweakFirmware.Tests
                 new PartitionAnalysisResult { Status = PartitionAnalysisStatus.Cancelled },
                 path, _folder, new SilentAnalysisHost(), CancellationToken.None);
 
-            Assert.DoesNotContain(Path.Combine(_folder, AnalysisArtifactWriter.AnalysisFileName), artifacts.Files);
+            // Ни отчёта, ни чего-либо ещё — и это не ошибка.
+            Assert.False(artifacts.Any);
         }
 
         [Fact]
