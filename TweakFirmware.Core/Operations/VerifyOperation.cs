@@ -86,6 +86,14 @@ namespace TweakFirmware.Core.Operations
         /// <summary>Хэши по файлам, в порядке ввода. Пустая строка — не успели посчитать.</summary>
         public IReadOnlyList<string> Hashes { get; init; } = Array.Empty<string>();
 
+        /// <summary>
+        /// Сравнивавшиеся файлы в том же порядке — пара к <see cref="Hashes"/>.
+        /// Нужны интерфейсу: при двух файлах он показывает не группы, а строку на файл,
+        /// и брать пути ему больше неоткуда — поля ввода к тому времени можно уже
+        /// переписать, а итог должен говорить о том, что действительно сравнивали.
+        /// </summary>
+        public IReadOnlyList<string> FilePaths { get; init; } = Array.Empty<string>();
+
         public int FileCount { get; init; }
 
         /// <summary>Файлы, которых не нашлось на диске.</summary>
@@ -119,7 +127,7 @@ namespace TweakFirmware.Core.Operations
             var paths = request.FilePaths;
 
             if (paths.Count < VerifyRequest.MinFiles)
-                return new VerifyOutcome { Status = VerifyStatus.NotEnoughFiles, FileCount = paths.Count };
+                return new VerifyOutcome { Status = VerifyStatus.NotEnoughFiles, FileCount = paths.Count, FilePaths = paths };
 
             var missing = new List<string>();
             foreach (string path in paths)
@@ -131,6 +139,7 @@ namespace TweakFirmware.Core.Operations
                 {
                     Status = VerifyStatus.FileMissing,
                     FileCount = paths.Count,
+                    FilePaths = paths,
                     MissingFilePaths = missing
                 };
             }
@@ -171,13 +180,14 @@ namespace TweakFirmware.Core.Operations
                     Status = allSame ? VerifyStatus.AllIdentical : VerifyStatus.Different,
                     Groups = groups,
                     Hashes = hashes,
+                    FilePaths = paths,
                     FileCount = paths.Count
                 };
             }
             catch (OperationCanceledException)
             {
                 // Уже посчитанные хэши отдаём: сделанная работа не должна пропадать с экрана.
-                return new VerifyOutcome { Status = VerifyStatus.Cancelled, Hashes = hashes, FileCount = paths.Count };
+                return new VerifyOutcome { Status = VerifyStatus.Cancelled, Hashes = hashes, FilePaths = paths, FileCount = paths.Count };
             }
             catch (Exception ex)
             {
@@ -185,6 +195,7 @@ namespace TweakFirmware.Core.Operations
                 {
                     Status = VerifyStatus.Failed,
                     Hashes = hashes,
+                    FilePaths = paths,
                     FileCount = paths.Count,
                     ErrorMessage = ex.Message
                 };

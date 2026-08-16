@@ -25,13 +25,17 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string path = "";
     }
 
-    /// <summary>Одна группа одинаковых хэшей в карточке результата.</summary>
-    public sealed class VerifyGroupView
+    /// <summary>
+    /// Одна строка в карточке результата: заголовок, хэш и имена файлов под ним.
+    /// Что за строка — зависит от числа сравниваемых файлов: при двух это сам файл
+    /// («Файл 1»), при трёх и больше — группа совпавших хэшей.
+    /// </summary>
+    public sealed class VerifyResultRow
     {
         public string Title { get; init; } = "";
         public string Hash { get; init; } = "";
 
-        /// <summary>Имена файлов этой группы, по одному в строке.</summary>
+        /// <summary>Имена файлов строки, по одному в строке.</summary>
         public string FileNames { get; init; } = "";
     }
 
@@ -40,8 +44,9 @@ namespace TweakFirmware.ViewModels
         /// <summary>Строки выбора файлов. Их число меняется кнопками «Добавить»/«Убрать».</summary>
         public ObservableCollection<VerifyFileSlot> Files { get; } = new();
 
-        /// <summary>Группы одинаковых хэшей — то, что показывается в карточке результата.</summary>
-        public ObservableCollection<VerifyGroupView> ResultGroups { get; } = new();
+        /// <summary>Что показывается в карточке результата: строка на файл при двух
+        /// файлах, строка на группу совпавших хэшей при трёх и больше.</summary>
+        public ObservableCollection<VerifyResultRow> ResultRows { get; } = new();
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
@@ -241,7 +246,7 @@ namespace TweakFirmware.ViewModels
 
             if (_lastOutcome is { HasResult: true } outcome)
             {
-                ShowGroups(outcome);
+                ShowResultRows(outcome);
                 ApplyResultTexts(outcome);
             }
             else
@@ -350,7 +355,7 @@ namespace TweakFirmware.ViewModels
                     request, progress, AppLogger.Log, _cts.Token, MarkOperationStarted);
 
                 _lastOutcome = outcome;
-                ShowGroups(outcome);
+                ShowResultRows(outcome);
                 await ShowOutcomeAsync(outcome);
             }
             finally
@@ -374,24 +379,51 @@ namespace TweakFirmware.ViewModels
             HasResult = false;
             ResultHeadline = Strings.Get("Verify_NoResultYet");
             ResultSubline = "";
-            ResultGroups.Clear();
+            ResultRows.Clear();
             _lastOutcome = null;
             OverallProgress = 0;
         }
 
         /// <summary>
-        /// Показываем не попарные сравнения, а группы совпавших хэшей: по ним сразу видно,
-        /// сколько файлов идентичны и какой именно выбивается.
+        /// Строки карточки результата.
+        ///
+        /// При трёх и более файлах это группы совпавших хэшей, а не попарные сравнения:
+        /// пять файлов дали бы десять пар, по которым не видно, какой файл выбивается,
+        /// а по группам видно сразу.
+        ///
+        /// При двух файлах группы только мешают: получалось две группы по одному файлу
+        /// с номерами, которые больше нигде в программе не встречаются, — а сказать надо
+        /// ровно одно, «вот хэш первого, вот хэш второго». Поэтому здесь строка на файл
+        /// и те же подписи, что у полей ввода: если имена файлов совпадают, номер строки —
+        /// единственное, чем их различить.
         /// </summary>
-        private void ShowGroups(VerifyOutcome outcome)
+        private void ShowResultRows(VerifyOutcome outcome)
         {
-            ResultGroups.Clear();
+            ResultRows.Clear();
+
+            // Отменённое и упавшее сравнение показывать нечем: хэши посчитаны не для всех,
+            // а половина ответа хуже, чем его отсутствие.
+            if (!outcome.HasResult) return;
+
+            if (outcome.FilePaths.Count == VerifyRequest.MinFiles && outcome.Hashes.Count == VerifyRequest.MinFiles)
+            {
+                for (int i = 0; i < outcome.FilePaths.Count; i++)
+                {
+                    ResultRows.Add(new VerifyResultRow
+                    {
+                        Title = Strings.Format("Verify_FileLabel", i + 1),
+                        Hash = outcome.Hashes[i],
+                        FileNames = Path.GetFileName(outcome.FilePaths[i])
+                    });
+                }
+                return;
+            }
 
             bool single = outcome.Groups.Count == 1;
             for (int i = 0; i < outcome.Groups.Count; i++)
             {
                 var group = outcome.Groups[i];
-                ResultGroups.Add(new VerifyGroupView
+                ResultRows.Add(new VerifyResultRow
                 {
                     Title = single
                         ? Strings.Get("Verify_SingleGroupTitle")
@@ -481,7 +513,7 @@ namespace TweakFirmware.ViewModels
 
         /// <summary>
         /// Текст окна с итогом. Собирается из того же, что показано в карточке результата,
-        /// — заголовок исхода, пояснение и группы совпавших хэшей, — поэтому окно и карточка
+        /// — заголовок исхода, пояснение и те же строки с хэшами, — поэтому окно и карточка
         /// не могут разойтись. Хэши переносим по строкам: в окно 64 знака одной строкой
         /// не влезают (см. HashDisplay).
         /// </summary>
@@ -491,10 +523,10 @@ namespace TweakFirmware.ViewModels
             sb.Append(ResultHeadline);
             if (ResultSubline.Length > 0) sb.Append("\n\n").Append(ResultSubline);
 
-            foreach (var group in ResultGroups)
+            foreach (var row in ResultRows)
             {
-                sb.Append("\n\n").Append(group.Title).Append('\n').Append(HashDisplay.Wrap(group.Hash));
-                if (group.FileNames.Length > 0) sb.Append('\n').Append(group.FileNames);
+                sb.Append("\n\n").Append(row.Title).Append('\n').Append(HashDisplay.Wrap(row.Hash));
+                if (row.FileNames.Length > 0) sb.Append('\n').Append(row.FileNames);
             }
 
             return sb.ToString();

@@ -189,16 +189,13 @@ namespace TweakFirmware.Views
 
             row.Children.Add(new SWC.TextBlock { Text = TextOf(item.Content), Foreground = foreground });
 
+            // Вид пункта — в стиле PeekMenuItemStyle (ShellWindow.xaml): там же объяснено,
+            // почему у него свой шаблон, а не библиотечный.
             var button = new SWC.Button
             {
                 Content = row,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(10, 7, 10, 7),
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Cursor = Cursors.Hand,
-                IsEnabled = item.IsEnabled,
-                FontFamily = new FontFamily("Cambria, Georgia, Times New Roman")
+                Style = (Style)FindResource("PeekMenuItemStyle"),
+                IsEnabled = item.IsEnabled
             };
 
             button.Click += (_, _) =>

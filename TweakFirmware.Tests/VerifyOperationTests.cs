@@ -390,6 +390,35 @@ namespace TweakFirmware.Tests
 
         // ============ Вспомогательное ============
 
+        // ============ Пути рядом с хэшами ============
+
+        [Fact]
+        public async Task Outcome_KeepsFilePathsPairedWithHashes()
+        {
+            // Интерфейс при двух файлах показывает не группы, а строку на файл, и берёт
+            // пару «путь — хэш» отсюда: поля ввода к тому моменту уже могли переписать.
+            string a = MakeFile("a.bin", 1024, seed: 1);
+            string b = MakeFile("b.bin", 1024, seed: 2);
+
+            var outcome = await RunAsync(a, b);
+
+            Assert.Equal(new[] { a, b }, outcome.FilePaths);
+            Assert.Equal(outcome.FilePaths.Count, outcome.Hashes.Count);
+            Assert.All(outcome.Hashes, hash => Assert.NotEmpty(hash));
+        }
+
+        [Fact]
+        public async Task Outcome_KeepsFilePaths_EvenWhenAFileIsMissing()
+        {
+            string a = MakeFile("a.bin", 512, seed: 1);
+            string missing = Path.Combine(_root, "нет-такого.bin");
+
+            var outcome = await RunAsync(a, missing);
+
+            Assert.Equal(VerifyStatus.FileMissing, outcome.Status);
+            Assert.Equal(new[] { a, missing }, outcome.FilePaths);
+        }
+
         private string MakeFile(string name, int sizeBytes, int seed)
         {
             string path = Path.Combine(_root, name);

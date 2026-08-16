@@ -177,8 +177,13 @@
                         <TextBlock FontSize="13" Margin="0,0,0,6">
                             <Hyperlink NavigateUri="https://mslw.com" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com</Hyperlink>
                         </TextBlock>
-                        <TextBlock FontSize="13">
+                        <TextBlock FontSize="13" Margin="0,0,0,6">
                             <Hyperlink NavigateUri="https://teleservis.net" RequestNavigate="Hyperlink_RequestNavigate">https://teleservis.net</Hyperlink>
+                        </TextBlock>
+                        <!-- Именно http: по https сайт не отвечает (проверено запросом),
+                             и ссылка с https молча вела бы в никуда. -->
+                        <TextBlock FontSize="13">
+                            <Hyperlink NavigateUri="http://muuh.ru" RequestNavigate="Hyperlink_RequestNavigate">http://muuh.ru</Hyperlink>
                         </TextBlock>
                     </StackPanel>
                 </c:AboutCard.Extra>

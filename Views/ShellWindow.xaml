@@ -18,6 +18,46 @@
         <Style x:Key="BannerButtonStyle" TargetType="Button" BasedOn="{StaticResource SolidButtonStyle}">
             <Setter Property="Padding" Value="14,7"/>
         </Style>
+
+        <!-- Пункт всплывающего списка разделов (свёрнутое меню). Свой шаблон, а не
+             библиотечный, из-за подсветки под мышью: WPF-UI берёт для неё
+             ControlFillColorSecondary, а это в светлой теме полупрозрачный почти белый
+             (#80F9F9F9) поверх почти белой карточки — подсветки фактически не видно.
+             В тёмной теме тот же ключ даёт белый по тёмному и читается отлично, поэтому
+             и заметно было только на светлой.
+
+             Своей пары кистей под каждую тему заводить не стали: серый с прозрачностью
+             работает в обеих — на белом он темнее фона, на тёмном светлее. -->
+        <Style x:Key="PeekMenuItemStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontFamily" Value="Cambria, Georgia, Times New Roman"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                CornerRadius="8" SnapsToDevicePixels="True">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="#24808080"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="#33808080"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </ui:FluentWindow.Resources>
 
     <Grid>
