@@ -488,7 +488,8 @@ namespace TweakFirmware.ViewModels
                     ApplyResultTexts(outcome);
                     // Итог сообщается окном, как в Конвертировании и Сборке: операция может
                     // идти долго, и человек к этому моменту уже мог отойти от компьютера.
-                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), BuildResultMessage());
+                    await DialogService.ShowInfoWithHashesAsync(
+                        Strings.Get("Common_DoneTitle"), BuildResultMessage(), BuildHashRows());
                     break;
 
                 case VerifyStatus.Different:
@@ -497,7 +498,8 @@ namespace TweakFirmware.ViewModels
                     // просто файлы разные. «Ошибка проверки» здесь читалась так, будто
                     // не сработала сама проверка, — а её итог как раз и есть ответ.
                     // Что файлы разошлись, видно по красной карточке результата.
-                    await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), BuildResultMessage());
+                    await DialogService.ShowInfoWithHashesAsync(
+                        Strings.Get("Common_DoneTitle"), BuildResultMessage(), BuildHashRows());
                     break;
 
                 case VerifyStatus.Cancelled:
@@ -512,25 +514,23 @@ namespace TweakFirmware.ViewModels
         }
 
         /// <summary>
-        /// Текст окна с итогом. Собирается из того же, что показано в карточке результата,
-        /// — заголовок исхода, пояснение и те же строки с хэшами, — поэтому окно и карточка
-        /// не могут разойтись. Хэши переносим по строкам: в окно 64 знака одной строкой
-        /// не влезают (см. HashDisplay).
+        /// Текст окна с итогом — заголовок исхода и пояснение под ним. То же, что
+        /// в верхней части карточки результата, поэтому окно и карточка не могут
+        /// разойтись.
         /// </summary>
-        private string BuildResultMessage()
-        {
-            var sb = new StringBuilder();
-            sb.Append(ResultHeadline);
-            if (ResultSubline.Length > 0) sb.Append("\n\n").Append(ResultSubline);
+        private string BuildResultMessage() =>
+            ResultSubline.Length > 0 ? ResultHeadline + "\n\n" + ResultSubline : ResultHeadline;
 
-            foreach (var row in ResultRows)
-            {
-                sb.Append("\n\n").Append(row.Title).Append('\n').Append(HashDisplay.Wrap(row.Hash));
-                if (row.FileNames.Length > 0) sb.Append('\n').Append(row.FileNames);
-            }
-
-            return sb.ToString();
-        }
+        /// <summary>
+        /// Хэши для окна — отдельными строками, а не внутри текста: рядом с каждой
+        /// стоит кнопка копирования. Хэш из сверки нужен не «на посмотреть» — его
+        /// вписывают в «Ожидаемый SHA-256» при сборке и им же ищут, чем отличаются
+        /// файлы, — а 64 знака из текста окна оставалось только перепечатывать.
+        /// Строки те же и в том же порядке, что в карточке результата.
+        /// </summary>
+        private DialogService.HashRow[] BuildHashRows() => ResultRows
+            .Select(row => new DialogService.HashRow(row.Title, row.Hash, row.FileNames))
+            .ToArray();
 
         [RelayCommand(CanExecute = nameof(IsBusy))]
         private void Cancel() => _cts?.Cancel();

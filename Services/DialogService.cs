@@ -48,8 +48,11 @@ namespace TweakFirmware.Services
             await box.ShowDialogAsync();
         }
 
-        /// <summary>Подпись и сам хэш — одна строка итога в окне.</summary>
-        public readonly record struct HashRow(string Label, string Hash);
+        /// <summary>
+        /// Подпись и сам хэш — одна строка итога в окне. <paramref name="Note"/> — то,
+        /// что показывается под хэшем: в сверке это имя файла, которому он принадлежит.
+        /// </summary>
+        public readonly record struct HashRow(string Label, string Hash, string Note = "");
 
         /// <summary>
         /// Текстовая строка для окна. Весь текст диалогов идёт через неё.
@@ -90,7 +93,8 @@ namespace TweakFirmware.Services
 
         /// <summary>
         /// Строка хэша: подпись, под ней с отступом сам хэш, а кнопка копирования —
-        /// на уровне хэша, а не подписи.
+        /// на уровне хэша, а не подписи. Ниже — необязательное пояснение
+        /// (<see cref="HashRow.Note"/>).
         /// </summary>
         private static UIElement BuildHashRow(HashRow row)
         {
@@ -115,6 +119,18 @@ namespace TweakFirmware.Services
             line.Children.Add(copy);
 
             block.Children.Add(line);
+
+            // Пояснение идёт под хэшем, а не в подпись над ним: в сверке окно повторяет
+            // карточку результата на странице, а там порядок «что за строка → хэш →
+            // какой это файл». Перестановка читалась бы как другой ответ.
+            if (!string.IsNullOrEmpty(row.Note))
+            {
+                var note = BuildText(row.Note);
+                note.Margin = new Thickness(0, 6, 0, 0);
+                note.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
+                block.Children.Add(note);
+            }
+
             return block;
         }
 
