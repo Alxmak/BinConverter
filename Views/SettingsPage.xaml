@@ -195,12 +195,17 @@
                                Title="{loc:Loc Settings_ClearLogTitle}"
                                Description="{loc:Loc Settings_ClearLogDescription}">
                     <c:SettingsRow.Action>
-                        <!-- Плашка, как у вариантов «Внешнего вида»: в правой колонке
-                             страницы всё действие одного вида. Высота — общая для кнопок
-                             действия, чтобы строка журнала не оказалась ниже соседних. -->
-                        <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
-                                Style="{StaticResource PillButton}"
-                                MinHeight="{StaticResource ActionButtonMinHeight}"/>
+                        <!-- Кнопка стоит на такой же дорожке, как варианты «Внешнего вида»,
+                             и той же плашкой внутри. Без дорожки одна плашка на белой
+                             карточке читалась обычной кнопкой с рамкой: форму этим
+                             элементам задаёт как раз серая подложка вокруг.
+
+                             Высоту не задаём: она набирается так же, как у вариантов
+                             в дорожке, — иначе строка журнала оказалась бы выше соседних. -->
+                        <Border Style="{StaticResource SegmentedTrack}">
+                            <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
+                                    Style="{StaticResource PillButton}"/>
+                        </Border>
                     </c:SettingsRow.Action>
                 </c:SettingsRow>
             </Border>

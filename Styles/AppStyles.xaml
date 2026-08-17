@@ -85,7 +85,6 @@
         <Setter Property="Padding" Value="18,9"/>
         <Setter Property="MinHeight" Value="{StaticResource ActionButtonMinHeight}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -203,7 +202,6 @@
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Padding" Value="14,7"/>
-        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template" Value="{StaticResource PillButtonTemplate}"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -232,7 +230,6 @@
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Padding" Value="14,7"/>
-        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template" Value="{StaticResource PillButtonTemplate}"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -265,7 +262,6 @@
     <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
