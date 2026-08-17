@@ -132,6 +132,59 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Переключатель из нескольких вариантов: общая дорожка, внутри выбранный вариант
+         приподнят плашкой. Вместо ряда отдельных кнопок, у которых выбранная была
+         обведена рамкой: рамка говорит «сюда можно нажать», а не «это выбрано», и по
+         ряду одинаковых кнопок не читалось, что вариант тут ровно один.
+
+         Дорожка — полупрозрачный чёрный: он темнее фона и в светлой теме, и в тёмной,
+         поэтому пары значений под каждую тему не нужно. А вот плашке одного значения
+         не хватило: она должна быть светлее дорожки в обеих темах, а полупрозрачный
+         белый, годный для светлой, в тёмной даёт почти белый прямоугольник. Поэтому
+         у неё кисть темы — ControlSolidFillColorDefault: белая в светлой, #454545
+         в тёмной. -->
+    <Style x:Key="SegmentedTrack" TargetType="Border">
+        <Setter Property="Background" Value="#14000000"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="3"/>
+    </Style>
+
+    <!-- Один вариант в такой дорожке. Выбранное состояние задаётся снаружи: разметка
+         добавляет свой DataTrigger и меняет им Background, BorderBrush и Foreground —
+         шаблон берёт их привязками. Триггеры производного стиля срабатывают после
+         здешних, поэтому наведение на выбранный вариант его подсветку не сбивает.
+
+         Насыщенность у подписи одна на оба состояния, хотя на выбранной хотелось бы
+         жирнее: подписи разной длины меняли бы ширину дорожки, а она стоит по правому
+         краю карточки — при каждом нажатии её левый край дёргался бы на пару точек. -->
+    <Style x:Key="SegmentedButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="14,7"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Pill" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="8" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#0F000000"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Маленькая кнопка из одного значка — сейчас это копирование хэша в окне с итогом.
 
          Своя раскраска, а не библиотечная, потому что палитра WPF-UI для такой кнопки

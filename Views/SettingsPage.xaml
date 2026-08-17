@@ -7,15 +7,6 @@
       Title="{loc:Loc Settings_Title}"
       ScrollViewer.CanContentScroll="False">
 
-    <Page.Resources>
-        <!-- Пункт 11: голубая рамка вокруг выбранного варианта -->
-        <Style x:Key="OptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Margin" Value="0,0,8,0"/>
-        </Style>
-    </Page.Resources>
-
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
@@ -31,45 +22,49 @@
                  ним во всю ширину; почему, сказано перед ними. -->
             <c:IconCard Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}">
                 <c:IconCard.Action>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Light">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Content="{loc:Loc Settings_ThemeDark}" Command="{Binding SetThemeCommand}" CommandParameter="Dark">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Dark">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <!-- У последней кнопки ряда отступ справа снят: у OptionButton он общий,
-                             а ряд теперь прижат к правому краю карточки, и лишние восемь точек
-                             отодвинули бы его от края — кнопки перестали бы стоять по одной
-                             линии с кнопками соседних карточек. -->
-                        <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System" Margin="0">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="System">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
+                    <Border Style="{StaticResource SegmentedTrack}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light" Margin="0,0,2,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentTheme}" Value="Light">
+                                                <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="{loc:Loc Settings_ThemeDark}" Command="{Binding SetThemeCommand}" CommandParameter="Dark" Margin="0,0,2,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentTheme}" Value="Dark">
+                                                <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentTheme}" Value="System">
+                                                <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Border>
                 </c:IconCard.Action>
             </c:IconCard>
 
@@ -77,31 +72,36 @@
                         Title="{loc:Loc Settings_LanguageTitle}"
                         Description="{loc:Loc Settings_LanguageDescription}">
                 <c:IconCard.Action>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedLanguage}" Value="ru">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <!-- Отступ справа снят по той же причине, что у «Как в системе». -->
-                        <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en" Margin="0">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedLanguage}" Value="en">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
+                    <Border Style="{StaticResource SegmentedTrack}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru" Margin="0,0,2,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedLanguage}" Value="ru">
+                                                <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedLanguage}" Value="en">
+                                                <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Border>
                 </c:IconCard.Action>
             </c:IconCard>
 
