@@ -76,8 +76,8 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool hasResult;
 
         /// <summary>
-        /// Был ли разбор. Пока его не было, «Общая информация» показывает подсказку, а не
-        /// строку итога: до разбора итог всё равно ничего не сообщает о дампе.
+        /// Есть ли что показать в «Общей информации». Пока файл не выбран — там подсказка;
+        /// когда выбран, но не разобран, — его размер; после разбора — итог.
         /// </summary>
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ShowInfoHint))]
@@ -184,13 +184,15 @@ namespace TweakFirmware.ViewModels
         public ExtractViewModel()
         {
             Progress = 0;
-            Summary = Strings.Get("Extract_NoResultYet");
             SetOutputPathAuto(OutputPathSettingsService.GetExtractFolder());
         }
 
         protected override void OnAttached()
         {
             if (_outputPathIsAuto) SetOutputPathAuto(OutputPathSettingsService.GetExtractFolder());
+
+            // Файл мог смениться на диске, пока смотрели другой раздел.
+            ScheduleSourceInfoUpdate();
         }
 
         private void SetOutputPathAuto(string path)
@@ -223,6 +225,112 @@ namespace TweakFirmware.ViewModels
         {
             OnPropertyChanged(nameof(CanAnalyse));
             AnalyseCommand.NotifyCanExecuteChanged();
+
+            // Переименование дампа — единственный случай, когда путь меняется, а файл
+            // остаётся тем же: разбор к нему по-прежнему относится, и сбрасывать его
+            // нельзя, иначе таблица разделов исчезала бы прямо после переименования.
+            if (_keepAnalysisOnPathChange) return;
+
+            // Про новый файл мы пока не знаем ничего: прежний размер в карточке был бы
+            // не о нём. Настоящий придёт из ScheduleSourceInfoUpdate через четверть
+            // секунды после того, как путь перестанут набирать.
+            _sourceProbe = default;
+
+            // Во всех остальных случаях путь показывает уже другой файл, а на экране
+            // остаётся разбор прежнего. Это не только сбивало с толку: кнопка «Извлечь
+            // отмеченные» оставалась доступной и читала бы НОВЫЙ файл по СТАРОЙ таблице
+            // разделов — то есть молча резала бы его по чужим границам.
+            ResetAnalysis();
+            ScheduleSourceInfoUpdate();
+        }
+
+        /// <summary>
+        /// Убирает с экрана всё, что осталось от предыдущего разбора. Вызывается и перед
+        /// новым разбором, и при смене пути.
+        /// </summary>
+        private void ResetAnalysis()
+        {
+            _result = null;
+            _table = new PartitionTable();
+
+            HasResult = false;
+            CanRename = false;
+            SuggestedFileName = "";
+            IsNandDump = false;
+            ShowPhysicalAddresses = false;
+            ClearRows();
+
+            // Карточка возвращается к тому, что известно о файле без чтения, — к размеру.
+            RenderSourceInfo();
+        }
+
+        // ---------- «Общая информация» до разбора ----------
+
+        /// <summary>
+        /// Как в «Конвертировании»: спрашивать файловую систему на каждую нажатую клавишу
+        /// нельзя — на сетевом пути окно подвисало бы на каждую букву.
+        /// </summary>
+        private const int InputSettleDelayMs = 250;
+
+        private int _probeGeneration;
+
+        /// <summary>Последний ответ файловой системы о выбранном файле: из него собирается
+        /// строка карточки, в том числе заново после смены языка.</summary>
+        private FileProbeResult _sourceProbe;
+
+        /// <summary>Путь меняет само переименование дампа — разбор при этом остаётся в силе.</summary>
+        private bool _keepAnalysisOnPathChange;
+
+        /// <summary>
+        /// Пересчёт с задержкой — для набора пути с клавиатуры. Счётчик поколений
+        /// отбрасывает устаревшие ответы: пока ждали или ходили на диск, путь мог
+        /// смениться ещё раз, и старый размер затёр бы новый.
+        /// </summary>
+        private async void ScheduleSourceInfoUpdate()
+        {
+            // Метод возвращает void — ждать его некому, и любое исключение отсюда стало бы
+            // необработанным и уронило программу из-за одной строки в карточке.
+            try
+            {
+                int generation = ++_probeGeneration;
+
+                await Task.Delay(InputSettleDelayMs);
+                if (generation != _probeGeneration) return;
+
+                string path = SourcePath;
+                var probe = await Task.Run(() => FileProbe.Measure(path));
+                if (generation != _probeGeneration) return;
+
+                _sourceProbe = probe;
+                RenderSourceInfo();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
+                    nameof(ExtractViewModel), ex.GetType().Name, ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Что показывать в «Общей информации», пока разбора не было. Раньше там до самого
+        /// нажатия «Начать» висела подсказка «выберите файл» — даже когда файл уже выбран.
+        /// Размер — единственное, что о дампе известно без чтения, и его хватает, чтобы
+        /// понять, что программа видит тот файл, который выбрали.
+        /// </summary>
+        private void RenderSourceInfo()
+        {
+            // После разбора карточка занята его итогом, и трогать её нельзя.
+            if (_result is not null) return;
+
+            if (!_sourceProbe.Exists)
+            {
+                HasInfo = false;
+                Summary = "";
+                return;
+            }
+
+            Summary = Strings.Format("Common_SourceSizeLine", SizeFormatHelper.Format(_sourceProbe.SizeBytes));
+            HasInfo = true;
         }
 
         partial void OnHasResultChanged(bool value)
@@ -345,10 +453,10 @@ namespace TweakFirmware.ViewModels
             // Разбор паузы не поддерживает — см. пояснение к SupportsPause.
             var ct = BeginOperation(supportsPause: false);
 
-            HasResult = false;
-            CanRename = false;
-            SuggestedFileName = "";
-            ClearRows();
+            // Прежний разбор с экрана убираем целиком, а не наполовину: в карточке
+            // остаётся размер файла, чтобы во время работы она не показывала подсказку
+            // «выберите файл» при уже выбранном.
+            ResetAnalysis();
 
             try
             {
@@ -691,7 +799,12 @@ namespace TweakFirmware.ViewModels
             try
             {
                 File.Move(SourcePath, target);
-                SourcePath = target;
+
+                // Файл тот же, у него сменилось имя, — разбор остаётся в силе.
+                _keepAnalysisOnPathChange = true;
+                try { SourcePath = target; }
+                finally { _keepAnalysisOnPathChange = false; }
+
                 CanRename = false;
 
                 AppLogger.Log(Strings.Format("Extract_RenameDone", target));
@@ -726,7 +839,7 @@ namespace TweakFirmware.ViewModels
 
             if (_result is null)
             {
-                Summary = Strings.Get("Extract_NoResultYet");
+                RenderSourceInfo();
                 return;
             }
 

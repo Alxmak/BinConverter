@@ -283,7 +283,7 @@ namespace TweakFirmware.ViewModels
                 // отдельная строка о том, что поправить. Раньше на его месте стоял
                 // прочерк с пояснением в скобках следом.
                 GeneralInfoText =
-                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Format("Common_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
                     Strings.Get("Convert_InvalidLimitLine");
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
@@ -304,7 +304,7 @@ namespace TweakFirmware.ViewModels
                 // считаем «как-нибудь»: предпросмотр идёт из async void, и исключение
                 // отсюда стало бы необработанным и уронило бы программу.
                 GeneralInfoText =
-                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Format("Common_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
                     Strings.Get("Convert_InvalidLimitLine");
                 _expectedFileCount = 0;
                 ShowExpandButton = false;
@@ -315,7 +315,7 @@ namespace TweakFirmware.ViewModels
             if (count > MaxFilesToEnumerate)
             {
                 GeneralInfoText =
-                    Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                    Strings.Format("Common_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
                     Strings.Format("Convert_ExpectedCountLine", count.ToString("N0"));
                 _expectedFileCount = count;
                 ShowExpandButton = false;
@@ -328,7 +328,7 @@ namespace TweakFirmware.ViewModels
             _expectedLimitBytes = limit;
 
             GeneralInfoText =
-                Strings.Format("Convert_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
+                Strings.Format("Common_SourceSizeLine", SizeFormatHelper.Format(size)) + "\n" +
                 Strings.Format("Convert_ExpectedCountLine", count);
 
             ShowExpandButton = count > CollapsedFileListCount;
