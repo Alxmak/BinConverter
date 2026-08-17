@@ -1,0 +1,91 @@
+<UserControl x:Class="TweakFirmware.Controls.SettingsRow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:TweakFirmware.Controls"
+             x:Name="Root">
+
+    <!-- Одна настройка внутри карточки-группы: значок в плитке, название рядом,
+         действие справа. Своей рамки у строки нет — её рисует карточка группы,
+         а строки внутри разделены волосяной чертой.
+
+         Тем и отличается от IconCard, которой собрана «О программе»: там каждая
+         карточка сама по себе, с пояснением на пару строк и высоким действием,
+         поэтому плитка крупнее и всё выровнено по верху. Здесь строка обычно
+         в одну строку, и плитка меньше — иначе она подавляет название. -->
+    <Grid Margin="16,14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- По центру названия, а не по верху: в строке из одного названия плитка,
+             выровненная по верху, встаёт выше текста и висит сама по себе.
+             Исключение — строка с содержимым под названием (в «Папках» это поле
+             пути): там колонка высокая, и по центру плитка оказалась бы напротив
+             промежутка между названием и полем. -->
+        <c:IconTile Grid.Column="0" TileSize="36" GlyphSize="18"
+                    Symbol="{Binding Symbol, ElementName=Root}"
+                    Accent="{Binding Accent, ElementName=Root}" Margin="0,0,14,0">
+            <c:IconTile.Style>
+                <Style TargetType="c:IconTile">
+                    <Setter Property="VerticalAlignment" Value="Top"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Extra, ElementName=Root}" Value="{x:Null}">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </c:IconTile.Style>
+        </c:IconTile>
+
+        <StackPanel Grid.Column="1">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="VerticalAlignment" Value="Top"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Extra, ElementName=Root}" Value="{x:Null}">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource TileCardTitle}"
+                       TextWrapping="Wrap"/>
+
+            <!-- Пояснение есть не у всех строк, а пустой TextBlock всё равно занимал бы
+                 высоту строки и отрывал название от содержимого. -->
+            <TextBlock Text="{Binding Description, ElementName=Root}" FontSize="13" Margin="0,4,0,0"
+                       TextWrapping="Wrap" LineHeight="19" LineStackingStrategy="BlockLineHeight"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <ContentPresenter Content="{Binding Extra, ElementName=Root}"/>
+        </StackPanel>
+
+        <!-- Пустое место справа тоже занимает ширину: у строки без действия отступ 16
+             сдвигал бы название, поэтому колонку целиком сворачиваем. -->
+        <ContentPresenter Grid.Column="2" Content="{Binding Action, ElementName=Root}"
+                          VerticalAlignment="Center" Margin="16,0,0,0">
+            <ContentPresenter.Style>
+                <Style TargetType="ContentPresenter">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Action, ElementName=Root}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentPresenter.Style>
+        </ContentPresenter>
+    </Grid>
+</UserControl>

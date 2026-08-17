@@ -287,12 +287,16 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== Настройки =====================
             ["Settings_Title"] = "Настройки",
+            // Подписи групп — прописными прямо в словаре, как и заголовки групп
+            // в меню слева: регистр WPF сам не меняет.
+            ["Settings_AppearanceGroup"] = "ВНЕШНИЙ ВИД",
+            ["Settings_FoldersGroup"] = "ПАПКИ ПО УМОЛЧАНИЮ",
+            ["Settings_MaintenanceGroup"] = "ОБСЛУЖИВАНИЕ",
             ["Settings_ThemeTitle"] = "Тема оформления",
             ["Settings_ThemeLight"] = "Светлая",
             ["Settings_ThemeDark"] = "Тёмная",
             ["Settings_ThemeSystem"] = "Как в системе",
             ["Settings_LanguageTitle"] = "Язык интерфейса",
-            ["Settings_LanguageDescription"] = "Переключение между языками не требует перезагрузки приложения.",
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "По умолчанию",
@@ -742,12 +746,14 @@ namespace TweakFirmware.Core.Localization
 
             // ===================== Settings =====================
             ["Settings_Title"] = "Settings",
+            ["Settings_AppearanceGroup"] = "APPEARANCE",
+            ["Settings_FoldersGroup"] = "DEFAULT FOLDERS",
+            ["Settings_MaintenanceGroup"] = "MAINTENANCE",
             ["Settings_ThemeTitle"] = "Theme",
             ["Settings_ThemeLight"] = "Light",
             ["Settings_ThemeDark"] = "Dark",
             ["Settings_ThemeSystem"] = "Same as system",
             ["Settings_LanguageTitle"] = "Interface language",
-            ["Settings_LanguageDescription"] = "Switching between languages does not require restarting the application.",
             // Названия языков не переводятся: их читает тот, кто нужного языка
             // ещё не выбрал, — «Русский» ему понятнее, чем «Russian».
             ["Settings_LanguageRu"] = "Русский",

@@ -8,9 +8,10 @@ using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
 namespace TweakFirmware.Controls
 {
     /// <summary>
-    /// Значок в цветной плитке — деталь карточки <see cref="IconCard"/>. Отдельным
-    /// контролом, потому что величины внутри связаны между собой: размер плитки,
-    /// скругление, кегль значка и прозрачность заливки подобраны друг под друга.
+    /// Значок в цветной плитке — деталь карточек <see cref="IconCard"/> («О программе»)
+    /// и строк <see cref="SettingsRow"/> («Настройки»). Отдельным контролом, потому что
+    /// величины внутри связаны между собой: размер плитки, скругление, кегль значка
+    /// и прозрачность заливки подобраны друг под друга.
     /// </summary>
     public partial class IconTile : UserControl
     {
@@ -23,10 +24,32 @@ namespace TweakFirmware.Controls
             DependencyProperty.Register(nameof(Accent), typeof(Brush), typeof(IconTile),
                 new PropertyMetadata(new SolidColorBrush(Color.FromRgb(0x2F, 0x6F, 0xED))));
 
+        /// <summary>Сторона плитки. Меняется в паре с <see cref="GlyphSize"/>.</summary>
+        public static readonly DependencyProperty TileSizeProperty =
+            DependencyProperty.Register(nameof(TileSize), typeof(double), typeof(IconTile),
+                new PropertyMetadata(46.0));
+
+        /// <summary>Кегль значка внутри плитки.</summary>
+        public static readonly DependencyProperty GlyphSizeProperty =
+            DependencyProperty.Register(nameof(GlyphSize), typeof(double), typeof(IconTile),
+                new PropertyMetadata(22.0));
+
         public SymbolRegular Symbol
         {
             get => (SymbolRegular)GetValue(SymbolProperty);
             set => SetValue(SymbolProperty, value);
+        }
+
+        public double TileSize
+        {
+            get => (double)GetValue(TileSizeProperty);
+            set => SetValue(TileSizeProperty, value);
+        }
+
+        public double GlyphSize
+        {
+            get => (double)GetValue(GlyphSizeProperty);
+            set => SetValue(GlyphSizeProperty, value);
         }
 
         public Brush Accent

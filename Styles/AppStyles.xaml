@@ -132,6 +132,32 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Подпись группы карточек на странице. Кегль и приглушённость те же, что
+         у заголовков групп в меню слева: на экране они стоят рядом, в одной строке
+         взгляда. Прописные буквы — в самом тексте словаря, как и у меню: регистр
+         WPF не меняет, а заводить ради этого преобразователь не из чего. -->
+    <Style x:Key="GroupCaption" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Opacity" Value="0.7"/>
+        <Setter Property="Margin" Value="4,12,0,6"/>
+    </Style>
+
+    <!-- Карточка-группа: те же рамка и скругление, что у обычной карточки, но без
+         внутреннего отступа — его держат сами строки. Иначе разделитель между ними
+         не доходил бы до краёв и висел бы обрубком посередине. -->
+    <Style x:Key="GroupCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- Волосяная черта между строками группы. Тот же цвет, что у рамки карточки:
+         это её продолжение внутрь, а не отдельная линия. -->
+    <Style x:Key="RowDivider" TargetType="Border">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+    </Style>
+
     <!-- Переключатель из нескольких вариантов: общая дорожка, внутри выбранный вариант
          приподнят плашкой. Вместо ряда отдельных кнопок, у которых выбранная была
          обведена рамкой: рамка говорит «сюда можно нажать», а не «это выбрано», и по
