@@ -95,6 +95,7 @@
                          проверка обновлений берёт репозиторий. -->
                     <Button Content="{loc:Loc About_GitHubButton}"
                             Command="{Binding OpenGitHubCommand}"
+                            ToolTip="{Binding RepositoryUrl}"
                             MinWidth="{StaticResource AboutButtonWidth}"
                             MinHeight="{StaticResource ActionButtonMinHeight}"
                             HorizontalContentAlignment="Center"/>
@@ -178,28 +179,42 @@
             <c:IconCard Symbol="Globe24" Accent="#0D9488"
                         Title="{loc:Loc About_SourcesTitle}"
                         Description="{loc:Loc About_SourcesDescription}">
-                <!-- Ссылки справа, как действия остальных карточек: столбец действий
-                     на вкладке один, и список, оставленный под пояснением, выбивался
-                     из него единственный. Внутри столбца ссылки выровнены по левому
-                     краю — так у них общее начало, а не рваный левый край. -->
+                <!-- Ссылки кнопками, а не строками: в остальных карточках вкладки
+                     действие — это кнопка справа, и список ссылок под пояснением
+                     выбивался из общего столбца единственный.
+
+                     Адрес каждой кнопки лежит в CommandParameter, а подсказка привязана
+                     к нему же: сам адрес теперь не на виду, и куда ведёт кнопка, должно
+                     быть видно до нажатия. Второй раз тот же адрес в разметке не пишем —
+                     иначе подпись и ссылка однажды разойдутся. -->
                 <c:IconCard.Action>
-                    <!-- Ширина та же, что у кнопок: столбец действий на вкладке общий,
-                         и блок уже кнопок начинался бы правее их левого края. -->
-                    <StackPanel MinWidth="{StaticResource AboutButtonWidth}">
-                        <TextBlock FontSize="13" Margin="0,0,0,6">
-                            <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
-                        </TextBlock>
-                        <TextBlock FontSize="13" Margin="0,0,0,6">
-                            <Hyperlink NavigateUri="https://mslw.com" RequestNavigate="Hyperlink_RequestNavigate">https://mslw.com</Hyperlink>
-                        </TextBlock>
-                        <TextBlock FontSize="13" Margin="0,0,0,6">
-                            <Hyperlink NavigateUri="https://teleservis.net" RequestNavigate="Hyperlink_RequestNavigate">https://teleservis.net</Hyperlink>
-                        </TextBlock>
+                    <StackPanel>
+                        <Button Content="{loc:Loc About_SourceRemontAud}"
+                                Command="{Binding OpenLinkCommand}" CommandParameter="https://remont-aud.net"
+                                ToolTip="{Binding CommandParameter, RelativeSource={RelativeSource Self}}"
+                                MinWidth="{StaticResource AboutButtonWidth}"
+                                MinHeight="{StaticResource ActionButtonMinHeight}"
+                                HorizontalContentAlignment="Center" Margin="0,0,0,8"/>
+                        <Button Content="{loc:Loc About_SourceMslWorks}"
+                                Command="{Binding OpenLinkCommand}" CommandParameter="https://mslw.com"
+                                ToolTip="{Binding CommandParameter, RelativeSource={RelativeSource Self}}"
+                                MinWidth="{StaticResource AboutButtonWidth}"
+                                MinHeight="{StaticResource ActionButtonMinHeight}"
+                                HorizontalContentAlignment="Center" Margin="0,0,0,8"/>
+                        <Button Content="{loc:Loc About_SourceTeleservis}"
+                                Command="{Binding OpenLinkCommand}" CommandParameter="https://teleservis.net"
+                                ToolTip="{Binding CommandParameter, RelativeSource={RelativeSource Self}}"
+                                MinWidth="{StaticResource AboutButtonWidth}"
+                                MinHeight="{StaticResource ActionButtonMinHeight}"
+                                HorizontalContentAlignment="Center" Margin="0,0,0,8"/>
                         <!-- Именно http: по https сайт не отвечает (проверено запросом),
-                             и ссылка с https молча вела бы в никуда. -->
-                        <TextBlock FontSize="13">
-                            <Hyperlink NavigateUri="http://muuh.ru" RequestNavigate="Hyperlink_RequestNavigate">http://muuh.ru</Hyperlink>
-                        </TextBlock>
+                             и кнопка с https молча вела бы в никуда. -->
+                        <Button Content="{loc:Loc About_SourceMuuh}"
+                                Command="{Binding OpenLinkCommand}" CommandParameter="http://muuh.ru"
+                                ToolTip="{Binding CommandParameter, RelativeSource={RelativeSource Self}}"
+                                MinWidth="{StaticResource AboutButtonWidth}"
+                                MinHeight="{StaticResource ActionButtonMinHeight}"
+                                HorizontalContentAlignment="Center"/>
                     </StackPanel>
                 </c:IconCard.Action>
             </c:IconCard>

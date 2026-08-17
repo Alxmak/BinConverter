@@ -323,9 +323,13 @@ namespace TweakFirmware.Core.Localization
             ["About_DevelopmentTitle"] = "Разработка",
             ["About_DevelopmentText"] = "Claude Code, ChatGPT и @alxmak.",
             ["About_PersonalUseText"] = "Программа создавалась для использования в личных целях.",
-            // Название сайта не переводится, но лежит здесь: литералов в разметке
+            // Названия сайтов не переводятся, но лежат здесь: литералов в разметке
             // в проекте нет, и слово должно быть в одном месте (как Common_BetaBadge).
-            ["About_GitHubButton"] = "GitHub",
+            ["About_GitHubButton"] = "Проект на GitHub",
+            ["About_SourceRemontAud"] = "REMONT-AUD",
+            ["About_SourceMslWorks"] = "MSL Works",
+            ["About_SourceTeleservis"] = "TELESERVIS",
+            ["About_SourceMuuh"] = "MUUH",
             ["About_OpenLinkFailedLog"] = "Не удалось открыть ссылку: {0}",
             ["About_OpenLinkFailedCopied"] = "Не удалось открыть ссылку в браузере. Адрес скопирован в буфер обмена:\n{0}",
             ["About_OpenLinkFailed"] = "Не удалось открыть ссылку в браузере. Адрес:\n{0}",
@@ -773,7 +777,11 @@ namespace TweakFirmware.Core.Localization
             ["About_DevelopmentTitle"] = "Development",
             ["About_DevelopmentText"] = "Claude Code, ChatGPT and @alxmak.",
             ["About_PersonalUseText"] = "This program was created for personal use.",
-            ["About_GitHubButton"] = "GitHub",
+            ["About_GitHubButton"] = "Project on GitHub",
+            ["About_SourceRemontAud"] = "REMONT-AUD",
+            ["About_SourceMslWorks"] = "MSL Works",
+            ["About_SourceTeleservis"] = "TELESERVIS",
+            ["About_SourceMuuh"] = "MUUH",
             ["About_OpenLinkFailedLog"] = "Could not open the link: {0}",
             ["About_OpenLinkFailedCopied"] = "Could not open the link in a browser. The address has been copied to the clipboard:\n{0}",
             ["About_OpenLinkFailed"] = "Could not open the link in a browser. The address:\n{0}",

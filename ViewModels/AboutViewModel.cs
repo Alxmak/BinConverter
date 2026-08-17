@@ -132,6 +132,10 @@ namespace TweakFirmware.ViewModels
         private string BuildFeedbackStatusText() =>
             _clipboardFailed ? Strings.Get("Feedback_CopyFailedStatus") : "";
 
+        /// <summary>Адрес репозитория для подсказки к кнопке: куда она ведёт, видно
+        /// до нажатия, а не после.</summary>
+        public string RepositoryUrl => UpdateService.RepositoryUrl;
+
         /// <summary>
         /// Открывает страницу программы на GitHub. Адрес не вписан в разметку, а взят
         /// оттуда же, откуда проверка обновлений берёт репозиторий, — второй адрес
@@ -141,17 +145,25 @@ namespace TweakFirmware.ViewModels
         private System.Threading.Tasks.Task OpenGitHubAsync() => OpenLinkAsync(UpdateService.RepositoryUrl);
 
         /// <summary>
-        /// Открывает ссылку в браузере. Общий путь для кнопки «GitHub» и для ссылок
-        /// «Источников информации»: <see cref="Process.Start(ProcessStartInfo)"/> бросает
-        /// исключение, если браузер в системе не назначен, — а из обработчика ссылки оно
-        /// уходило наружу необработанным и валило программу.
+        /// Открывает ссылку в браузере. Общий путь для всех кнопок со ссылками
+        /// вкладки; адрес кнопок «Источников информации» приходит параметром команды
+        /// из разметки.
+        ///
+        /// <see cref="Process.Start(ProcessStartInfo)"/> бросает исключение, если
+        /// браузер в системе не назначен. Раньше он вызывался прямо из обработчика
+        /// ссылки и без перехвата — на такой машине нажатие на ссылку валило программу.
         ///
         /// Отказ не проглатывается молча: адрес уходит в буфер обмена и называется
         /// в сообщении, чтобы открыть его можно было откуда угодно. Тот же приём, что
         /// у письма без почтового клиента.
         /// </summary>
-        public async System.Threading.Tasks.Task OpenLinkAsync(string url)
+        [RelayCommand]
+        private async System.Threading.Tasks.Task OpenLinkAsync(string? url)
         {
+            // Пустой адрес — это опечатка в разметке, а не действие пользователя:
+            // открывать нечего, и сообщать не о чем.
+            if (string.IsNullOrWhiteSpace(url)) return;
+
             try
             {
                 Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
