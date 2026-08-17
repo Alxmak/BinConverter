@@ -19,44 +19,24 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Плитка со значком. Обычно вверху, а не по центру: в карточках с кнопками
+            <!-- Плитка со значком. Вверху, а не по центру: в карточках с кнопками
                  и ссылками содержимое высокое, и по центру значок оказывался бы
                  напротив пустого места, а не напротив заголовка. Сама плитка —
-                 общий контрол: такие же стоят в заголовках карточек «Настроек».
-
-                 Исключение — карточка без пояснения (в «Настройках» это тема и язык).
-                 Там текстовая колонка — одна строка названия в 20 точек против плитки
-                 в 46, и вверху название встаёт у самой макушки значка. Поэтому без
-                 пояснения обе колонки центруются: они всё равно остаются на одной
-                 линии друг с другом, а равнять их больше не с чем. -->
+                 общий контрол: такие же стоят в заголовках карточек «Настроек». -->
             <c:IconTile Grid.Column="0" Symbol="{Binding Symbol, ElementName=Root}"
-                        Accent="{Binding Accent, ElementName=Root}" Margin="0,0,16,0">
-                <c:IconTile.Style>
-                    <Style TargetType="c:IconTile">
-                        <Setter Property="VerticalAlignment" Value="Top"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </c:IconTile.Style>
-            </c:IconTile>
+                        Accent="{Binding Accent, ElementName=Root}"
+                        Margin="0,0,16,0" VerticalAlignment="Top"/>
 
-            <!-- Выравнивание то же, что у плитки, и по той же причине: высоту карточки
-                 задаёт самая высокая колонка (в «Обратной связи» это две кнопки справа),
-                 и текст, выровненный по центру, уезжал бы от значка к середине карточки. -->
-            <StackPanel Grid.Column="1">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
-                        <Setter Property="VerticalAlignment" Value="Top"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
+            <!-- Вверху, а не по центру, и по той же причине, что плитка: высоту
+                 карточки задаёт самая высокая колонка (в «Обратной связи» это две
+                 кнопки справа), и текст, выровненный по центру, уезжал бы от значка
+                 к середине карточки.
+
+                 По верху и в карточке без пояснения, где название — одна строка против
+                 плитки в 46 точек: короткая попытка центровать такие карточки сделала
+                 «Настройки» непохожими на «О программе», а вид у карточек должен быть
+                 один на обе вкладки. -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Top">
 
                 <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource TileCardTitle}"
                            TextWrapping="Wrap"/>

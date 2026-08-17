@@ -11,13 +11,17 @@
          Содержимое намеренно не сдвигается под заголовок: в карточках с папками поле
          пути стоит в той же колонке, что и на рабочих вкладках, и отступ под плитку
          увёл бы его в сторону от остальной программы. -->
+    <!-- Отступ от плитки до названия — 16, ровно как в IconCard: карточки обоих видов
+         стоят на одной странице друг под другом, и разница даже в две точки видна
+         как ступенька в столбце названий. -->
     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
         <c:IconTile Symbol="{Binding Symbol, ElementName=Root}" Accent="{Binding Accent, ElementName=Root}"
-                    Margin="0,0,14,0" VerticalAlignment="Center"/>
+                    Margin="0,0,16,0" VerticalAlignment="Top"/>
 
-        <!-- Стиль тот же, что у названия в IconCard: на одной странице стоят карточки
-             обоих видов, и названия у них обязаны быть одного кегля. -->
+        <!-- Стиль и выравнивание те же, что у названия в IconCard: на одной странице
+             стоят карточки обоих видов, и названия у них обязаны быть и одного кегля,
+             и на одной высоте. -->
         <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource TileCardTitle}"
-                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                   VerticalAlignment="Top" TextWrapping="Wrap"/>
     </StackPanel>
 </UserControl>
