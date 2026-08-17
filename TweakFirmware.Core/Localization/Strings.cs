@@ -323,6 +323,12 @@ namespace TweakFirmware.Core.Localization
             ["About_DevelopmentTitle"] = "Разработка",
             ["About_DevelopmentText"] = "Claude Code, ChatGPT и @alxmak.",
             ["About_PersonalUseText"] = "Программа создавалась для использования в личных целях.",
+            // Название сайта не переводится, но лежит здесь: литералов в разметке
+            // в проекте нет, и слово должно быть в одном месте (как Common_BetaBadge).
+            ["About_GitHubButton"] = "GitHub",
+            ["About_OpenLinkFailedLog"] = "Не удалось открыть ссылку: {0}",
+            ["About_OpenLinkFailedCopied"] = "Не удалось открыть ссылку в браузере. Адрес скопирован в буфер обмена:\n{0}",
+            ["About_OpenLinkFailed"] = "Не удалось открыть ссылку в браузере. Адрес:\n{0}",
             ["About_SourcesTitle"] = "Источники информации",
             ["About_SourcesDescription"] = "Форумы и сайты, материалы которых помогли в работе над программой.",
             ["About_VersionText"] = "Версия {0}",
@@ -767,6 +773,10 @@ namespace TweakFirmware.Core.Localization
             ["About_DevelopmentTitle"] = "Development",
             ["About_DevelopmentText"] = "Claude Code, ChatGPT and @alxmak.",
             ["About_PersonalUseText"] = "This program was created for personal use.",
+            ["About_GitHubButton"] = "GitHub",
+            ["About_OpenLinkFailedLog"] = "Could not open the link: {0}",
+            ["About_OpenLinkFailedCopied"] = "Could not open the link in a browser. The address has been copied to the clipboard:\n{0}",
+            ["About_OpenLinkFailed"] = "Could not open the link in a browser. The address:\n{0}",
             ["About_SourcesTitle"] = "Sources",
             ["About_SourcesDescription"] = "Forums and sites whose materials helped in the work on the program.",
             ["About_VersionText"] = "Version {0}",

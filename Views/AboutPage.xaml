@@ -90,6 +90,15 @@
             <c:IconCard Symbol="Code24" Accent="#16A34A"
                         Title="{loc:Loc About_DevelopmentTitle}"
                         Description="{loc:Loc About_DevelopmentText}">
+                <c:IconCard.Action>
+                    <!-- Адрес в кнопку не вписан: его отдаёт ViewModel оттуда же, откуда
+                         проверка обновлений берёт репозиторий. -->
+                    <Button Content="{loc:Loc About_GitHubButton}"
+                            Command="{Binding OpenGitHubCommand}"
+                            MinWidth="{StaticResource AboutButtonWidth}"
+                            MinHeight="{StaticResource ActionButtonMinHeight}"
+                            HorizontalContentAlignment="Center"/>
+                </c:IconCard.Action>
                 <c:IconCard.Extra>
                     <TextBlock Text="{loc:Loc About_PersonalUseText}" TextWrapping="Wrap" FontSize="13" Margin="0,4,0,0"
                                LineHeight="19" LineStackingStrategy="BlockLineHeight"

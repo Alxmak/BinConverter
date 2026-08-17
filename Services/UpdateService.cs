@@ -38,6 +38,13 @@ namespace TweakFirmware.Services
         private const string GitHubOwner = "Alxmak";
         private const string GitHubRepo = "BinConverter";
 
+        /// <summary>
+        /// Страница программы на GitHub — её открывает кнопка во вкладке «О программе».
+        /// Собрана из тех же owner и repo, что и запрос к API: вписанный рядом второй
+        /// адрес того же репозитория однажды разъехался бы с первым.
+        /// </summary>
+        public const string RepositoryUrl = "https://github.com/" + GitHubOwner + "/" + GitHubRepo;
+
         // Имя файла установщика без версии и расширения — должно совпадать
         // с OutputBaseFilename в installer/Setup.iss.
         private const string InstallerAssetPrefix = "TweakFirmwareSetup";

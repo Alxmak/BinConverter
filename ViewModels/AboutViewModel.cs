@@ -133,6 +133,40 @@ namespace TweakFirmware.ViewModels
             _clipboardFailed ? Strings.Get("Feedback_CopyFailedStatus") : "";
 
         /// <summary>
+        /// Открывает страницу программы на GitHub. Адрес не вписан в разметку, а взят
+        /// оттуда же, откуда проверка обновлений берёт репозиторий, — второй адрес
+        /// того же репозитория однажды разъехался бы с первым.
+        /// </summary>
+        [RelayCommand]
+        private System.Threading.Tasks.Task OpenGitHubAsync() => OpenLinkAsync(UpdateService.RepositoryUrl);
+
+        /// <summary>
+        /// Открывает ссылку в браузере. Общий путь для кнопки «GitHub» и для ссылок
+        /// «Источников информации»: <see cref="Process.Start(ProcessStartInfo)"/> бросает
+        /// исключение, если браузер в системе не назначен, — а из обработчика ссылки оно
+        /// уходило наружу необработанным и валило программу.
+        ///
+        /// Отказ не проглатывается молча: адрес уходит в буфер обмена и называется
+        /// в сообщении, чтобы открыть его можно было откуда угодно. Тот же приём, что
+        /// у письма без почтового клиента.
+        /// </summary>
+        public async System.Threading.Tasks.Task OpenLinkAsync(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Log(Strings.Format("About_OpenLinkFailedLog", ex.Message));
+
+                bool copied = ClipboardHelper.TryCopy(url);
+                await DialogService.ShowWarningAsync(Strings.Get("About_Title"),
+                    Strings.Format(copied ? "About_OpenLinkFailedCopied" : "About_OpenLinkFailed", url));
+            }
+        }
+
+        /// <summary>
         /// Открывает письмо в почтовом клиенте. Формы из трёх полей здесь больше нет:
         /// набранное в ней всё равно уезжало в то же письмо, которое человек дописывал
         /// и отправлял уже у себя в почте, — то есть форма была почтовым клиентом
