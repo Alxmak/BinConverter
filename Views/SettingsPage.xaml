@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
       Title="{loc:Loc Settings_Title}"
       ScrollViewer.CanContentScroll="False">
 
@@ -24,7 +25,7 @@
                  общего вида приложения. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_ThemeTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}"/>
                     <StackPanel Orientation="Horizontal">
                         <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light">
                             <Button.Style>
@@ -65,7 +66,7 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_LanguageTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="LocalLanguage24" Accent="#0D9488" Title="{loc:Loc Settings_LanguageTitle}"/>
                     <StackPanel Orientation="Horizontal">
                         <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
                             <Button.Style>
@@ -96,10 +97,15 @@
             <!-- Каждая папка — своя карточка со своим заголовком. Подписи «Папка назначения»
                  у строки нет: карточка уже названа по своей папке, а слева на её месте
                  стоит галочка — она и работает подписью строки. Колонка та же
-                 (LabelColumnWidth), поэтому поле стоит там же, где на рабочих вкладках. -->
+                 (LabelColumnWidth), поэтому поле стоит там же, где на рабочих вкладках.
+
+                 Значок у всех трёх один: это одна и та же настройка, только для разных
+                 разделов, и разные картинки заставляли бы искать между ними разницу,
+                 которой нет. Цвет при этом у каждой свой — иначе столбец из трёх
+                 одинаковых плиток выглядит недоделанным. -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_ConvertFolderTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#2F6FED" Title="{loc:Loc Settings_ConvertFolderTitle}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
@@ -120,7 +126,7 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_MergeFolderTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#16A34A" Title="{loc:Loc Settings_MergeFolderTitle}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
@@ -141,7 +147,7 @@
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_ExtractFolderTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#D97706" Title="{loc:Loc Settings_ExtractFolderTitle}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
@@ -162,7 +168,7 @@
 
             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Settings_ClearLogTitle}" Style="{StaticResource CardTitle}"/>
+                    <c:CardHeader Symbol="DocumentBulletList24" Accent="#64748B" Title="{loc:Loc Settings_ClearLogTitle}"/>
                     <TextBlock Text="{loc:Loc Settings_ClearLogDescription}" TextWrapping="Wrap"
                                FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,12"/>
                     <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"

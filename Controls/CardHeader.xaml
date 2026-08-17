@@ -1,0 +1,23 @@
+<UserControl x:Class="TweakFirmware.Controls.CardHeader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:TweakFirmware.Controls"
+             x:Name="Root">
+
+    <!-- Заголовок карточки со значком слева — для карточек, содержимое которых идёт
+         под заголовком во всю ширину («Настройки»). Тем и отличается от AboutCard,
+         где плитка стоит в своей колонке слева от всего содержимого сразу.
+
+         Содержимое намеренно не сдвигается под заголовок: в карточках с папками поле
+         пути стоит в той же колонке, что и на рабочих вкладках, и отступ под плитку
+         увёл бы его в сторону от остальной программы. -->
+    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+        <c:IconTile Symbol="{Binding Symbol, ElementName=Root}" Accent="{Binding Accent, ElementName=Root}"
+                    Margin="0,0,14,0" VerticalAlignment="Center"/>
+
+        <!-- Отступ снизу у CardTitle снимаем: расстояние до содержимого задаёт
+             сама строка заголовка, иначе оно сложилось бы дважды. -->
+        <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource CardTitle}"
+                   Margin="0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>
