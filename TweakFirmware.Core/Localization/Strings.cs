@@ -445,6 +445,11 @@ namespace TweakFirmware.Core.Localization
             ["Extract_AndroidDisplaySize"] = "Диагональ: {0}",
             ["Extract_FileSize"] = "Размер файла {0} ({1:N0} байт).",
             ["Extract_LayoutFound"] = "Опознана разметка {0}.",
+            // Файл под тем же путём подменили после разбора. Отдельное сообщение,
+            // а не молчаливый повтор разбора: человек мог и не заметить, что файл
+            // изменился, и должен знать, почему таблица разделов пропала.
+            ["Extract_SourceChangedTitle"] = "Файл изменился",
+            ["Extract_SourceChangedMessage"] = "Файл по этому пути изменился после разбора, и прежняя таблица разделов к нему больше не относится. Нажмите «Начать», чтобы разобрать его заново.",
             ["Extract_LayoutNotRecognised"] = "Разметку опознать не удалось.",
             ["Extract_PartsTotal"] = "Разделов в списке: {0}.",
             // Замечания к таблице разделов. Числа в шестнадцатеричном виде и без единиц:
@@ -895,6 +900,8 @@ namespace TweakFirmware.Core.Localization
             ["Extract_AndroidDisplaySize"] = "Display size: {0}",
             ["Extract_FileSize"] = "File size {0} ({1:N0} bytes).",
             ["Extract_LayoutFound"] = "Layout recognised: {0}.",
+            ["Extract_SourceChangedTitle"] = "The file has changed",
+            ["Extract_SourceChangedMessage"] = "The file at this path changed after the analysis, and the previous partition table no longer applies to it. Press \u201CStart\u201D to analyse it again.",
             ["Extract_LayoutNotRecognised"] = "The layout could not be recognised.",
             ["Extract_PartsTotal"] = "Partitions in the list: {0}.",
             ["Extract_IssuesFound"] = "Notes on the partition table: {0}",

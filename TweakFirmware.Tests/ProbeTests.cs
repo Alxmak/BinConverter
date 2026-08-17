@@ -133,6 +133,84 @@ namespace TweakFirmware.Tests
             Assert.False(probe.Resolved);
         }
 
+        // ============ FileProbeResult.SameFileAs ============
+        //
+        // Примета файла — размер и время записи. Проверяется она там, где результат
+        // долгого чтения переживает само чтение: разбор дампа во «Извлечении разделов»
+        // относится к содержимому, а не к имени. Путь при этом может не измениться —
+        // файл под ним перезаписывают снаружи программы, и таблица разделов от прежнего
+        // содержимого молча применилась бы к новому.
+
+        [Fact]
+        public void SameFileAs_TheSameFileMeasuredTwice_Matches()
+        {
+            string path = Path.Combine(_root, "same.bin");
+            File.WriteAllBytes(path, new byte[1024]);
+
+            Assert.True(FileProbe.Measure(path).SameFileAs(FileProbe.Measure(path)));
+        }
+
+        [Fact]
+        public void SameFileAs_FileOfAnotherSize_DoesNotMatch()
+        {
+            string path = Path.Combine(_root, "grown.bin");
+            File.WriteAllBytes(path, new byte[1024]);
+            var before = FileProbe.Measure(path);
+
+            File.WriteAllBytes(path, new byte[2048]);
+
+            Assert.False(FileProbe.Measure(path).SameFileAs(before));
+        }
+
+        /// <summary>
+        /// Главный случай: подменили содержимое, а размер остался прежним. Одного размера
+        /// для приметы не хватает — дампы одной модели сплошь одинаковой длины.
+        /// Время записи ставим сами: два быстрых подряд сохранения файловая система
+        /// может пометить одним и тем же временем, и тест зависел бы от её точности.
+        /// </summary>
+        [Fact]
+        public void SameFileAs_SameSizeButRewritten_DoesNotMatch()
+        {
+            string path = Path.Combine(_root, "swapped.bin");
+            File.WriteAllBytes(path, new byte[1024]);
+            var before = FileProbe.Measure(path);
+
+            var other = new byte[1024];
+            new Random(3).NextBytes(other);
+            File.WriteAllBytes(path, other);
+            File.SetLastWriteTimeUtc(path, before.LastWriteUtc.AddSeconds(5));
+
+            var after = FileProbe.Measure(path);
+
+            Assert.Equal(before.SizeBytes, after.SizeBytes);
+            Assert.False(after.SameFileAs(before));
+        }
+
+        [Fact]
+        public void SameFileAs_FileGoneFromDisk_DoesNotMatch()
+        {
+            string path = Path.Combine(_root, "vanished.bin");
+            File.WriteAllBytes(path, new byte[1024]);
+            var before = FileProbe.Measure(path);
+
+            File.Delete(path);
+
+            Assert.False(FileProbe.Measure(path).SameFileAs(before));
+        }
+
+        /// <summary>
+        /// «Нечего читать» — это не «то же самое»: два несуществующих файла совпадающими
+        /// не считаются, иначе проверка пропускала бы вперёд случай, когда осмотр
+        /// не удался ни тогда, ни сейчас.
+        /// </summary>
+        [Fact]
+        public void SameFileAs_TwoMissingFiles_DoNotMatch()
+        {
+            var missing = FileProbe.Measure(Path.Combine(_root, "нет-такого.bin"));
+
+            Assert.False(missing.SameFileAs(missing));
+        }
+
         private async Task<string> MakeChain(int totalBytes, long partSize)
         {
             string source = Path.Combine(_root, "chain-source.bin");

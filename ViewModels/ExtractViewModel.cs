@@ -282,6 +282,15 @@ namespace TweakFirmware.ViewModels
         private bool _keepAnalysisOnPathChange;
 
         /// <summary>
+        /// Каким файл был, когда его разбирали: размер и время записи. Нужны потому, что
+        /// смена пути — не единственный способ подсунуть другой дамп. Путь может остаться
+        /// прежним, а файл под ним — смениться: его перезаписали снаружи программы. Тогда
+        /// ничего не происходит (свойство не менялось, сброс не срабатывает), и таблица
+        /// разделов от прежнего содержимого молча применилась бы к новому.
+        /// </summary>
+        private FileProbeResult _analysedFile;
+
+        /// <summary>
         /// Пересчёт с задержкой — для набора пути с клавиатуры. Счётчик поколений
         /// отбрасывает устаревшие ответы: пока ждали или ходили на диск, путь мог
         /// смениться ещё раз, и старый размер затёр бы новый.
@@ -457,6 +466,10 @@ namespace TweakFirmware.ViewModels
             // остаётся размер файла, чтобы во время работы она не показывала подсказку
             // «выберите файл» при уже выбранном.
             ResetAnalysis();
+
+            // Примету файла запоминаем до чтения, а не после: разбор длится долго,
+            // и подмена в это время должна считаться подменой.
+            _analysedFile = FileProbe.Measure(SourcePath);
 
             try
             {
@@ -650,9 +663,31 @@ namespace TweakFirmware.ViewModels
 
         // ---------- действия над результатом ----------
 
+        /// <summary>
+        /// Тот ли это файл, который разбирали. Проверяется перед всем, что опирается
+        /// на таблицу разделов: путь мог остаться прежним, а содержимое смениться —
+        /// файл перезаписали снаружи программы, пока окно было открыто.
+        /// Само сравнение — <see cref="FileProbeResult.SameFileAs"/>.
+        /// </summary>
+        private async Task<bool> SourceStillMatchesAnalysisAsync()
+        {
+            if (FileProbe.Measure(SourcePath).SameFileAs(_analysedFile)) return true;
+
+            // Разбор больше не о чем: убираем его целиком, иначе на экране останется
+            // таблица, которой человек снова попробует воспользоваться.
+            ResetAnalysis();
+            ScheduleSourceInfoUpdate();
+
+            await DialogService.ShowWarningAsync(
+                Strings.Get("Extract_SourceChangedTitle"), Strings.Get("Extract_SourceChangedMessage"));
+            return false;
+        }
+
         [RelayCommand(CanExecute = nameof(CanExtract))]
         private async Task ExtractAsync()
         {
+            if (!await SourceStillMatchesAnalysisAsync()) return;
+
             var ct = BeginOperation(supportsPause: true);
 
             try
@@ -713,6 +748,8 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanUseResult))]
         private async Task SaveUdevAsync()
         {
+            if (!await SourceStillMatchesAnalysisAsync()) return;
+
             var dlg = new SaveFileDialog
             {
                 Filter = Strings.Get("Extract_UdevFilter"),
@@ -747,6 +784,8 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanSplitNand))]
         private async Task SplitNandAsync()
         {
+            if (!await SourceStillMatchesAnalysisAsync()) return;
+
             var ct = BeginOperation(supportsPause: true);
 
             try

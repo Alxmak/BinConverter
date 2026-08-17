@@ -8,6 +8,30 @@ namespace TweakFirmware.Core
     {
         public bool Exists { get; init; }
         public long SizeBytes { get; init; }
+
+        /// <summary>
+        /// Когда файл последний раз меняли. Вместе с размером служит приметой файла:
+        /// по ним видно, что под тем же путём лежит уже не то, что читали раньше.
+        /// </summary>
+        public DateTime LastWriteUtc { get; init; }
+
+        /// <summary>
+        /// Тот же ли это файл, что был осмотрен раньше. Нужно там, где результат долгого
+        /// чтения переживает само чтение: разбор дампа относится к содержимому, а не
+        /// к имени, и подменённый файл иначе нарезался бы по чужой таблице разделов.
+        /// Смена пути тут не помощник — файл можно перезаписать снаружи программы,
+        /// не трогая ни имени, ни папки.
+        ///
+        /// Сравниваются размер и время записи. Открывать файл ради этого нельзя — дампы
+        /// многогигабайтные, а на каждое нажатие кнопки их не перечитывают. Пара
+        /// «размер + время» подмену не докажет, но заметит: чтобы обмануть её, надо
+        /// подложить файл ровно того же размера и вернуть ему прежнее время записи.
+        ///
+        /// Несуществующий файл не совпадает ни с чем, включая другой несуществующий:
+        /// «нечего читать» — это не «то же самое».
+        /// </summary>
+        public bool SameFileAs(FileProbeResult other) =>
+            Exists && other.Exists && SizeBytes == other.SizeBytes && LastWriteUtc == other.LastWriteUtc;
     }
 
     /// <summary>
@@ -35,7 +59,7 @@ namespace TweakFirmware.Core
             {
                 var info = new FileInfo(path);
                 return info.Exists
-                    ? new FileProbeResult { Exists = true, SizeBytes = info.Length }
+                    ? new FileProbeResult { Exists = true, SizeBytes = info.Length, LastWriteUtc = info.LastWriteTimeUtc }
                     : default;
             }
             catch
