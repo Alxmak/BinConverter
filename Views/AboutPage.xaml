@@ -169,8 +169,14 @@
             <c:IconCard Symbol="Globe24" Accent="#0D9488"
                         Title="{loc:Loc About_SourcesTitle}"
                         Description="{loc:Loc About_SourcesDescription}">
-                <c:IconCard.Extra>
-                    <StackPanel Margin="0,10,0,0">
+                <!-- Ссылки справа, как действия остальных карточек: столбец действий
+                     на вкладке один, и список, оставленный под пояснением, выбивался
+                     из него единственный. Внутри столбца ссылки выровнены по левому
+                     краю — так у них общее начало, а не рваный левый край. -->
+                <c:IconCard.Action>
+                    <!-- Ширина та же, что у кнопок: столбец действий на вкладке общий,
+                         и блок уже кнопок начинался бы правее их левого края. -->
+                    <StackPanel MinWidth="{StaticResource AboutButtonWidth}">
                         <TextBlock FontSize="13" Margin="0,0,0,6">
                             <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
                         </TextBlock>
@@ -186,7 +192,7 @@
                             <Hyperlink NavigateUri="http://muuh.ru" RequestNavigate="Hyperlink_RequestNavigate">http://muuh.ru</Hyperlink>
                         </TextBlock>
                     </StackPanel>
-                </c:IconCard.Extra>
+                </c:IconCard.Action>
             </c:IconCard>
 
         </StackPanel>
