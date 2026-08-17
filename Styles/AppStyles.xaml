@@ -85,6 +85,7 @@
         <Setter Property="Padding" Value="18,9"/>
         <Setter Property="MinHeight" Value="{StaticResource ActionButtonMinHeight}"/>
         <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -131,120 +132,6 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Подпись группы карточек на странице. Кегль и приглушённость те же, что
-         у заголовков групп в меню слева: на экране они стоят рядом, в одной строке
-         взгляда. Прописные буквы — в самом тексте словаря, как и у меню: регистр
-         WPF не меняет, а заводить ради этого преобразователь не из чего. -->
-    <Style x:Key="GroupCaption" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
-        <Setter Property="FontSize" Value="11"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Opacity" Value="0.7"/>
-        <Setter Property="Margin" Value="4,12,0,6"/>
-    </Style>
-
-    <!-- Карточка-группа: те же рамка и скругление, что у обычной карточки, но без
-         внутреннего отступа — его держат сами строки. Иначе разделитель между ними
-         не доходил бы до краёв и висел бы обрубком посередине. -->
-    <Style x:Key="GroupCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
-        <Setter Property="Padding" Value="0"/>
-    </Style>
-
-    <!-- Волосяная черта между строками группы. Тот же цвет, что у рамки карточки:
-         это её продолжение внутрь, а не отдельная линия. -->
-    <Style x:Key="RowDivider" TargetType="Border">
-        <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-    </Style>
-
-    <!-- Переключатель из нескольких вариантов: общая дорожка, внутри выбранный вариант
-         приподнят плашкой. Вместо ряда отдельных кнопок, у которых выбранная была
-         обведена рамкой: рамка говорит «сюда можно нажать», а не «это выбрано», и по
-         ряду одинаковых кнопок не читалось, что вариант тут ровно один.
-
-         Дорожка — полупрозрачный чёрный: он темнее фона и в светлой теме, и в тёмной,
-         поэтому пары значений под каждую тему не нужно. А вот плашке одного значения
-         не хватило: она должна быть светлее дорожки в обеих темах, а полупрозрачный
-         белый, годный для светлой, в тёмной даёт почти белый прямоугольник. Поэтому
-         у неё кисть темы — ControlSolidFillColorDefault: белая в светлой, #454545
-         в тёмной. -->
-    <Style x:Key="SegmentedTrack" TargetType="Border">
-        <Setter Property="Background" Value="#14000000"/>
-        <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="Padding" Value="3"/>
-    </Style>
-
-    <!-- Один вариант в такой дорожке. Выбранное состояние задаётся снаружи: разметка
-         добавляет свой DataTrigger и меняет им Background, BorderBrush и Foreground —
-         шаблон берёт их привязками. Триггеры производного стиля срабатывают после
-         здешних, поэтому наведение на выбранный вариант его подсветку не сбивает.
-
-         Насыщенность у подписи одна на оба состояния, хотя на выбранной хотелось бы
-         жирнее: подписи разной длины меняли бы ширину дорожки, а она стоит по правому
-         краю карточки — при каждом нажатии её левый край дёргался бы на пару точек. -->
-    <!-- Шаблон плашки — общий у варианта в дорожке и у одиночной кнопки: скругление,
-         рамка и отступы должны совпадать, иначе в одной колонке страницы окажутся
-         две почти одинаковые, но разные формы. Цвета шаблон не задаёт — их приносит
-         стиль привязками. -->
-    <ControlTemplate x:Key="PillButtonTemplate" TargetType="Button">
-        <Border x:Name="Pill" Background="{TemplateBinding Background}"
-                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                CornerRadius="8" SnapsToDevicePixels="True">
-            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                              Margin="{TemplateBinding Padding}"/>
-        </Border>
-    </ControlTemplate>
-
-    <Style x:Key="SegmentedButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Padding" Value="14,7"/>
-        <Setter Property="Template" Value="{StaticResource PillButtonTemplate}"/>
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#0F000000"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
-    <!-- Одиночное действие в строке настроек («Очистить журнал»). Выглядит как выбранный
-         вариант дорожки: та же плашка, та же кисть темы под ней. Иначе в правой колонке
-         страницы соседствовали бы переключатели своего вида и кнопка библиотечного,
-         и колонка читалась бы собранной из разных программ.
-
-         Не производный стиль от SegmentedButton: там наведение делает фон полупрозрачным,
-         а триггер базового стиля перебивает setter производного — пришлось бы повторять
-         в производном весь набор состояний. Общее у них — шаблон, он и вынесен.
-
-         Наведение меняет рамку, а не заливку: заливка тут кисть темы (в светлой теме
-         белая), и любой её сдвиг в светлой теме на белой карточке не виден. Серый
-         полупрозрачный, наоборот, читается в обеих темах. -->
-    <Style x:Key="PillButton" TargetType="Button">
-        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-        <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Padding" Value="14,7"/>
-        <Setter Property="Template" Value="{StaticResource PillButtonTemplate}"/>
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="BorderBrush" Value="#40808080"/>
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="BorderBrush" Value="#59808080"/>
-                <Setter Property="Opacity" Value="0.9"/>
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Opacity" Value="0.5"/>
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
     <!-- Маленькая кнопка из одного значка — сейчас это копирование хэша в окне с итогом.
 
          Своя раскраска, а не библиотечная, потому что палитра WPF-UI для такой кнопки
@@ -262,6 +149,7 @@
     <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">

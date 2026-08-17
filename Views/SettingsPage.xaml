@@ -7,217 +7,193 @@
       Title="{loc:Loc Settings_Title}"
       ScrollViewer.CanContentScroll="False">
 
+    <Page.Resources>
+        <!-- Пункт 11: голубая рамка вокруг выбранного варианта -->
+        <Style x:Key="OptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
-            <!-- Настройки собраны группами: подпись, под ней одна карточка, внутри неё
-                 строки через волосяную черту. Раньше каждая настройка была отдельной
-                 карточкой, и страница читалась плоским списком из шести равнозначных
-                 плиток — по нему не видно, что тема и язык об одном, а три папки
-                 об одном и том же для разных разделов.
+            <!-- Карточки со значком в плитке — та же IconCard, что во вкладке
+                 «О программе»: плитка и название слева, действие справа.
 
-                 Подписи групп — те же прописные, что у групп в меню слева: страница
-                 и меню видны одновременно, и разнобой в них заметен сразу. -->
+                 Когда-то здесь стоял CardControl из WPF-UI, и убрали его как раз за
+                 такое расположение: тогда так не выглядела больше ни одна вкладка
+                 программы, и «Настройки» выбивались из общего вида. Теперь так собрана
+                 «О программе» — и выбивались бы уже «Настройки», оставь мы прежний вид.
 
-            <TextBlock Text="{loc:Loc Settings_AppearanceGroup}" Style="{StaticResource GroupCaption}"/>
-            <Border Style="{StaticResource GroupCardStyle}">
-                <StackPanel>
-                    <c:SettingsRow Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}">
-                        <c:SettingsRow.Action>
-                            <Border Style="{StaticResource SegmentedTrack}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light" Margin="0,0,2,0">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding CurrentTheme}" Value="Light">
-                                                        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <Button Content="{loc:Loc Settings_ThemeDark}" Command="{Binding SetThemeCommand}" CommandParameter="Dark" Margin="0,0,2,0">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding CurrentTheme}" Value="Dark">
-                                                        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding CurrentTheme}" Value="System">
-                                                        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-                        </c:SettingsRow.Action>
-                    </c:SettingsRow>
+                 Карточки с папками устроены иначе — заголовок сверху, строка пути под
+                 ним во всю ширину; почему, сказано перед ними. -->
+            <c:IconCard Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}">
+                <c:IconCard.Action>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Light">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="{loc:Loc Settings_ThemeDark}" Command="{Binding SetThemeCommand}" CommandParameter="Dark">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Dark">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <!-- У последней кнопки ряда отступ справа снят: у OptionButton он общий,
+                             а ряд теперь прижат к правому краю карточки, и лишние восемь точек
+                             отодвинули бы его от края — кнопки перестали бы стоять по одной
+                             линии с кнопками соседних карточек. -->
+                        <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System" Margin="0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="System">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </c:IconCard.Action>
+            </c:IconCard>
 
-                    <Border Style="{StaticResource RowDivider}"/>
+            <c:IconCard Symbol="LocalLanguage24" Accent="#0D9488"
+                        Title="{loc:Loc Settings_LanguageTitle}"
+                        Description="{loc:Loc Settings_LanguageDescription}">
+                <c:IconCard.Action>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedLanguage}" Value="ru">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <!-- Отступ справа снят по той же причине, что у «Как в системе». -->
+                        <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en" Margin="0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedLanguage}" Value="en">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </c:IconCard.Action>
+            </c:IconCard>
 
-                    <c:SettingsRow Symbol="LocalLanguage24" Accent="#0D9488" Title="{loc:Loc Settings_LanguageTitle}">
-                        <c:SettingsRow.Action>
-                            <Border Style="{StaticResource SegmentedTrack}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru" Margin="0,0,2,0">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedLanguage}" Value="ru">
-                                                        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource SegmentedButton}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedLanguage}" Value="en">
-                                                        <Setter Property="Background" Value="{DynamicResource ControlSolidFillColorDefaultBrush}"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-                        </c:SettingsRow.Action>
-                    </c:SettingsRow>
-                </StackPanel>
-            </Border>
+            <!-- Каждая папка — своя карточка. Подписи «Папка назначения» у строки нет:
+                 карточка уже названа по своей папке, а слева на её месте стоит галочка —
+                 она и работает подписью строки.
 
-            <!-- Папки: подписи «Папка назначения» у строки нет — строка уже названа
-                 по своей папке, а слева на её месте стоит галочка, она и работает
-                 подписью. Ширина колонки галочки «по тексту», а не общая
+                 Строка стоит под названием, в той же колонке, что и оно, — то есть
+                 карточкой со значком, а не заголовком и содержимым во всю ширину.
+                 Ширина колонки галочки при этом стала «по тексту» вместо общей
                  LabelColumnWidth: та держалась ради совпадения с полями на рабочих
-                 вкладках, но здесь строка сдвинута под название и с ними всё равно
-                 не на одной линии.
+                 вкладках, но после сдвига под название строка с ними всё равно уже
+                 не на одной линии. Заодно это и вернуло полю пути ширину: отступ под
+                 плитку съедает 62 точки, а колонка галочки после укорочения подписи
+                 отдаёт примерно столько же, и самый длинный путь по-прежнему виден
+                 целиком.
 
                  Значок у всех трёх один: это одна и та же настройка, только для разных
                  разделов, и разные картинки заставляли бы искать между ними разницу,
                  которой нет. Цвет при этом у каждой свой — иначе столбец из трёх
                  одинаковых плиток выглядит недоделанным. -->
-            <TextBlock Text="{loc:Loc Settings_FoldersGroup}" Style="{StaticResource GroupCaption}"/>
-            <Border Style="{StaticResource GroupCardStyle}">
-                <StackPanel>
-                    <c:SettingsRow Symbol="FolderArrowRight24" Accent="#2F6FED" Title="{loc:Loc Settings_ConvertFolderTitle}">
-                        <c:SettingsRow.Extra>
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
-                                          Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"/>
-                                <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                            PlaceholderText="{loc:Loc Common_NoFolderSelected}"
-                                            IsEnabled="{Binding CanEditConvertPath}"
-                                            AllowDrop="True" PreviewDragOver="ConvertFolderBox_DragOver" PreviewDrop="ConvertFolderBox_Drop"/>
-                                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
-                                        IsEnabled="{Binding CanEditConvertPath}"/>
-                            </Grid>
-                        </c:SettingsRow.Extra>
-                    </c:SettingsRow>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#2F6FED" Title="{loc:Loc Settings_ConvertFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
+                                  Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultConvertPath}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ConvertFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    IsEnabled="{Binding CanEditConvertPath}"
+                                    AllowDrop="True" PreviewDragOver="ConvertFolderBox_DragOver" PreviewDrop="ConvertFolderBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
+                                IsEnabled="{Binding CanEditConvertPath}"/>
+                    </Grid>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-                    <Border Style="{StaticResource RowDivider}"/>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#16A34A" Title="{loc:Loc Settings_MergeFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
+                                  Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    IsEnabled="{Binding CanEditMergePath}"
+                                    AllowDrop="True" PreviewDragOver="MergeFolderBox_DragOver" PreviewDrop="MergeFolderBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
+                                IsEnabled="{Binding CanEditMergePath}"/>
+                    </Grid>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-                    <c:SettingsRow Symbol="FolderArrowRight24" Accent="#16A34A" Title="{loc:Loc Settings_MergeFolderTitle}">
-                        <c:SettingsRow.Extra>
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
-                                          Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultMergePath}"/>
-                                <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding MergeFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                            PlaceholderText="{loc:Loc Common_NoFolderSelected}"
-                                            IsEnabled="{Binding CanEditMergePath}"
-                                            AllowDrop="True" PreviewDragOver="MergeFolderBox_DragOver" PreviewDrop="MergeFolderBox_Drop"/>
-                                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
-                                        IsEnabled="{Binding CanEditMergePath}"/>
-                            </Grid>
-                        </c:SettingsRow.Extra>
-                    </c:SettingsRow>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#D97706" Title="{loc:Loc Settings_ExtractFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
+                                  Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultExtractPath}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ExtractFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    IsEnabled="{Binding CanEditExtractPath}"
+                                    AllowDrop="True" PreviewDragOver="ExtractFolderBox_DragOver" PreviewDrop="ExtractFolderBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseExtractFolderCommand}"
+                                IsEnabled="{Binding CanEditExtractPath}"/>
+                    </Grid>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-                    <Border Style="{StaticResource RowDivider}"/>
-
-                    <c:SettingsRow Symbol="FolderArrowRight24" Accent="#D97706" Title="{loc:Loc Settings_ExtractFolderTitle}">
-                        <c:SettingsRow.Extra>
-                            <Grid Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox Grid.Column="0" Style="{StaticResource CardCheckBox}" VerticalAlignment="Center"
-                                          Content="{loc:Loc Settings_UseDefaultPathCheckbox}" IsChecked="{Binding UseDefaultExtractPath}"/>
-                                <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding ExtractFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
-                                            PlaceholderText="{loc:Loc Common_NoFolderSelected}"
-                                            IsEnabled="{Binding CanEditExtractPath}"
-                                            AllowDrop="True" PreviewDragOver="ExtractFolderBox_DragOver" PreviewDrop="ExtractFolderBox_Drop"/>
-                                <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseExtractFolderCommand}"
-                                        IsEnabled="{Binding CanEditExtractPath}"/>
-                            </Grid>
-                        </c:SettingsRow.Extra>
-                    </c:SettingsRow>
-                </StackPanel>
-            </Border>
-
-            <TextBlock Text="{loc:Loc Settings_MaintenanceGroup}" Style="{StaticResource GroupCaption}"/>
-            <Border Style="{StaticResource GroupCardStyle}" Margin="0,0,0,20">
-                <c:SettingsRow Symbol="DocumentBulletList24" Accent="#64748B"
-                               Title="{loc:Loc Settings_ClearLogTitle}">
-                    <c:SettingsRow.Action>
-                        <!-- Три действия на общей дорожке, как варианты «Внешнего вида».
-                             Подписи те же, что у карточки «Журнал» на рабочих вкладках:
-                             журнал один на всю программу, и кнопки к нему должны
-                             называться одинаково, где бы они ни стояли.
-
-                             Пояснения под названием нет: строка про то, что очистка
-                             затрагивает и файл на диске, объясняла ровно одну кнопку
-                             из трёх, а после очистки об этом и так говорит окно.
-
-                             Высоту не задаём: она набирается так же, как у вариантов
-                             в дорожке, — иначе строка журнала оказалась бы выше соседних. -->
-                        <Border Style="{StaticResource SegmentedTrack}">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}"
-                                        Style="{StaticResource PillButton}" Margin="0,0,2,0"/>
-                                <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}"
-                                        Style="{StaticResource PillButton}" Margin="0,0,2,0"/>
-                                <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}"
-                                        Style="{StaticResource PillButton}"/>
-                            </StackPanel>
-                        </Border>
-                    </c:SettingsRow.Action>
-                </c:SettingsRow>
-            </Border>
+            <!-- Пояснение отдано карточке свойством Description, а не поставлено строкой
+                 под заголовком: так оно встаёт в ту же колонку, что и название, а не под
+                 плиткой со значком. -->
+            <c:IconCard Symbol="DocumentBulletList24" Accent="#64748B"
+                        Title="{loc:Loc Settings_ClearLogTitle}"
+                        Description="{loc:Loc Settings_ClearLogDescription}">
+                <c:IconCard.Action>
+                    <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
+                            MinHeight="{StaticResource ActionButtonMinHeight}"/>
+                </c:IconCard.Action>
+            </c:IconCard>
         </StackPanel>
     </ScrollViewer>
 </Page>

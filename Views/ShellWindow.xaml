@@ -33,6 +33,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="10,7"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FontFamily" Value="Cambria, Georgia, Times New Roman"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -99,7 +100,7 @@
                          нет очевидного имени, а ☰ есть в системных шрифтах Windows. -->
                     <Button x:Name="MenuToggleButton" Content="&#x2630;" FontSize="15"
                             Background="Transparent" BorderThickness="0" Padding="10,4" Margin="6,0,0,0"
-                            ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
+                            Cursor="Hand" ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
                             Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"
                             MouseLeave="MenuToggle_MouseLeave"/>
                 </StackPanel>
