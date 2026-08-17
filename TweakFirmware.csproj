@@ -11,9 +11,9 @@
     <LangVersion>latest</LangVersion>
     <ApplicationTitle>Tweak Firmware</ApplicationTitle>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-    <Version>2.8.20</Version>
-    <AssemblyVersion>2.8.20.0</AssemblyVersion>
-    <FileVersion>2.8.20.0</FileVersion>
+    <Version>2.8.21</Version>
+    <AssemblyVersion>2.8.21.0</AssemblyVersion>
+    <FileVersion>2.8.21.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
