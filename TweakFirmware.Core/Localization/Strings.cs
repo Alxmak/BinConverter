@@ -294,7 +294,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_LanguageTitle"] = "Язык интерфейса",
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
-            ["Settings_UseDefaultPathCheckbox"] = "Путь по умолчанию",
+            ["Settings_UseDefaultPathCheckbox"] = "По умолчанию",
             ["Settings_ChooseConvertFolderTitle"] = "Папка по умолчанию для конвертирования",
             ["Settings_ChooseMergeFolderTitle"] = "Папка по умолчанию для сборки файла",
             ["Settings_ChooseExtractFolderTitle"] = "Папка по умолчанию для извлечения разделов",
@@ -740,7 +740,7 @@ namespace TweakFirmware.Core.Localization
             // ещё не выбрал, — «Русский» ему понятнее, чем «Russian».
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
-            ["Settings_UseDefaultPathCheckbox"] = "Default path",
+            ["Settings_UseDefaultPathCheckbox"] = "Default",
             ["Settings_ChooseConvertFolderTitle"] = "Default folder for conversion",
             ["Settings_ChooseMergeFolderTitle"] = "Default folder for merging",
             ["Settings_ChooseExtractFolderTitle"] = "Default folder for partition extraction",

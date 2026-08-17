@@ -8,9 +8,9 @@ using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
 namespace TweakFirmware.Controls
 {
     /// <summary>
-    /// Значок в цветной плитке. Используется в карточках «О программе»
-    /// (<see cref="IconCard"/>) и в заголовках карточек «Настроек»
-    /// (<see cref="CardHeader"/>) — вид у плитки один на обе вкладки.
+    /// Значок в цветной плитке — деталь карточки <see cref="IconCard"/>. Отдельным
+    /// контролом, потому что величины внутри связаны между собой: размер плитки,
+    /// скругление, кегль значка и прозрачность заливки подобраны друг под друга.
     /// </summary>
     public partial class IconTile : UserControl
     {

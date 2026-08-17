@@ -42,8 +42,10 @@ CommunityToolkit.Mvvm 8.4.2. Интерфейс на русском и англ�
 **Общие детали интерфейса не копируются, а переиспользуются:**
 `Controls/LogCard` (карточка журнала), `Controls/ProgressRow` (полоса прогресса),
 `Controls/OperationBar` (запуск/пауза/отмена), `Controls/HintBanner` (подсказка
-вместо данных в «Общей информации»), `Controls/AboutCard` (строка вкладки
-«О программе»), `Controls/Badge` (плашка: номер версии, «Beta» у группы меню),
+вместо данных в «Общей информации»), `Controls/IconCard` (карточка со значком
+в цветной плитке — из неё собраны «О программе» и «Настройки») вместе с
+`Controls/IconTile` (сама плитка), `Controls/Badge` (плашка: номер версии,
+«Beta» у группы меню),
 стили из `Styles/AppStyles.xaml`
 (`CardStyle`, `CardTitle`, `RowGrid`, `RowLabel`, `LabelColumnWidth`,
 `SolidButtonStyle`, `PauseButtonStyle`, `CardCheckBox`).

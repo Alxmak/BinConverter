@@ -103,21 +103,29 @@
                 </c:IconCard.Action>
             </c:IconCard>
 
-            <!-- Каждая папка — своя карточка со своим заголовком. Подписи «Папка назначения»
-                 у строки нет: карточка уже названа по своей папке, а слева на её месте
-                 стоит галочка — она и работает подписью строки. Колонка та же
-                 (LabelColumnWidth), поэтому поле стоит там же, где на рабочих вкладках.
+            <!-- Каждая папка — своя карточка. Подписи «Папка назначения» у строки нет:
+                 карточка уже названа по своей папке, а слева на её месте стоит галочка —
+                 она и работает подписью строки.
+
+                 Строка стоит под названием, в той же колонке, что и оно, — то есть
+                 карточкой со значком, а не заголовком и содержимым во всю ширину.
+                 Ширина колонки галочки при этом стала «по тексту» вместо общей
+                 LabelColumnWidth: та держалась ради совпадения с полями на рабочих
+                 вкладках, но после сдвига под название строка с ними всё равно уже
+                 не на одной линии. Заодно это и вернуло полю пути ширину: отступ под
+                 плитку съедает 62 точки, а колонка галочки после укорочения подписи
+                 отдаёт примерно столько же, и самый длинный путь по-прежнему виден
+                 целиком.
 
                  Значок у всех трёх один: это одна и та же настройка, только для разных
                  разделов, и разные картинки заставляли бы искать между ними разницу,
                  которой нет. Цвет при этом у каждой свой — иначе столбец из трёх
                  одинаковых плиток выглядит недоделанным. -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#2F6FED" Title="{loc:Loc Settings_ConvertFolderTitle}"/>
-                    <Grid>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#2F6FED" Title="{loc:Loc Settings_ConvertFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -130,15 +138,14 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseConvertFolderCommand}"
                                 IsEnabled="{Binding CanEditConvertPath}"/>
                     </Grid>
-                </StackPanel>
-            </Border>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#16A34A" Title="{loc:Loc Settings_MergeFolderTitle}"/>
-                    <Grid>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#16A34A" Title="{loc:Loc Settings_MergeFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -151,15 +158,14 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseMergeFolderCommand}"
                                 IsEnabled="{Binding CanEditMergePath}"/>
                     </Grid>
-                </StackPanel>
-            </Border>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <c:CardHeader Symbol="FolderArrowRight24" Accent="#D97706" Title="{loc:Loc Settings_ExtractFolderTitle}"/>
-                    <Grid>
+            <c:IconCard Symbol="FolderArrowRight24" Accent="#D97706" Title="{loc:Loc Settings_ExtractFolderTitle}">
+                <c:IconCard.Extra>
+                    <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -172,8 +178,8 @@
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseExtractFolderCommand}"
                                 IsEnabled="{Binding CanEditExtractPath}"/>
                     </Grid>
-                </StackPanel>
-            </Border>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
             <!-- Пояснение отдано карточке свойством Description, а не поставлено строкой
                  под заголовком: так оно встаёт в ту же колонку, что и название, а не под
