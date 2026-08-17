@@ -195,7 +195,11 @@
                                Title="{loc:Loc Settings_ClearLogTitle}"
                                Description="{loc:Loc Settings_ClearLogDescription}">
                     <c:SettingsRow.Action>
+                        <!-- Плашка, как у вариантов «Внешнего вида»: в правой колонке
+                             страницы всё действие одного вида. Высота — общая для кнопок
+                             действия, чтобы строка журнала не оказалась ниже соседних. -->
                         <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
+                                Style="{StaticResource PillButton}"
                                 MinHeight="{StaticResource ActionButtonMinHeight}"/>
                     </c:SettingsRow.Action>
                 </c:SettingsRow>
