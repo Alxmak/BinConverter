@@ -19,13 +19,18 @@
     <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
-            <!-- Карточки как на рабочих вкладках: заголовок сверху, содержимое под ним.
-                 Раньше здесь был CardControl из WPF-UI, но он всегда разносит заголовок
-                 влево, а содержимое вправо, — из-за чего Настройки выбивались из
-                 общего вида приложения. -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <c:CardHeader Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}"/>
+            <!-- Карточки со значком в плитке — та же IconCard, что во вкладке
+                 «О программе»: плитка и название слева, действие справа.
+
+                 Когда-то здесь стоял CardControl из WPF-UI, и убрали его как раз за
+                 такое расположение: тогда так не выглядела больше ни одна вкладка
+                 программы, и «Настройки» выбивались из общего вида. Теперь так собрана
+                 «О программе» — и выбивались бы уже «Настройки», оставь мы прежний вид.
+
+                 Карточки с папками устроены иначе — заголовок сверху, строка пути под
+                 ним во всю ширину; почему, сказано перед ними. -->
+            <c:IconCard Symbol="PaintBrush24" Accent="#6366F1" Title="{loc:Loc Settings_ThemeTitle}">
+                <c:IconCard.Action>
                     <StackPanel Orientation="Horizontal">
                         <Button Content="{loc:Loc Settings_ThemeLight}" Command="{Binding SetThemeCommand}" CommandParameter="Light">
                             <Button.Style>
@@ -49,7 +54,11 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System">
+                        <!-- У последней кнопки ряда отступ справа снят: у OptionButton он общий,
+                             а ряд теперь прижат к правому краю карточки, и лишние восемь точек
+                             отодвинули бы его от края — кнопки перестали бы стоять по одной
+                             линии с кнопками соседних карточек. -->
+                        <Button Content="{loc:Loc Settings_ThemeSystem}" Command="{Binding SetThemeCommand}" CommandParameter="System" Margin="0">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                     <Style.Triggers>
@@ -61,12 +70,11 @@
                             </Button.Style>
                         </Button>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </c:IconCard.Action>
+            </c:IconCard>
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-                    <c:CardHeader Symbol="LocalLanguage24" Accent="#0D9488" Title="{loc:Loc Settings_LanguageTitle}"/>
+            <c:IconCard Symbol="LocalLanguage24" Accent="#0D9488" Title="{loc:Loc Settings_LanguageTitle}">
+                <c:IconCard.Action>
                     <StackPanel Orientation="Horizontal">
                         <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">
                             <Button.Style>
@@ -79,7 +87,8 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en">
+                        <!-- Отступ справа снят по той же причине, что у «Как в системе». -->
+                        <Button Content="{loc:Loc Settings_LanguageEn}" Command="{Binding SetLanguageCommand}" CommandParameter="en" Margin="0">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource OptionButton}">
                                     <Style.Triggers>
@@ -91,8 +100,8 @@
                             </Button.Style>
                         </Button>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </c:IconCard.Action>
+            </c:IconCard>
 
             <!-- Каждая папка — своя карточка со своим заголовком. Подписи «Папка назначения»
                  у строки нет: карточка уже названа по своей папке, а слева на её месте
@@ -166,15 +175,17 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
-                <StackPanel>
-                    <c:CardHeader Symbol="DocumentBulletList24" Accent="#64748B" Title="{loc:Loc Settings_ClearLogTitle}"/>
-                    <TextBlock Text="{loc:Loc Settings_ClearLogDescription}" TextWrapping="Wrap"
-                               FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,12"/>
+            <!-- Пояснение отдано карточке свойством Description, а не поставлено строкой
+                 под заголовком: так оно встаёт в ту же колонку, что и название, а не под
+                 плиткой со значком. -->
+            <c:IconCard Symbol="DocumentBulletList24" Accent="#64748B"
+                        Title="{loc:Loc Settings_ClearLogTitle}"
+                        Description="{loc:Loc Settings_ClearLogDescription}">
+                <c:IconCard.Action>
                     <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
-                            HorizontalAlignment="Left"/>
-                </StackPanel>
-            </Border>
+                            MinHeight="{StaticResource ActionButtonMinHeight}"/>
+                </c:IconCard.Action>
+            </c:IconCard>
         </StackPanel>
     </ScrollViewer>
 </Page>

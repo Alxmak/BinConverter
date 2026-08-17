@@ -22,7 +22,7 @@
         <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
 
             <!-- Шапка тоже карточка: раньше она висела «в воздухе» над остальными
-                 и выбивалась из ряда. Значок и отступы — как у плитки в AboutCard,
+                 и выбивалась из ряда. Значок и отступы — как у плитки в IconCard,
                  чтобы заголовок программы стоял на одной вертикали с заголовками
                  карточек под ним. -->
             <Border Style="{StaticResource CardStyle}">
@@ -59,17 +59,17 @@
                 </StackPanel>
             </Border>
 
-            <c:AboutCard Symbol="CloudArrowDown24" Accent="#2F6FED"
-                         Title="{loc:Loc About_UpdatesTitle}"
-                         Description="{loc:Loc About_UpdatesDescription}">
-                <c:AboutCard.Action>
+            <c:IconCard Symbol="CloudArrowDown24" Accent="#2F6FED"
+                        Title="{loc:Loc About_UpdatesTitle}"
+                        Description="{loc:Loc About_UpdatesDescription}">
+                <c:IconCard.Action>
                     <Button Content="{loc:Loc About_CheckUpdatesButton}"
                             Command="{Binding CheckForUpdatesCommand}"
                             MinWidth="{StaticResource AboutButtonWidth}"
                             MinHeight="{StaticResource ActionButtonMinHeight}"
                             HorizontalContentAlignment="Center"/>
-                </c:AboutCard.Action>
-                <c:AboutCard.Extra>
+                </c:IconCard.Action>
+                <c:IconCard.Extra>
                     <!-- Итог последней проверки. Пока не нажимали — строки нет,
                          иначе она занимала бы высоту пустым местом. -->
                     <TextBlock Text="{Binding UpdateStatusText}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
@@ -84,18 +84,18 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </c:AboutCard.Extra>
-            </c:AboutCard>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-            <c:AboutCard Symbol="Code24" Accent="#16A34A"
-                         Title="{loc:Loc About_DevelopmentTitle}"
-                         Description="{loc:Loc About_DevelopmentText}">
-                <c:AboutCard.Extra>
+            <c:IconCard Symbol="Code24" Accent="#16A34A"
+                        Title="{loc:Loc About_DevelopmentTitle}"
+                        Description="{loc:Loc About_DevelopmentText}">
+                <c:IconCard.Extra>
                     <TextBlock Text="{loc:Loc About_PersonalUseText}" TextWrapping="Wrap" FontSize="13" Margin="0,4,0,0"
                                LineHeight="19" LineStackingStrategy="BlockLineHeight"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                </c:AboutCard.Extra>
-            </c:AboutCard>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
             <!-- Обратная связь: письмо открывает почтовый клиент пользователя, своего
                  сервера у программы нет. Раньше здесь стояла форма из трёх полей —
@@ -105,10 +105,10 @@
                  форма и была: открыть письмо и получить адрес. Самого адреса на
                  виду нет — он зашит в обе кнопки, и строкой в карточке только
                  занимал место. -->
-            <c:AboutCard Symbol="Chat24" Accent="#6366F1"
-                         Title="{loc:Loc Feedback_Title}"
-                         Description="{loc:Loc Feedback_Intro}">
-                <c:AboutCard.Action>
+            <c:IconCard Symbol="Chat24" Accent="#6366F1"
+                        Title="{loc:Loc Feedback_Title}"
+                        Description="{loc:Loc Feedback_Intro}">
+                <c:IconCard.Action>
                     <!-- Друг под другом и той же ширины, что кнопка «Проверить
                          обновления»: три кнопки вкладки стоят одним столбцом
                          по правому краю карточек. -->
@@ -146,8 +146,8 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                </c:AboutCard.Action>
-                <c:AboutCard.Extra>
+                </c:IconCard.Action>
+                <c:IconCard.Extra>
                     <!-- Единственное, о чём кнопкой не скажешь: буфер обмена занят
                          другим приложением. Об удачном нажатии карточка молчит —
                          почтовый клиент открывается сам и виден без подписи. -->
@@ -163,13 +163,13 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </c:AboutCard.Extra>
-            </c:AboutCard>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
-            <c:AboutCard Symbol="Globe24" Accent="#0D9488"
-                         Title="{loc:Loc About_SourcesTitle}"
-                         Description="{loc:Loc About_SourcesDescription}">
-                <c:AboutCard.Extra>
+            <c:IconCard Symbol="Globe24" Accent="#0D9488"
+                        Title="{loc:Loc About_SourcesTitle}"
+                        Description="{loc:Loc About_SourcesDescription}">
+                <c:IconCard.Extra>
                     <StackPanel Margin="0,10,0,0">
                         <TextBlock FontSize="13" Margin="0,0,0,6">
                             <Hyperlink NavigateUri="https://remont-aud.net" RequestNavigate="Hyperlink_RequestNavigate">https://remont-aud.net</Hyperlink>
@@ -186,8 +186,8 @@
                             <Hyperlink NavigateUri="http://muuh.ru" RequestNavigate="Hyperlink_RequestNavigate">http://muuh.ru</Hyperlink>
                         </TextBlock>
                     </StackPanel>
-                </c:AboutCard.Extra>
-            </c:AboutCard>
+                </c:IconCard.Extra>
+            </c:IconCard>
 
         </StackPanel>
     </ScrollViewer>

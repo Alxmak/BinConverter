@@ -53,6 +53,16 @@
         <Setter Property="Margin" Value="0,0,0,12"/>
     </Style>
 
+    <!-- Название карточки со значком в цветной плитке («О программе», «Настройки»).
+         Крупнее обычного заголовка карточки: рядом стоит плитка 46 точек, и подпись
+         в 13 при ней читается подрисуночной. Отступ снизу не задан — он у каждой
+         разметки свой: в строке с плиткой его держит сама строка. -->
+    <Style x:Key="TileCardTitle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
     <Style x:Key="RowGrid" TargetType="Grid">
         <Setter Property="Margin" Value="0,0,0,14"/>
     </Style>

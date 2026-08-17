@@ -1,0 +1,99 @@
+<UserControl x:Class="TweakFirmware.Controls.IconCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:TweakFirmware.Controls"
+             x:Name="Root">
+
+    <!-- Карточка со значком: цветная плитка слева, название с пояснением рядом
+         и необязательное действие справа. Из таких собраны «О программе» и часть
+         «Настроек».
+
+         Отдельным контролом, а не одинаковыми сетками в разметке каждой вкладки:
+         карточек уже семь, и стоит одной из них разъехаться по отступам или размеру
+         плитки, как весь столбец перестаёт читаться списком. -->
+    <Border Style="{StaticResource CardStyle}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Плитка со значком. Обычно вверху, а не по центру: в карточках с кнопками
+                 и ссылками содержимое высокое, и по центру значок оказывался бы
+                 напротив пустого места, а не напротив заголовка. Сама плитка —
+                 общий контрол: такие же стоят в заголовках карточек «Настроек».
+
+                 Исключение — карточка без пояснения (в «Настройках» это тема и язык).
+                 Там текстовая колонка — одна строка названия в 20 точек против плитки
+                 в 46, и вверху название встаёт у самой макушки значка. Поэтому без
+                 пояснения обе колонки центруются: они всё равно остаются на одной
+                 линии друг с другом, а равнять их больше не с чем. -->
+            <c:IconTile Grid.Column="0" Symbol="{Binding Symbol, ElementName=Root}"
+                        Accent="{Binding Accent, ElementName=Root}" Margin="0,0,16,0">
+                <c:IconTile.Style>
+                    <Style TargetType="c:IconTile">
+                        <Setter Property="VerticalAlignment" Value="Top"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </c:IconTile.Style>
+            </c:IconTile>
+
+            <!-- Выравнивание то же, что у плитки, и по той же причине: высоту карточки
+                 задаёт самая высокая колонка (в «Обратной связи» это две кнопки справа),
+                 и текст, выровненный по центру, уезжал бы от значка к середине карточки. -->
+            <StackPanel Grid.Column="1">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="VerticalAlignment" Value="Top"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource TileCardTitle}"
+                           TextWrapping="Wrap"/>
+
+                <!-- Пояснение необязательно: без него пустой TextBlock всё равно
+                     занимал бы высоту строки и отрывал заголовок от содержимого. -->
+                <TextBlock Text="{Binding Description, ElementName=Root}" FontSize="13" Margin="0,5,0,0"
+                           TextWrapping="Wrap" LineHeight="19" LineStackingStrategy="BlockLineHeight"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Description, ElementName=Root}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <ContentPresenter Content="{Binding Extra, ElementName=Root}"/>
+            </StackPanel>
+
+            <!-- Пустое место справа тоже занимает ширину: у карточки без действия
+                 отступ 16 сдвигал бы текст, поэтому колонку целиком сворачиваем. -->
+            <ContentPresenter Grid.Column="2" Content="{Binding Action, ElementName=Root}"
+                              VerticalAlignment="Center" Margin="16,0,0,0">
+                <ContentPresenter.Style>
+                    <Style TargetType="ContentPresenter">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Action, ElementName=Root}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentPresenter.Style>
+            </ContentPresenter>
+        </Grid>
+    </Border>
+</UserControl>

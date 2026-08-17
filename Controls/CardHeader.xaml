@@ -5,7 +5,7 @@
              x:Name="Root">
 
     <!-- Заголовок карточки со значком слева — для карточек, содержимое которых идёт
-         под заголовком во всю ширину («Настройки»). Тем и отличается от AboutCard,
+         под заголовком во всю ширину («Настройки»). Тем и отличается от IconCard,
          где плитка стоит в своей колонке слева от всего содержимого сразу.
 
          Содержимое намеренно не сдвигается под заголовок: в карточках с папками поле
@@ -15,9 +15,9 @@
         <c:IconTile Symbol="{Binding Symbol, ElementName=Root}" Accent="{Binding Accent, ElementName=Root}"
                     Margin="0,0,14,0" VerticalAlignment="Center"/>
 
-        <!-- Отступ снизу у CardTitle снимаем: расстояние до содержимого задаёт
-             сама строка заголовка, иначе оно сложилось бы дважды. -->
-        <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource CardTitle}"
-                   Margin="0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+        <!-- Стиль тот же, что у названия в IconCard: на одной странице стоят карточки
+             обоих видов, и названия у них обязаны быть одного кегля. -->
+        <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource TileCardTitle}"
+                   VerticalAlignment="Center" TextWrapping="Wrap"/>
     </StackPanel>
 </UserControl>

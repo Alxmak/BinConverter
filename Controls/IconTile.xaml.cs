@@ -9,7 +9,7 @@ namespace TweakFirmware.Controls
 {
     /// <summary>
     /// Значок в цветной плитке. Используется в карточках «О программе»
-    /// (<see cref="AboutCard"/>) и в заголовках карточек «Настроек»
+    /// (<see cref="IconCard"/>) и в заголовках карточек «Настроек»
     /// (<see cref="CardHeader"/>) — вид у плитки один на обе вкладки.
     /// </summary>
     public partial class IconTile : UserControl
