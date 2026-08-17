@@ -67,23 +67,43 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Иконка заголовка берётся из кадра на 32, а не на 64: заголовок рисует её
-             в 16 точек, то есть уменьшает вдвое при обычном масштабе и не уменьшает
-             вовсе при 200%. С 64-м кадром уменьшение было вчетверо и давало мыло.
-             Иконка самого окна (атрибут Icon выше) остаётся 64-й: её Windows просит
-             и мелкой для панели задач, и крупной для Alt+Tab. -->
-        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Icon="{ui:ImageIcon 'pack://application:,,,/Assets/AppIcon-32.png'}">
-            <!-- Своя кнопка меню вместо встроенной. Встроенная живёт внутри самой панели,
-                 а панель теперь прячется целиком — вместе с ней исчезла бы и кнопка,
-                 и развернуть меню было бы нечем. Здесь же она видна всегда.
-                 Символ вписан текстом, а не значком WPF-UI: у гамбургера в наборе
-                 нет очевидного имени, а ☰ есть в системных шрифтах Windows. -->
+        <!-- Логотип нарисован своим Image в шапке заголовка, а не задан свойством Icon.
+             Свойство не подошло: в шаблоне TitleBar из WPF-UI под значок отведён
+             ContentPresenter с жёстко прописанной высотой в 16 точек, и значок крупнее
+             туда не помещается — он вылезал бы за отведённое место, а разметка про
+             это не знала бы. В 16 точек логотип не читается: видно, что что-то синее,
+             а что именно — нет.
+
+             Padding заголовка обнулён по той же причине: он задаёт отступ той самой
+             колонке под Icon, а она теперь пустая и оставляла бы слева дыру. Отступ
+             логотипа от края задан ему самому и равен прежнему.
+
+             Кадр на 64, а не на 32 или 256: при обычном масштабе он уменьшается ровно
+             вдвое, при 200% рисуется один к одному — оба случая без дробного пересчёта.
+             Кадр на 32 пришлось бы растягивать уже при 150%, а 256 — уменьшать
+             в восемь раз. Иконка самого окна (атрибут Icon выше) остаётся 64-й:
+             её Windows просит и мелкой для панели задач, и крупной для Alt+Tab. -->
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Padding="0">
             <ui:TitleBar.Header>
-                <Button x:Name="MenuToggleButton" Content="&#x2630;" FontSize="15"
-                        Background="Transparent" BorderThickness="0" Padding="10,4" Margin="6,0,0,0"
-                        Cursor="Hand" ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
-                        Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"
-                        MouseLeave="MenuToggle_MouseLeave"/>
+                <!-- Полоса тянется на всю высоту заголовка намеренно: так кнопка меню
+                     остаётся ровно той же высоты, что была, когда стояла в шапке одна.
+                     Логотип внутри выровнен по центру сам. -->
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Assets/AppIcon-64.png" Width="32" Height="32"
+                           Margin="16,0,4,0" Stretch="Uniform" VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                    <!-- Своя кнопка меню вместо встроенной. Встроенная живёт внутри самой
+                         панели, а панель теперь прячется целиком — вместе с ней исчезла бы
+                         и кнопка, и развернуть меню было бы нечем. Здесь же она видна всегда.
+                         Символ вписан текстом, а не значком WPF-UI: у гамбургера в наборе
+                         нет очевидного имени, а ☰ есть в системных шрифтах Windows. -->
+                    <Button x:Name="MenuToggleButton" Content="&#x2630;" FontSize="15"
+                            Background="Transparent" BorderThickness="0" Padding="10,4" Margin="6,0,0,0"
+                            Cursor="Hand" ToolTip="{loc:Loc Shell_MenuToggleTooltip}"
+                            Click="MenuToggle_Click" MouseEnter="MenuToggle_MouseEnter"
+                            MouseLeave="MenuToggle_MouseLeave"/>
+                </StackPanel>
             </ui:TitleBar.Header>
         </ui:TitleBar>
 
