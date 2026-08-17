@@ -192,19 +192,28 @@
             <TextBlock Text="{loc:Loc Settings_MaintenanceGroup}" Style="{StaticResource GroupCaption}"/>
             <Border Style="{StaticResource GroupCardStyle}" Margin="0,0,0,20">
                 <c:SettingsRow Symbol="DocumentBulletList24" Accent="#64748B"
-                               Title="{loc:Loc Settings_ClearLogTitle}"
-                               Description="{loc:Loc Settings_ClearLogDescription}">
+                               Title="{loc:Loc Settings_ClearLogTitle}">
                     <c:SettingsRow.Action>
-                        <!-- Кнопка стоит на такой же дорожке, как варианты «Внешнего вида»,
-                             и той же плашкой внутри. Без дорожки одна плашка на белой
-                             карточке читалась обычной кнопкой с рамкой: форму этим
-                             элементам задаёт как раз серая подложка вокруг.
+                        <!-- Три действия на общей дорожке, как варианты «Внешнего вида».
+                             Подписи те же, что у карточки «Журнал» на рабочих вкладках:
+                             журнал один на всю программу, и кнопки к нему должны
+                             называться одинаково, где бы они ни стояли.
+
+                             Пояснения под названием нет: строка про то, что очистка
+                             затрагивает и файл на диске, объясняла ровно одну кнопку
+                             из трёх, а после очистки об этом и так говорит окно.
 
                              Высоту не задаём: она набирается так же, как у вариантов
                              в дорожке, — иначе строка журнала оказалась бы выше соседних. -->
                         <Border Style="{StaticResource SegmentedTrack}">
-                            <Button Content="{loc:Loc Settings_ClearLogButton}" Command="{Binding ClearLogCommand}"
-                                    Style="{StaticResource PillButton}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="{loc:Loc Common_LogOpenButton}" Command="{Binding OpenLogCommand}"
+                                        Style="{StaticResource PillButton}" Margin="0,0,2,0"/>
+                                <Button Content="{loc:Loc Common_LogSaveButton}" Command="{Binding SaveLogCommand}"
+                                        Style="{StaticResource PillButton}" Margin="0,0,2,0"/>
+                                <Button Content="{loc:Loc Common_LogClearButton}" Command="{Binding ClearLogCommand}"
+                                        Style="{StaticResource PillButton}"/>
+                            </StackPanel>
                         </Border>
                     </c:SettingsRow.Action>
                 </c:SettingsRow>

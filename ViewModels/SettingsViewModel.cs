@@ -143,16 +143,26 @@ namespace TweakFirmware.ViewModels
             RefreshFolderDisplays();
         }
 
+        // Действия над журналом — те же самые, что у карточки «Журнал» на рабочих
+        // вкладках, и берутся из общего места: журнал в программе один, и вести себя
+        // эти кнопки обязаны одинаково, где бы их ни нажали.
+        [RelayCommand]
+        private void OpenLog() => LogActions.Open();
+
+        [RelayCommand]
+        private void SaveLog() => LogActions.SaveAs();
+
         /// <summary>
         /// Чистит журнал — и файл на диске, и то, что показано в карточке «Журнал».
-        /// Раньше вызывался AppLogger.ClearLog напрямую: файл становился пустым, а на
-        /// экране оставались все прежние строки, и «Сохранить» отдавал файл, не
-        /// совпадающий с тем, что человек видит. LogService.Clear делает и то, и другое.
+        ///
+        /// В отличие от той же кнопки на рабочих вкладках, здесь после очистки
+        /// показывается окно: там журнал виден рядом и сам становится пустым, а тут
+        /// нажатие иначе выглядело бы как «ничего не произошло».
         /// </summary>
         [RelayCommand]
         private async Task ClearLogAsync()
         {
-            LogService.Clear();
+            LogActions.Clear();
             await DialogService.ShowInfoAsync(Strings.Get("Common_DoneTitle"), Strings.Get("Settings_LogClearedMessage"));
         }
     }

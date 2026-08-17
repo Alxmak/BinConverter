@@ -1,9 +1,5 @@
-using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
-using TweakFirmware.Core;
-using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
@@ -14,9 +10,9 @@ namespace TweakFirmware.ViewModels
     /// Журнал один на всё приложение (<see cref="LogService"/>), поэтому и команды к нему
     /// у всех вкладок были одинаковые — три копии одного кода, которые разъезжались:
     /// в «Конвертировании» и «Сборке» ошибка сохранения показывалась системным
-    /// MessageBox, в «Проверке» — диалогом в стиле программы. Оставлен второй вариант:
-    /// <see cref="DialogService"/> и есть то единое место, через которое по договорённости
-    /// идут все всплывающие сообщения.
+    /// MessageBox, в «Проверке» — диалогом в стиле программы. Сами действия теперь живут
+    /// в <see cref="LogActions"/>: те же три кнопки есть и в «Настройках», и разъехаться
+    /// они больше не могут.
     /// </summary>
     public abstract partial class LogHostViewModel : LocalizedViewModel
     {
@@ -24,25 +20,12 @@ namespace TweakFirmware.ViewModels
         public ObservableCollection<string> LogLines => LogService.Lines;
 
         [RelayCommand]
-        private void OpenLog() => AppLogger.OpenLogFile();
+        private void OpenLog() => LogActions.Open();
 
         [RelayCommand]
-        private void SaveLog()
-        {
-            var dlg = new SaveFileDialog { Filter = Strings.Get("Common_TextFileFilter"), FileName = "TweakFirmware.log.txt" };
-            if (dlg.ShowDialog() != true) return;
-
-            try
-            {
-                LogService.SaveAs(dlg.FileName);
-            }
-            catch (Exception ex)
-            {
-                _ = DialogService.ShowErrorAsync(Strings.Get("Common_Error"), Strings.Format("Common_SaveLogFailed", ex.Message));
-            }
-        }
+        private void SaveLog() => LogActions.SaveAs();
 
         [RelayCommand]
-        private void ClearLog() => LogService.Clear();
+        private void ClearLog() => LogActions.Clear();
     }
 }

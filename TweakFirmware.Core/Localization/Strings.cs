@@ -310,8 +310,6 @@ namespace TweakFirmware.Core.Localization
             // Никаких временных файлов программа не создаёт — чистится только журнал,
             // поэтому и название, и описание теперь про него.
             ["Settings_ClearLogTitle"] = "Журнал приложения",
-            ["Settings_ClearLogDescription"] = "Удаляет все записи журнала — и в карточке «Журнал» на рабочих вкладках, и в файле на диске.",
-            ["Settings_ClearLogButton"] = "Очистить журнал",
             ["Settings_LogClearedMessage"] = "Журнал очищен.",
 
             // ===================== О программе =====================
@@ -766,8 +764,6 @@ namespace TweakFirmware.Core.Localization
             ["Settings_MergeFolderTitle"] = "Merge folder",
             ["Settings_ExtractFolderTitle"] = "Extract folder",
             ["Settings_ClearLogTitle"] = "Application log",
-            ["Settings_ClearLogDescription"] = "Removes every log entry — both from the “Log” card on the working tabs and from the file on disk.",
-            ["Settings_ClearLogButton"] = "Clear the log",
             ["Settings_LogClearedMessage"] = "The log has been cleared.",
 
             // ===================== About =====================
