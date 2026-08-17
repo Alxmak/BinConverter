@@ -326,9 +326,9 @@ namespace TweakFirmware.Core.Localization
             // Названия сайтов не переводятся, но лежат здесь: литералов в разметке
             // в проекте нет, и слово должно быть в одном месте (как Common_BetaBadge).
             ["About_GitHubButton"] = "Проект на GitHub",
-            ["About_SourceRemontAud"] = "REMONT-AUD",
+            ["About_SourceRemontAud"] = "Remont-aud",
             ["About_SourceMslWorks"] = "MSL Works",
-            ["About_SourceTeleservis"] = "TELESERVIS",
+            ["About_SourceTeleservis"] = "Teleservis",
             ["About_SourceMuuh"] = "MUUH",
             ["About_OpenLinkFailedLog"] = "Не удалось открыть ссылку: {0}",
             ["About_OpenLinkFailedCopied"] = "Не удалось открыть ссылку в браузере. Адрес скопирован в буфер обмена:\n{0}",
@@ -778,9 +778,9 @@ namespace TweakFirmware.Core.Localization
             ["About_DevelopmentText"] = "Claude Code, ChatGPT and @alxmak.",
             ["About_PersonalUseText"] = "This program was created for personal use.",
             ["About_GitHubButton"] = "Project on GitHub",
-            ["About_SourceRemontAud"] = "REMONT-AUD",
+            ["About_SourceRemontAud"] = "Remont-aud",
             ["About_SourceMslWorks"] = "MSL Works",
-            ["About_SourceTeleservis"] = "TELESERVIS",
+            ["About_SourceTeleservis"] = "Teleservis",
             ["About_SourceMuuh"] = "MUUH",
             ["About_OpenLinkFailedLog"] = "Could not open the link: {0}",
             ["About_OpenLinkFailedCopied"] = "Could not open the link in a browser. The address has been copied to the clipboard:\n{0}",
