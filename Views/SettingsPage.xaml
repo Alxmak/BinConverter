@@ -73,7 +73,9 @@
                 </c:IconCard.Action>
             </c:IconCard>
 
-            <c:IconCard Symbol="LocalLanguage24" Accent="#0D9488" Title="{loc:Loc Settings_LanguageTitle}">
+            <c:IconCard Symbol="LocalLanguage24" Accent="#0D9488"
+                        Title="{loc:Loc Settings_LanguageTitle}"
+                        Description="{loc:Loc Settings_LanguageDescription}">
                 <c:IconCard.Action>
                     <StackPanel Orientation="Horizontal">
                         <Button Content="{loc:Loc Settings_LanguageRu}" Command="{Binding SetLanguageCommand}" CommandParameter="ru">

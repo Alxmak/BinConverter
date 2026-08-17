@@ -292,6 +292,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_ThemeDark"] = "Тёмная",
             ["Settings_ThemeSystem"] = "Как в системе",
             ["Settings_LanguageTitle"] = "Язык интерфейса",
+            ["Settings_LanguageDescription"] = "Переключение между языками не требует перезагрузки приложения.",
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "По умолчанию",
@@ -736,6 +737,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_ThemeDark"] = "Dark",
             ["Settings_ThemeSystem"] = "Same as system",
             ["Settings_LanguageTitle"] = "Interface language",
+            ["Settings_LanguageDescription"] = "Switching between languages does not require restarting the application.",
             // Названия языков не переводятся: их читает тот, кто нужного языка
             // ещё не выбрал, — «Русский» ему понятнее, чем «Russian».
             ["Settings_LanguageRu"] = "Русский",
