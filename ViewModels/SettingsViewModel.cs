@@ -43,6 +43,13 @@ namespace TweakFirmware.ViewModels
         partial void OnUseDefaultConvertPathChanged(bool value)
         {
             OutputPathSettingsService.SetUseDefaultConvertPath(value);
+
+            // Снятая галочка значит «сейчас выберу другую папку», а не «верните ту,
+            // что я когда-то набирал». Прежний путь возвращался вместе с обрывками,
+            // набранными по дороге (поле сохраняется на каждую нажатую клавишу),
+            // и в поле оказывалось «C:\Users\m» или вовсе «ns».
+            if (!value) OutputPathSettingsService.SetCustomConvertFolder("");
+
             OnPropertyChanged(nameof(CanEditConvertPath));
             RefreshFolderDisplays();
         }
@@ -50,6 +57,10 @@ namespace TweakFirmware.ViewModels
         partial void OnUseDefaultMergePathChanged(bool value)
         {
             OutputPathSettingsService.SetUseDefaultMergePath(value);
+
+            // По той же причине, что в конвертировании.
+            if (!value) OutputPathSettingsService.SetCustomMergeFolder("");
+
             OnPropertyChanged(nameof(CanEditMergePath));
             RefreshFolderDisplays();
         }
@@ -57,15 +68,33 @@ namespace TweakFirmware.ViewModels
         partial void OnUseDefaultExtractPathChanged(bool value)
         {
             OutputPathSettingsService.SetUseDefaultExtractPath(value);
+
+            // По той же причине, что в конвертировании.
+            if (!value) OutputPathSettingsService.SetCustomExtractFolder("");
+
             OnPropertyChanged(nameof(CanEditExtractPath));
             RefreshFolderDisplays();
         }
 
+        /// <summary>
+        /// В поле показывается не то же, что отдают операции. С галочкой — папка
+        /// по умолчанию; без галочки — ровно то, что выбрал человек, и пустое поле
+        /// остаётся пустым, чтобы в нём была видна подсказка. Операции при пустом
+        /// выборе всё равно получают папку по умолчанию — см. GetConvertFolder.
+        /// </summary>
         private void RefreshFolderDisplays()
         {
-            ConvertFolder = OutputPathSettingsService.GetConvertFolder();
-            MergeFolder = OutputPathSettingsService.GetMergeFolder();
-            ExtractFolder = OutputPathSettingsService.GetExtractFolder();
+            ConvertFolder = UseDefaultConvertPath
+                ? OutputPathSettingsService.GetConvertFolder()
+                : OutputPathSettingsService.CustomConvertFolder;
+
+            MergeFolder = UseDefaultMergePath
+                ? OutputPathSettingsService.GetMergeFolder()
+                : OutputPathSettingsService.CustomMergeFolder;
+
+            ExtractFolder = UseDefaultExtractPath
+                ? OutputPathSettingsService.GetExtractFolder()
+                : OutputPathSettingsService.CustomExtractFolder;
         }
 
         // Пункт: поля путей теперь редактируются свободно (можно вставлять и печатать).

@@ -296,6 +296,10 @@ namespace TweakFirmware.Core.Localization
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "По умолчанию",
+            // Подсказка в пустом поле пути. Своя, а не общая Common_NoFolderSelected:
+            // на рабочих вкладках поле говорит, куда уйдёт результат этого запуска,
+            // а здесь — какая папка будет предлагаться по умолчанию.
+            ["Settings_FolderPlaceholder"] = "Выберите папку, куда будут сохраняться файлы",
             ["Settings_ChooseConvertFolderTitle"] = "Папка по умолчанию для конвертирования",
             ["Settings_ChooseMergeFolderTitle"] = "Папка по умолчанию для сборки файла",
             ["Settings_ChooseExtractFolderTitle"] = "Папка по умолчанию для извлечения разделов",
@@ -752,6 +756,7 @@ namespace TweakFirmware.Core.Localization
             ["Settings_LanguageRu"] = "Русский",
             ["Settings_LanguageEn"] = "English",
             ["Settings_UseDefaultPathCheckbox"] = "Default",
+            ["Settings_FolderPlaceholder"] = "Choose the folder where files will be saved",
             ["Settings_ChooseConvertFolderTitle"] = "Default folder for conversion",
             ["Settings_ChooseMergeFolderTitle"] = "Default folder for merging",
             ["Settings_ChooseExtractFolderTitle"] = "Default folder for partition extraction",
