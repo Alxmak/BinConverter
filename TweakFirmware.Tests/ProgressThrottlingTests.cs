@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
-using TweakFirmware.Core.Analysis;
 using TweakFirmware.Core.Dump;
 using TweakFirmware.Core.FileSystems;
 using TweakFirmware.Core.Partitions;
@@ -27,32 +23,6 @@ namespace TweakFirmware.Tests
     /// </summary>
     public class ProgressThrottlingTests
     {
-        /// <summary>Хост, который только считает сообщения о ходе работы.</summary>
-        private sealed class CountingHost : IAnalysisHost
-        {
-            private sealed class Counter : IProgress<AnalysisProgress>
-            {
-                private readonly CountingHost _host;
-                public Counter(CountingHost host) => _host = host;
-                public void Report(AnalysisProgress value) => _host.Reports++;
-            }
-
-            public CountingHost() => Progress = new Counter(this);
-
-            public int Reports { get; private set; }
-
-            public List<string> Messages { get; } = new();
-
-            public void Log(string message, AnalysisLogLevel level = AnalysisLogLevel.Info) => Messages.Add(message);
-
-            public Task<int?> AskNandGeometryAsync(IReadOnlyList<NandGeometryOption> options, CancellationToken ct) =>
-                Task.FromResult<int?>(null);
-
-            public Task<bool> ConfirmAsync(string question, CancellationToken ct) => Task.FromResult(false);
-
-            public IProgress<AnalysisProgress>? Progress { get; }
-        }
-
         [Fact]
         public void Scan_ReportsProgressOnceEveryFewHundredSteps()
         {
@@ -62,7 +32,7 @@ namespace TweakFirmware.Tests
             const long steps = region / 0x1000;
 
             using var dump = new PlainDumpReader(new MemoryStream(new DumpBuilder(region).Build()));
-            var host = new CountingHost();
+            var host = new RecordingAnalysisHost();
 
             int found = FileSystemScanner.Scan(dump, 0, region, new PartitionTable(), host, CancellationToken.None);
 
@@ -71,8 +41,8 @@ namespace TweakFirmware.Tests
             // Прореживание — раз в 256 шагов, считая первый: 512 шагов дают ровно два
             // сообщения. Без него их было бы 512 — сравнение с числом шагов и есть суть
             // проверки, само число 2 без него ничего не значит.
-            Assert.Equal(2, host.Reports);
-            Assert.True(host.Reports < steps / 100);
+            Assert.Equal(2, host.Reports.Count);
+            Assert.True(host.Reports.Count < steps / 100);
         }
 
         [Fact]
@@ -86,14 +56,14 @@ namespace TweakFirmware.Tests
 
             var flat = new DumpBuilder(block * blocks).Pattern(0, block * blocks).Build();
             using var stream = new MemoryStream(flat);
-            var host = new CountingHost();
+            var host = new RecordingAnalysisHost();
 
             var geometry = NandGeometryDetector.TryDetectPageSize(stream, 0x20, 0x01, host.Progress);
 
             Assert.Null(geometry);
 
             // Восемь блоков — одно сообщение (первое). Без прореживания их было бы восемь.
-            Assert.Equal(1, host.Reports);
+            Assert.Equal(1, host.Reports.Count);
         }
     }
 }

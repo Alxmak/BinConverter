@@ -160,6 +160,49 @@ namespace TweakFirmware.Tests
         }
 
         [Fact]
+        public async Task Extract_ProgressIsCountedInBytesAndReachesTheEnd()
+        {
+            // Так выглядит настоящий дамп: пара крошечных разделов и один большой.
+            // Пока прогресс считался разделами, полоса за мгновение доходила до двух
+            // третей и стояла там всё время записи третьего — отличить это от зависшей
+            // программы было нельзя.
+            byte[] content = new DumpBuilder(0x20000).Pattern(0, 0x20000).Build();
+            string path = WriteDump(content, "progress.bin");
+
+            var table = new PartitionTable();
+            table.Add("small_one", 0, 0x100);
+            table.Add("small_two", 0x100, 0x100);
+            table.Add("big", 0x1000, 0x1F000);
+
+            var host = new RecordingAnalysisHost();
+
+            var outcome = await PartitionExtractOperation.RunAsync(
+                new PartitionExtractRequest { SourcePath = path, OutputFolder = _folder, CheckDiskSpace = false },
+                table, host, CancellationToken.None);
+
+            Assert.Equal(PartitionExtractStatus.Completed, outcome.Status);
+
+            long total = 0x100 + 0x100 + 0x1F000;
+
+            // Знаменатель — все байты, которые будут записаны, а не число разделов.
+            Assert.NotEmpty(host.Reports);
+            Assert.All(host.Reports, report => Assert.Equal(total, report.Total));
+
+            // Счётчик только растёт и доходит ровно до конца: полоса не должна замирать
+            // на середине после последнего записанного куска.
+            long previous = -1;
+            foreach (var report in host.Reports)
+            {
+                Assert.True(report.Done >= previous, $"прогресс пошёл назад: {report.Done} после {previous}");
+                previous = report.Done;
+            }
+            Assert.Equal(total, host.Reports[^1].Done);
+
+            // Подпись под полосой называет раздел, который пишется сейчас.
+            Assert.Contains(host.Reports, report => report.Stage == "big");
+        }
+
+        [Fact]
         public async Task Extract_FolderSuffixSaysWhatWasExtracted()
         {
             // Оригинал брал суффикс из глобального флага, который к моменту извлечения
