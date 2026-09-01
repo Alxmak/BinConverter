@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using TweakFirmware.Core;
+using TweakFirmware.Core.Localization;
 using TweakFirmware.Services;
 using Wpf.Ui.Controls;
 
@@ -48,7 +50,58 @@ namespace TweakFirmware.Views
 
             WindowPlacementService.Restore(this);
             Loaded += (_, _) => RootNavigation.Navigate(typeof(ConvertPage));
-            Closing += (_, _) => WindowPlacementService.Save(this);
+            Closing += OnClosing;
+        }
+
+        /// <summary>
+        /// Подтверждение уже получено — второй заход в обработчик закрытия не спрашивает.
+        /// </summary>
+        private bool _closeConfirmed;
+
+        /// <summary>
+        /// Закрытие окна во время работы.
+        ///
+        /// Раньше крестик закрывал программу молча. Запись при этом обрывалась вместе
+        /// с процессом: уборка за прерванной операцией живёт в блоке finally, а при выходе
+        /// он не выполняется. На диске оставался полный на вид набор файлов, один из которых
+        /// обрезан, — отличить его от целого можно было только по хэшу. Заметьте, насколько
+        /// это расходилось с остальным: переключать разделы во время работы нельзя, ставить
+        /// обновление нельзя, а выйти — пожалуйста.
+        ///
+        /// Теперь окно спрашивает и, если человек согласен, останавливает операцию штатно
+        /// и дожидается, пока она уберёт за собой. Чья это операция, окно не знает и знать
+        /// не должно — способ её остановить оставляет сама вкладка (см. OperationLockService).
+        /// </summary>
+        private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!_closeConfirmed && OperationLockService.Instance.IsBusy)
+            {
+                // Отменяем закрытие до первого await: WPF ждёт ответа от обработчика
+                // синхронно и, не получив его, закроет окно, пока мы показываем вопрос.
+                e.Cancel = true;
+
+                var answer = await DialogService.ShowConfirmAsync(
+                    Strings.Get("Shell_CloseWhileBusyTitle"),
+                    Strings.Get("Shell_CloseWhileBusyMessage"),
+                    Strings.Get("Shell_CloseWhileBusyStop"),
+                    null,
+                    Strings.Get("Shell_CloseWhileBusyKeep"));
+
+                if (answer != DialogChoice.Primary) return;
+
+                AppLogger.Log(Strings.Get("Shell_ClosingCancelledLog"));
+
+                // Ждём не «пока отменится», а пока операция дойдёт до конца и удалит
+                // недописанное. Без ожидания закрытие обогнало бы уборку, и смысл
+                // подтверждения пропал бы.
+                await OperationLockService.Instance.StopAndWaitAsync();
+
+                _closeConfirmed = true;
+                Close();
+                return;
+            }
+
+            WindowPlacementService.Save(this);
         }
 
         /// <summary>

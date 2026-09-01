@@ -315,7 +315,7 @@ namespace TweakFirmware.ViewModels
                 OverallProgress = 0; CurrentFileProgress = 0;
                 IsBusy = false;
                 IsPaused = false;
-                OperationLockService.Instance.IsBusy = false;
+                OperationLockService.Instance.OperationFinished();
                 _cts?.Dispose();
                 _cts = null;
                 _pauseController = null;
@@ -327,7 +327,7 @@ namespace TweakFirmware.ViewModels
         {
             IsBusy = true;
             IsPaused = false;
-            OperationLockService.Instance.IsBusy = true;
+            OperationLockService.Instance.OperationStarted(CancelNow);
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0;
         }
@@ -425,8 +425,23 @@ namespace TweakFirmware.ViewModels
             string? folder = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(folder)) ResultFolder.Open(folder);
         }
+        /// <summary>Спрашивает, прежде чем прервать, — по той же причине,
+        /// что и в «Конвертировании»: цена случайного нажатия здесь вся работа.</summary>
         [RelayCommand(CanExecute = nameof(IsBusy))]
-        private void Cancel()
+        private async Task CancelAsync()
+        {
+            var answer = await DialogService.ShowConfirmAsync(
+                Strings.Get("Common_CancelConfirmTitle"),
+                Strings.Get("Common_CancelConfirmWritingMessage"),
+                Strings.Get("Common_CancelConfirmStop"),
+                null,
+                Strings.Get("Common_CancelConfirmKeep"));
+
+            if (answer == DialogChoice.Primary) CancelNow();
+        }
+
+        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
+        private void CancelNow()
         {
             _pauseController?.Resume();
             _cts?.Cancel();

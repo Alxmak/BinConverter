@@ -409,7 +409,7 @@ namespace TweakFirmware.ViewModels
             SupportsPause = supportsPause;
             Progress = 0;
 
-            OperationLockService.Instance.IsBusy = true;
+            OperationLockService.Instance.OperationStarted(CancelNow);
 
             return _cts.Token;
         }
@@ -435,7 +435,7 @@ namespace TweakFirmware.ViewModels
             _cts?.Dispose();
             _cts = null;
 
-            OperationLockService.Instance.IsBusy = false;
+            OperationLockService.Instance.OperationFinished();
         }
 
         /// <summary>
@@ -863,8 +863,27 @@ namespace TweakFirmware.ViewModels
 
         public bool CanRenameDump => !IsBusy && CanRename;
 
+        /// <summary>
+        /// Спрашивает, прежде чем прервать. Сообщение общее для всех трёх работ вкладки:
+        /// разбор ничего не пишет и терять там нечего, но извлечение и разделение NAND
+        /// пишут гигабайты, а какая из трёх идёт сейчас, человек и так видит по подписи
+        /// под полосой. Одно честное предупреждение лучше трёх разных.
+        /// </summary>
         [RelayCommand(CanExecute = nameof(IsBusy))]
-        private void Cancel() => _cts?.Cancel();
+        private async Task CancelAsync()
+        {
+            var answer = await DialogService.ShowConfirmAsync(
+                Strings.Get("Common_CancelConfirmTitle"),
+                Strings.Get("Common_CancelConfirmWritingMessage"),
+                Strings.Get("Common_CancelConfirmStop"),
+                null,
+                Strings.Get("Common_CancelConfirmKeep"));
+
+            if (answer == DialogChoice.Primary) CancelNow();
+        }
+
+        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
+        private void CancelNow() => _cts?.Cancel();
 
         private void SetAllSelected(bool value)
         {

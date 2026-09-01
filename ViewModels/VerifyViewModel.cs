@@ -363,7 +363,7 @@ namespace TweakFirmware.ViewModels
                 OverallProgress = 0;
                 CurrentFileLabel = "";
                 IsBusy = false;
-                OperationLockService.Instance.IsBusy = false;
+                OperationLockService.Instance.OperationFinished();
                 _cts?.Dispose();
                 _cts = null;
             }
@@ -375,7 +375,7 @@ namespace TweakFirmware.ViewModels
             IsBusy = true;
             // Как в Конвертировании и Сборке: пока считаем хэши, переключение разделов
             // в меню заблокировано — иначе можно уйти со вкладки и потерять процесс из виду.
-            OperationLockService.Instance.IsBusy = true;
+            OperationLockService.Instance.OperationStarted(CancelNow);
             HasResult = false;
             ResultHeadline = Strings.Get("Verify_NoResultYet");
             ResultSubline = "";
@@ -532,7 +532,25 @@ namespace TweakFirmware.ViewModels
             .Select(row => new DialogService.HashRow(row.Title, row.Hash, row.FileNames))
             .ToArray();
 
+        /// <summary>
+        /// Спрашивает, прежде чем прервать. Сообщение здесь своё: сравнение только читает
+        /// файлы, удалять после него нечего, и пугать человека потерянными файлами
+        /// было бы неправдой. Esc на странице ведёт сюда же.
+        /// </summary>
         [RelayCommand(CanExecute = nameof(IsBusy))]
-        private void Cancel() => _cts?.Cancel();
+        private async Task CancelAsync()
+        {
+            var answer = await DialogService.ShowConfirmAsync(
+                Strings.Get("Common_CancelConfirmTitle"),
+                Strings.Get("Common_CancelConfirmReadingMessage"),
+                Strings.Get("Common_CancelConfirmStop"),
+                null,
+                Strings.Get("Common_CancelConfirmKeep"));
+
+            if (answer == DialogChoice.Primary) CancelNow();
+        }
+
+        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
+        private void CancelNow() => _cts?.Cancel();
     }
 }

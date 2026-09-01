@@ -430,7 +430,7 @@ namespace TweakFirmware.ViewModels
                 IsBusy = false;
                 IsPaused = false;
                 IsVerifying = false;
-                OperationLockService.Instance.IsBusy = false;
+                OperationLockService.Instance.OperationFinished();
                 // Dispose до обнуления: и здесь, и в Cancel мы в потоке интерфейса,
                 // поэтому «отменить уже освобождённый» невозможно.
                 _cts?.Dispose();
@@ -445,7 +445,7 @@ namespace TweakFirmware.ViewModels
             IsBusy = true;
             IsPaused = false;
             IsVerifying = false;
-            OperationLockService.Instance.IsBusy = true;
+            OperationLockService.Instance.OperationStarted(CancelNow);
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
         }
@@ -539,8 +539,31 @@ namespace TweakFirmware.ViewModels
             if (OpenFolderAfter) ResultFolder.Open(folder);
         }
 
+        /// <summary>
+        /// Спрашивает, прежде чем прервать. Раньше не спрашивала ни кнопка, ни Esc,
+        /// а цена ошибки здесь — вся работа: недописанные файлы удаляются, и на дампе
+        /// в несколько гигабайт это десятки минут заново. Esc вдобавок рефлекторная
+        /// клавиша «закрыть что-нибудь ненужное», а «Отмена» — крупная красная кнопка
+        /// в восьми пикселях под «Начать».
+        /// </summary>
         [RelayCommand(CanExecute = nameof(IsBusy))]
-        private void Cancel()
+        private async Task CancelAsync()
+        {
+            var answer = await DialogService.ShowConfirmAsync(
+                Strings.Get("Common_CancelConfirmTitle"),
+                Strings.Get("Common_CancelConfirmWritingMessage"),
+                Strings.Get("Common_CancelConfirmStop"),
+                null,
+                Strings.Get("Common_CancelConfirmKeep"));
+
+            if (answer == DialogChoice.Primary) CancelNow();
+        }
+
+        /// <summary>
+        /// Прервать молча. Тем же способом операцию останавливает закрытие окна — там
+        /// решение уже принято в своём диалоге, и спрашивать второй раз незачем.
+        /// </summary>
+        private void CancelNow()
         {
             _pauseController?.Resume();
             _cts?.Cancel();
