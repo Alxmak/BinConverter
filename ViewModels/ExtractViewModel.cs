@@ -18,6 +18,11 @@ using TweakFirmware.Core.Operations;
 using TweakFirmware.Core.Partitions;
 using TweakFirmware.Services;
 
+// Только ради Dispatcher'а в AskNandGeometryAsync. Пространство System.Windows целиком
+// не подключаем: в нём свои MessageBox и Point, и они пересекаются с уже используемыми
+// именами — про эти грабли сказано в CLAUDE.md.
+using Application = System.Windows.Application;
+
 namespace TweakFirmware.ViewModels
 {
     /// <summary>
@@ -184,6 +189,7 @@ namespace TweakFirmware.ViewModels
         public ExtractViewModel()
         {
             Progress = 0;
+            _progress = new Progress<AnalysisProgress>(OnProgress);
             SetOutputPathAuto(OutputPathSettingsService.GetExtractFolder());
         }
 
@@ -903,22 +909,55 @@ namespace TweakFirmware.ViewModels
         /// <summary>
         /// Автоопределение размера страницы NAND не справилось. Список вариантов приходит
         /// из ядра, показать его должна вкладка.
+        ///
+        /// Спрашивают отсюда из фонового потока: разбор целиком идёт внутри Task.Run,
+        /// и продолжения его await'ов остаются там же. А диалог — это окно WPF, которое
+        /// в чужом потоке не построить: первым же падает обращение к Application.MainWindow
+        /// (владелец окна), потому что Application живёт в потоке интерфейса и проверяет
+        /// это на каждом обращении. Дальше не пустил бы и сам показ: модальное окно
+        /// требует STA-потока, а поток из пула — MTA.
+        ///
+        /// Из-за этого вопрос о геометрии не появлялся вовсе: вместо списка вариантов
+        /// разбор падал, и человек видел окно с сообщением об ошибке потока. Проверить
+        /// это тестом нельзя — здесь та самая граница, за которой начинается WPF.
+        ///
+        /// Поэтому окно открывается в потоке интерфейса, а дожидаться ответа можно откуда
+        /// угодно: наружу уходит Task, и await над ним возвращается в фоновый поток сам.
         /// </summary>
         async Task<int?> IAnalysisHost.AskNandGeometryAsync(IReadOnlyList<NandGeometryOption> options, CancellationToken ct)
         {
             var lines = options.Select(o => o.IsNoSpare
                 ? Strings.Format("Extract_GeometryOptionNoSpare", o.Index)
-                : Strings.Format("Extract_GeometryOption", o.Index, o.Main, o.Spare));
+                : Strings.Format("Extract_GeometryOption", o.Index, o.Main, o.Spare)).ToList();
 
-            return await DialogService.AskChoiceAsync(
+            Task<int?> Ask() => DialogService.AskChoiceAsync(
                 Strings.Get("Extract_GeometryQuestionTitle"),
                 Strings.Get("Extract_GeometryQuestion"),
-                lines.ToList());
+                lines);
+
+            var dispatcher = Application.Current?.Dispatcher;
+
+            // Уже в потоке интерфейса (или программа запущена без Application — так
+            // бывает в тестовом окружении): звать через диспетчер незачем.
+            if (dispatcher is null || dispatcher.CheckAccess()) return await Ask();
+
+            return await dispatcher.InvokeAsync(Ask).Task.Unwrap();
         }
 
-        IProgress<AnalysisProgress>? IAnalysisHost.Progress => _progress ??= new Progress<AnalysisProgress>(OnProgress);
+        IProgress<AnalysisProgress>? IAnalysisHost.Progress => _progress;
 
-        private IProgress<AnalysisProgress>? _progress;
+        /// <summary>
+        /// Куда ядро сообщает о ходе работы.
+        ///
+        /// Создаётся здесь, в поле, а не при первом обращении — и это важно, где именно.
+        /// Progress&lt;T&gt; запоминает поток в момент своего создания и потом возвращает
+        /// вызовы туда же. Создавался он лениво, а первым спрашивал его как раз разбор —
+        /// то есть из потока пула, где запоминать нечего: обработчик выполнялся где
+        /// придётся, а изменения свойств доезжали до окна окольным путём, через разбор
+        /// привязок. Поле инициализируется при создании ViewModel, а её создаёт страница
+        /// в потоке интерфейса — значит и OnProgress выполняется там же, всегда.
+        /// </summary>
+        private readonly Progress<AnalysisProgress> _progress;
 
         private void OnProgress(AnalysisProgress value)
         {
