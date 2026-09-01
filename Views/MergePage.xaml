@@ -31,6 +31,7 @@
                         <TextBlock Grid.Column="0" Text="{loc:Loc Merge_AnyChainPartLabel}" Style="{StaticResource RowLabel}"/>
                         <!-- Цель перетаскивания — само поле; см. пояснение в Конвертировании. -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
                                     PlaceholderText="{loc:Loc Common_NoFileSelected}"
                                     AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
@@ -44,6 +45,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{loc:Loc Common_DestinationFolderLabel}" Style="{StaticResource RowLabel}"/>
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
                                     PlaceholderText="{loc:Loc Common_NoFolderSelected}"
                                     AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
                         <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>

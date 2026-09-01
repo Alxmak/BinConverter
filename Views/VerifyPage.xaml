@@ -39,6 +39,7 @@
                                     <!-- Цель перетаскивания — само поле; см. пояснение в Конвертировании.
                                          Строку, на которую бросили, определяет DataContext поля. -->
                                     <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                                Style="{StaticResource PathBox}"
                                                 Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}"
                                                 PlaceholderText="{loc:Loc Common_NoFileSelected}"
                                                 AllowDrop="True" PreviewDragOver="FileBox_DragOver" PreviewDrop="FileBox_Drop"/>

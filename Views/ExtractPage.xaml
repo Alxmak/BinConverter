@@ -34,6 +34,7 @@
                         <!-- Перетаскивание принимает само поле, а не строка целиком —
                              см. подробное пояснение в «Конвертировании». -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
                                     Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}"
                                     PlaceholderText="{loc:Loc Common_NoFileSelected}"
                                     AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
@@ -50,6 +51,7 @@
                         <!-- Своя подсказка, а не общая «Папка не выбрана»: здесь пустое поле
                              значит «рядом с дампом», а не «не задано». -->
                         <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
                                     Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}"
                                     PlaceholderText="{loc:Loc Extract_OutputPlaceholder}"
                                     AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
