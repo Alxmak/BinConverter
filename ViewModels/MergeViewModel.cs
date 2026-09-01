@@ -101,9 +101,10 @@ namespace TweakFirmware.ViewModels
             if (!_outputPathIsAuto) return;
 
             // Если файл цепочки уже выбран, имя результата зависит от него — пусть
-            // его подберёт та же самая логика, что и при выборе файла.
-            if (File.Exists(SourcePath)) ProbeChainNow();
-            else ResetOutputPathToDefault();
+            // его подберёт та же самая логика, что и при выборе файла. Проверка
+            // существования файла уходит в фон вместе с самим осмотром: этот код
+            // выполняется в потоке интерфейса ровно тогда, когда открывается раздел.
+            ProbeChain(delayMs: 0, resetOutputWhenSourceMissing: true);
         }
 
         private void ResetOutputPathToDefault() =>
@@ -180,41 +181,63 @@ namespace TweakFirmware.ViewModels
         /// Осмотр цепочки — не сразу. Раньше он шёл прямо из обработчика изменения текста,
         /// то есть на каждое нажатие клавиши в поле пути, и перебирал файлы на диске
         /// в потоке интерфейса: на сетевом пути окно подвисало на каждую букву.
-        ///
-        /// Счётчик поколений отбрасывает устаревшие ответы: пока ждали или пока ходили
-        /// на диск, путь мог измениться ещё раз.
         /// </summary>
-        private async void ScheduleChainProbe()
+        private void ScheduleChainProbe() => ProbeChain(InputSettleDelayMs, resetOutputWhenSourceMissing: false);
+
+        /// <summary>Осмотреть сейчас же, не дожидаясь, пока допечатают, — при возврате
+        /// на вкладку и при смене языка. На диск всё равно ходим в фоне.</summary>
+        private void ProbeChainNow() => ProbeChain(delayMs: 0, resetOutputWhenSourceMissing: false);
+
+        /// <summary>
+        /// Осмотр цепочки.
+        ///
+        /// <paramref name="delayMs"/> — сколько ждать, прежде чем идти на диск: при наборе
+        /// текста ждём, чтобы не перебирать файлы на каждую букву, в остальных случаях нет.
+        ///
+        /// <paramref name="resetOutputWhenSourceMissing"/> — что делать, если файла цепочки
+        /// нет: возврат на вкладку в этом случае показывает общую папку по умолчанию,
+        /// потому что подбирать имя результата не по чему.
+        ///
+        /// На диск ходим только из Task.Run, без исключений. «Осмотреть сейчас же» раньше
+        /// значило «прямо здесь», в потоке интерфейса, — и на возврате в раздел это
+        /// приходилось ровно на построение страницы: осмотр делает FileInfo на каждую часть
+        /// цепочки (см. MergeOperation.GetChainSize), а на флешке или сетевом пути это
+        /// уже заметная задержка перехода. Именно это и написано в самом ChainProbe:
+        /// он «не имеет права идти в потоке интерфейса».
+        /// </summary>
+        private async void ProbeChain(int delayMs, bool resetOutputWhenSourceMissing)
         {
             // Как и в «Конвертировании»: метод возвращает void, ждать его некому,
             // и необработанное исключение отсюда уронило бы программу из-за
             // предпросмотра цепочки.
             try
             {
+                // Счётчик поколений отбрасывает устаревшие ответы: пока ждали или пока
+                // ходили на диск, путь мог измениться ещё раз.
                 int generation = ++_chainGeneration;
 
-                await Task.Delay(InputSettleDelayMs);
-                if (generation != _chainGeneration) return;
+                if (delayMs > 0)
+                {
+                    await Task.Delay(delayMs);
+                    if (generation != _chainGeneration) return;
+                }
 
                 string path = SourcePath;
-                var probe = await Task.Run(() => ChainProbe.Measure(path));
+
+                // Тип указан явно, а не выведен: без него вывод по ветке с null
+                // зависит от настроек анализа, а предупреждение здесь роняет сборку.
+                ChainProbeResult? probe = await Task.Run<ChainProbeResult?>(() =>
+                    !resetOutputWhenSourceMissing || File.Exists(path) ? ChainProbe.Measure(path) : null);
                 if (generation != _chainGeneration) return;
 
-                ApplyChainProbe(probe);
+                if (probe is null) ResetOutputPathToDefault();
+                else ApplyChainProbe(probe);
             }
             catch (Exception ex)
             {
                 AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
                     nameof(MergeViewModel), ex.GetType().Name, ex.Message));
             }
-        }
-
-        /// <summary>Осмотреть сейчас же — когда путь задан не набором текста
-        /// (кнопка «Обзор», перетаскивание, возврат на вкладку, смена языка).</summary>
-        private void ProbeChainNow()
-        {
-            _chainGeneration++;
-            ApplyChainProbe(ChainProbe.Measure(SourcePath));
         }
 
         private void ApplyChainProbe(ChainProbeResult probe)
