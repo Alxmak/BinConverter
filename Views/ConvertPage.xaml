@@ -93,6 +93,9 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <!-- Единица стоит вплотную к полю: она относится к числу
+                                     в нём, а не к строке вообще. -->
+                                <ColumnDefinition Width="Auto"/>
                                 <!-- Пустая колонка под кнопку «Обзор» соседних строк: поле
                                      байтов должно кончаться там же, где поля путей, иначе
                                      оно одно выпирает вправо. Ширину берёт у самой кнопки
@@ -100,18 +103,45 @@
                                      кнопка шире или уже в зависимости от языка. -->
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="BrowseButton"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc Convert_LimitLabel}" Style="{StaticResource RowLabel}"/>
                             <!-- ui:TextBox, а не обычный: подсказка внутри поля есть только у него.
                                  Обработчики принимают его как TextBox — Wpf.Ui.Controls.TextBox
-                                 от него и наследуется. Отступ справа тот же 8, что у полей путей:
-                                 без него правый край поля не совпал бы с ними на эти 8 пикселей. -->
-                            <ui:TextBox x:Name="LimitTextBox" Grid.Column="1" ClearButtonEnabled="False" Margin="0,0,8,0"
-                                        Text="{Binding CustomLimitBytesText, UpdateSourceTrigger=PropertyChanged}"
+                                 от него и наследуется. -->
+                            <ui:TextBox x:Name="LimitTextBox" Grid.Row="0" Grid.Column="1" ClearButtonEnabled="False"
+                                        Text="{Binding LimitValueText, UpdateSourceTrigger=PropertyChanged}"
                                         IsEnabled="{Binding IsCustomPreset}"
                                         PlaceholderText="{loc:Loc Convert_LimitPlaceholder}"
                                         PreviewTextInput="LimitTextBox_PreviewTextInput"
                                         DataObject.Pasting="LimitTextBox_Pasting"
                                         TextChanged="LimitTextBox_TextChanged"/>
+
+                            <!-- Отступ справа тот же 8, что у полей путей: без него правый край
+                                 списка не совпал бы с ними на эти 8 пикселей. -->
+                            <ComboBox Grid.Row="0" Grid.Column="2" Margin="8,0,8,0" MinWidth="72"
+                                      ItemsSource="{Binding LimitUnits}" SelectedItem="{Binding SelectedLimitUnit}"
+                                      DisplayMemberPath="Name" IsEnabled="{Binding IsCustomPreset}"/>
+
+                            <!-- Точное число байт: единица делает лимит читаемым, но программатору
+                                 задают именно байты. Пустая подпись места не занимает — строка
+                                 сворачивается вместе с текстом. -->
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="2,3,0,0"
+                                       FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="{Binding LimitBytesHint}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LimitBytesHint}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Grid>
                     </Grid>
                 </StackPanel>

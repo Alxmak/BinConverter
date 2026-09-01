@@ -31,12 +31,22 @@ namespace TweakFirmware.Core
         /// и текст поля не разбирается вовсе. Возвращает 0, если значение задать не удалось, —
         /// вызывающий код трактует 0 как "лимит не задан" и не строит предпросмотр.
         /// </summary>
-        public static long Resolve(long? presetLimitBytes, string? customLimitText)
+        public static long Resolve(long? presetLimitBytes, string? customLimitText) =>
+            Resolve(presetLimitBytes, customLimitText, SizeUnit.Bytes);
+
+        /// <summary>
+        /// То же, но число в поле задано в выбранной единице, а не обязательно в байтах.
+        ///
+        /// Отдельная перегрузка, а не замена: единицы появились у лимита позже самого
+        /// лимита, и «в байтах» осталось обычным случаем — как для старого вызова,
+        /// так и для проверок, которым единица безразлична.
+        /// </summary>
+        public static long Resolve(long? presetLimitBytes, string? customLimitText, SizeUnit unit)
         {
             if (presetLimitBytes.HasValue) return presetLimitBytes.Value;
 
-            return long.TryParse(DigitsOnly(customLimitText), out long bytes) && bytes > 0
-                ? bytes
+            return long.TryParse(DigitsOnly(customLimitText), out long value) && value > 0
+                ? SizeUnits.ToBytes(value, unit)
                 : 0;
         }
     }

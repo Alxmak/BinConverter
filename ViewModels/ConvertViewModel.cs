@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,14 +23,31 @@ namespace TweakFirmware.ViewModels
         private const int CollapsedFileListCount = 4;
         private const int MaxFilesToEnumerate = 2000;
 
+        // Два готовых программатора задают один и тот же лимит, поэтому и стоят одной
+        // строкой: раздельными пунктами список обещал выбор, которого нет, — что бы
+        // из двух ни выбрали, дальше всё считалось одинаково.
         public ObservableCollection<ProgrammerPreset> Presets { get; } = new()
         {
-            new ProgrammerPreset("TNM5000", FileSplitter.DefaultMaxPartSizeBytes),
-            new ProgrammerPreset("RT809H", FileSplitter.DefaultMaxPartSizeBytes),
+            new ProgrammerPreset("TNM5000, RT809H", FileSplitter.DefaultMaxPartSizeBytes),
             new ProgrammerPreset(Strings.Get("Convert_CustomPresetName"), null)
         };
 
         [ObservableProperty] private ProgrammerPreset selectedPreset = null!;
+
+        /// <summary>
+        /// Единицы рядом с полем лимита. Список постоянный, меняются только подписи
+        /// при смене языка — поэтому элементы живут всё время работы программы,
+        /// а не пересоздаются (на один из них указывает SelectedLimitUnit).
+        /// </summary>
+        public ObservableCollection<SizeUnitOption> LimitUnits { get; } = new()
+        {
+            new SizeUnitOption(SizeUnit.Bytes, Strings.Get("Convert_UnitBytes")),
+            new SizeUnitOption(SizeUnit.Kilobytes, Strings.Get("Convert_UnitKilobytes")),
+            new SizeUnitOption(SizeUnit.Megabytes, Strings.Get("Convert_UnitMegabytes")),
+            new SizeUnitOption(SizeUnit.Gigabytes, Strings.Get("Convert_UnitGigabytes"))
+        };
+
+        [ObservableProperty] private SizeUnitOption selectedLimitUnit = null!;
 
         // Пока файл не выбран, запускать нечего: кнопка «Начать» гаснет, а не встречает
         // нажатие сообщением об ошибке.
@@ -40,7 +59,17 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string outputFolder = "";
         [ObservableProperty] private string baseFileName = "emmc.bin";
 
-        [ObservableProperty] private string customLimitBytesText = FileSplitter.DefaultMaxPartSizeBytes.ToString();
+        /// <summary>
+        /// Число в поле лимита — в той единице, что выбрана рядом. Раньше здесь всегда
+        /// были байты, и чтобы задать два гигабайта, приходилось набирать 2147483648,
+        /// не ошибившись ни в одной из десяти цифр. Ошибка на разряд означает здесь
+        /// вдесятеро больше файлов или один вместо десяти, и замечается она уже
+        /// по готовой нарезке.
+        /// </summary>
+        [ObservableProperty] private string limitValueText = "";
+
+        /// <summary>Точное число байт под полем — то, что раньше стояло в самом поле.</summary>
+        [ObservableProperty] private string limitBytesHint = "";
 
         [ObservableProperty] private string generalInfoText = "";
         [ObservableProperty] private string displayedFilesText = "";
@@ -135,6 +164,9 @@ namespace TweakFirmware.ViewModels
 
         public ConvertViewModel()
         {
+            // Единица до пресета: выбор пресета подставляет и число, и единицу, а без
+            // выбранной строки в списке она подставилась бы в пустоту.
+            SelectedLimitUnit = LimitUnits[0];
             SelectedPreset = Presets[0];
             SetOutputFolderAuto(GetDefaultOutputFolder());
         }
@@ -159,7 +191,12 @@ namespace TweakFirmware.ViewModels
         protected override void OnLanguageChanged()
         {
             Presets[^1].Name = Strings.Get("Convert_CustomPresetName");
+            LimitUnits[0].Name = Strings.Get("Convert_UnitBytes");
+            LimitUnits[1].Name = Strings.Get("Convert_UnitKilobytes");
+            LimitUnits[2].Name = Strings.Get("Convert_UnitMegabytes");
+            LimitUnits[3].Name = Strings.Get("Convert_UnitGigabytes");
             PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            UpdateLimitHint();
             UpdatePreviewNow();
         }
 
@@ -168,17 +205,61 @@ namespace TweakFirmware.ViewModels
         // Разбор лимита — в PartSizeLimit из Core: от этого числа зависит, на сколько частей
         // разрежется прошивка, поэтому граничные случаи проверяются тестами.
         private long CurrentLimitBytes =>
-            PartSizeLimit.Resolve(SelectedPreset?.MaxPartSizeBytes, CustomLimitBytesText);
+            PartSizeLimit.Resolve(SelectedPreset?.MaxPartSizeBytes, LimitValueText, SelectedLimitUnit?.Unit ?? SizeUnit.Bytes);
 
         partial void OnSelectedPresetChanged(ProgrammerPreset value)
         {
             OnPropertyChanged(nameof(IsCustomPreset));
-            if (value?.MaxPartSizeBytes is long fixedBytes)
-                CustomLimitBytesText = fixedBytes.ToString();
+            if (value?.MaxPartSizeBytes is long fixedBytes) ShowLimitBytes(fixedBytes);
+            UpdateLimitHint();
             UpdatePreviewNow();
         }
 
-        partial void OnCustomLimitBytesTextChanged(string value) => SchedulePreviewUpdate();
+        /// <summary>
+        /// Показывает готовый лимит в поле: единицу берём самую крупную, в которой он
+        /// выражается целым числом. Так у пресета вместо 4 152 360 960 в поле стоит
+        /// «3960 МБ» — то же самое, но это число можно запомнить и пересказать.
+        /// </summary>
+        private void ShowLimitBytes(long bytes)
+        {
+            var unit = SizeUnits.Best(bytes);
+
+            SelectedLimitUnit = LimitUnits.FirstOrDefault(option => option.Unit == unit) ?? LimitUnits[0];
+            LimitValueText = SizeUnits.ToUnit(bytes, unit).ToString(CultureInfo.CurrentCulture);
+        }
+
+        /// <summary>
+        /// Точное число байт под полем. Единица делает лимит читаемым, но программатору
+        /// человек задаёт именно байты, и сверить их с тем, что написано у него в окне,
+        /// должно быть можно не считая в уме.
+        /// </summary>
+        private void UpdateLimitHint()
+        {
+            long bytes = CurrentLimitBytes;
+
+            // В байтах подпись повторяла бы само поле слово в слово.
+            LimitBytesHint = bytes > 0 && SelectedLimitUnit?.Unit != SizeUnit.Bytes
+                ? Strings.Format("Convert_LimitBytesHint", bytes)
+                : "";
+        }
+
+        partial void OnLimitValueTextChanged(string value)
+        {
+            UpdateLimitHint();
+            SchedulePreviewUpdate();
+        }
+
+        /// <summary>
+        /// Смена единицы не пересчитывает число: «500» при переключении с МБ на ГБ
+        /// становится 500 гигабайтами, а не 0.48. Так работает любой такой список,
+        /// и человек, меняющий единицу, меняет её как раз затем, чтобы то же число
+        /// значило другое.
+        /// </summary>
+        partial void OnSelectedLimitUnitChanged(SizeUnitOption value)
+        {
+            UpdateLimitHint();
+            UpdatePreviewNow();
+        }
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // предпросмотр должен обновляться и при прямом вводе, не только через SetSource.
         partial void OnSourcePathChanged(string value) => SchedulePreviewUpdate();
