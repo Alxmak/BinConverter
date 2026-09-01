@@ -8,6 +8,15 @@ namespace TweakFirmware.Views
 {
     public partial class SettingsPage : Page
     {
+        // Своя ViewModel, не из TabViewModels: у «Настроек» нет состояния, которое надо
+        // хранить между переходами, — они читают и пишут прямо в службы.
+        //
+        // Раньше из этого следовало ещё и «показанное всегда актуально»: страница
+        // создавалась заново на каждый переход, а с ней и ViewModel. Теперь страницы
+        // кэшируются (NavigationCacheMode в ShellWindow.xaml), и эта ViewModel живёт всё
+        // время работы программы. Держится это на том, что тема, язык и три папки
+        // меняются только отсюда же и только через неё. Появится второе место, которое
+        // их меняет, — их придётся перечитывать в Loaded.
         private readonly SettingsViewModel _viewModel = new();
 
         public SettingsPage()

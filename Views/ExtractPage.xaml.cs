@@ -28,7 +28,14 @@ namespace TweakFirmware.Views
 
                 // Окно одно на всю программу и переживает страницу, поэтому подписку
                 // обязательно снимать: иначе каждый заход на вкладку добавлял бы ещё
-                // один обработчик, а страница не собиралась бы сборщиком мусора.
+                // один обработчик.
+                //
+                // Проверка на уже стоящую подписку — страховка: страница теперь
+                // кэшируется (NavigationCacheMode в ShellWindow.xaml) и живёт всё
+                // время работы программы, а Loaded у одного и того же элемента WPF
+                // способен прийти и без парного Unloaded.
+                if (_window != null) return;
+
                 _window = Window.GetWindow(this);
                 _window?.AddHandler(PreviewMouseDownEvent, new MouseButtonEventHandler(Window_PreviewMouseDown), true);
             };

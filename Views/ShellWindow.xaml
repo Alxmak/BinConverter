@@ -283,6 +283,28 @@
             <!-- Пункт 5: пока где-то идёт операция (IsNotBusy=false), пункты меню недоступны —
                  переключение раздела больше не может сорвать активный процесс.
                  Сгруппировано по образцу дизайна Claude: заголовки групп + разделитель. -->
+
+            <!-- NavigationCacheMode="Required" стоит у каждого пункта, и это не украшение.
+                 По умолчанию в WPF-UI 4.3 у пункта меню Disabled, а это значит буквально
+                 «строить страницу заново на каждый переход»: создание экземпляра через
+                 рефлексию, разбор BAML, всё дерево целиком, все привязки ({loc:Loc} — это
+                 отдельная привязка на каждую надпись) и полный проход разметки. Приходится
+                 всё это ровно на 200 миллисекунд анимации появления, а считает её тот же
+                 поток интерфейса — кадры пропускаются, и переход выглядит рывком.
+
+                 Вторая половина беды в том, что ни одна построенная страница не
+                 освобождалась. NavigationView кладёт каждую в PageToNavigationItemDictionary
+                 (обычный словарь по экземпляру страницы, чистится только при закрытии окна),
+                 а Frame журналирует навигацию по объекту как KeepAlive и тоже держит ссылку.
+                 То есть на каждое переключение в памяти оставалось целое дерево страницы,
+                 куча росла, а сборки мусора приходили по своему расписанию — отсюда
+                 «подлагивает, но не всегда».
+
+                 С Required страница строится один раз и дальше переиспользуется. На
+                 поведении это не сказывается: состояние вкладок и так живёт дольше страниц
+                 (см. TabViewModels), а Loaded/Unloaded при переходах приходят по-прежнему,
+                 так что Attach/Detach работают как работали. Поправить отдельно пришлось
+                 одно место — общую высоту журнала, см. LogCard. -->
             <ui:NavigationView.MenuItems>
                 <!-- Разделы стоят парами «прямая операция — обратная»: нарезка и сборка
                      файла в одной группе, извлечение и объединение разделов в другой.
@@ -291,9 +313,11 @@
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_FilesGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavConvert}" Icon="{ui:SymbolIcon ArrowSplit24}"
                                         TargetPageType="{x:Type views:ConvertPage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:MergePage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
 
                 <!-- Пометка «Beta» — у всей группы, а не у одного пункта: проверять
@@ -306,14 +330,17 @@
                      по тегу в программе нет — навигация идёт по типу страницы. -->
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavExtract}" Icon="{ui:SymbolIcon Archive24}"
                                         TargetPageType="{x:Type views:ExtractPage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavPartitionMerge}" Icon="{ui:SymbolIcon ArrowJoin20}"
                                         TargetPageType="{x:Type views:PartitionMergePage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
 
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_MiscGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavVerify}" Icon="{ui:SymbolIcon CheckmarkCircle24}"
                                         TargetPageType="{x:Type views:VerifyPage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
 
                 <!-- Разделителя перед «Системой» больше нет: группы и так разведены
@@ -323,9 +350,11 @@
                 <ui:NavigationViewItemHeader Text="{loc:Loc Shell_SystemGroupHeader}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavSettings}" Icon="{ui:SymbolIcon Settings24}"
                                         TargetPageType="{x:Type views:SettingsPage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
                 <ui:NavigationViewItem Content="{loc:Loc Shell_NavAbout}" Icon="{ui:SymbolIcon Info24}"
                                         TargetPageType="{x:Type views:AboutPage}"
+                                        NavigationCacheMode="Required"
                                         IsEnabled="{Binding IsNotBusy}"/>
             </ui:NavigationView.MenuItems>
 
