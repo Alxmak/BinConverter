@@ -42,6 +42,12 @@ namespace TweakFirmware.Core.Partitions.Layouts
             long pages = dump.PhysicalSize / geometry.Page;
             long offset = dump.LogicalSize - geometry.Main;
 
+            // Буфер один на весь перебор, а не новый массив на страницу: страниц здесь
+            // сотни тысяч, и ReadBlock выделял бы под четыре байта столько же коротких
+            // массивов. Объявлен до цикла — stackalloc внутри цикла занимает стек
+            // на каждом витке и не освобождает его до выхода из метода.
+            Span<byte> head = stackalloc byte[4];
+
             for (long i = 0; i < pages && offset >= 0 && (_lpch == 0 || _upch == 0); i++, offset -= geometry.Main)
             {
                 ct.ThrowIfCancellationRequested();
@@ -49,7 +55,7 @@ namespace TweakFirmware.Core.Partitions.Layouts
                 if ((i & 0xFF) == 0)
                     host.Progress?.Report(new AnalysisProgress(Name, i, pages));
 
-                var head = dump.ReadBlock(offset, 4);
+                dump.Read(offset, head);
                 uint marker = BinaryPrimitives.ReadUInt32LittleEndian(head);
 
                 if (marker == LpchMarker) _lpch = offset;

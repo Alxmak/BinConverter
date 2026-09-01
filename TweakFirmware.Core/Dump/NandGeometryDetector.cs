@@ -102,6 +102,14 @@ namespace TweakFirmware.Core.Dump
             var block = new byte[maxPage];
             long size = file.Length;
 
+            // Подпись этапа одна на весь проход, а сообщать о нём надо не на каждом блоке:
+            // блок здесь около шестнадцати килобайт, и если геометрия не опозналась, проход
+            // идёт по всему файлу — на дампе в восемь гигабайт это полмиллиона сообщений
+            // в поток интерфейса. Причина та же, что у прорежённого прохода в
+            // FileSystemScanner, там она расписана подробно.
+            string stage = Strings.Get("Extract_StageNandGeometry");
+            long blocks = 0;
+
             for (long offset = 0; offset + maxPage <= size; offset += maxPage)
             {
                 ct.ThrowIfCancellationRequested();
@@ -121,7 +129,8 @@ namespace TweakFirmware.Core.Dump
                     if (geometry is not null) return geometry;
                 }
 
-                progress?.Report(new AnalysisProgress(Strings.Get("Extract_StageNandGeometry"), offset, size));
+                if ((blocks++ & 0xFF) == 0)
+                    progress?.Report(new AnalysisProgress(stage, offset, size));
             }
 
             return null;

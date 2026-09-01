@@ -42,6 +42,22 @@ namespace TweakFirmware.Core.FileSystems
         private const long FineStep = 0x200;
 
         /// <summary>
+        /// Через сколько шагов сканирования сообщать о ходе работы.
+        ///
+        /// Сообщать на каждом шаге нельзя, и это не про экономию тактов. Шаг здесь —
+        /// четыре килобайта, то есть на дампе в четыре гигабайта шагов миллион, а каждое
+        /// сообщение о прогрессе — это отдельная работа, поставленная в очередь потока
+        /// интерфейса (Progress&lt;T&gt;), и два изменения свойств с уведомлениями. Поток
+        /// интерфейса захлёбывался в них: окно переставало отвечать на всё время разбора,
+        /// а полоса прогресса отставала от настоящей работы. Остальные проходы по дампу
+        /// прорежены точно так же — от 0x3F у перебора кандидатов до 0xFFF у разделения
+        /// NAND; здесь этого не было.
+        ///
+        /// Степень двойки, потому что проверяется битовой маской.
+        /// </summary>
+        private const long ProgressEveryNSteps = 0x100;
+
+        /// <summary>
         /// Ищет тома в заданной области. Найденное добавляется в <paramref name="table"/>;
         /// возвращает, сколько томов нашлось.
         /// </summary>
@@ -67,10 +83,16 @@ namespace TweakFirmware.Core.FileSystems
             int found = 0;
             long at = offset;
 
+            // Подпись этапа одна на весь проход — незачем собирать её заново на каждом шаге.
+            string stage = Strings.Get("Extract_StageScanFs");
+            long steps = 0;
+
             while (at < end)
             {
                 ct.ThrowIfCancellationRequested();
-                host.Progress?.Report(new AnalysisProgress(Strings.Get("Extract_StageScanFs"), at - offset, end - offset));
+
+                if ((steps++ & (ProgressEveryNSteps - 1)) == 0)
+                    host.Progress?.Report(new AnalysisProgress(stage, at - offset, end - offset));
 
                 var volume = Probe(dump, at, end, probes);
                 if (volume is null)
