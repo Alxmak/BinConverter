@@ -45,6 +45,12 @@ jobs:
       - name: Восстановить зависимости
         run: dotnet restore TweakFirmware.csproj
 
+      # PublishReadyToRun компилирует наши сборки заранее, а не JIT'ом по ходу работы.
+      # Сборки самой платформы в self-contained и так приходят скомпилированными, а вот
+      # TweakFirmware, TweakFirmware.Core и Wpf.Ui (одна она на 6,5 МБ) раньше
+      # компилировались на лету и первым проходом — в самом медленном режиме. Именно на
+      # это приходилось первое открытие каждого раздела: заметно медленнее последующих.
+      # Платой стал размер: exe вырастает, потому что рядом с кодом лежит ещё и машинный.
       - name: Собрать один exe-файл (self-contained, win-x64)
         run: >
           dotnet publish TweakFirmware.csproj
@@ -52,6 +58,7 @@ jobs:
           -r win-x64
           --self-contained true
           -p:PublishSingleFile=true
+          -p:PublishReadyToRun=true
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o ./publish
 
