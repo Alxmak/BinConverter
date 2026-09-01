@@ -383,8 +383,25 @@
                PlacementTarget="{Binding ElementName=MenuToggleButton}" Placement="Bottom"
                HorizontalOffset="4"
                MouseEnter="MenuPeek_MouseEnter" MouseLeave="MenuPeek_MouseLeave">
-            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+            <!-- Фон и рамка — «плавающие» кисти библиотеки, а не карточные, и это не
+                 придирка к оттенку.
+
+                 Карточная кисть полупрозрачна по замыслу: CardBackgroundFillColorDefault —
+                 это белый с прозрачностью 5% в тёмной теме и 70% в светлой. Карточке
+                 такого хватает, потому что под ней лежит непрозрачное окно. А всплывающий
+                 список — отдельное окно с AllowsTransparency, и под ним нет ничего: сквозь
+                 него было видно ту самую страницу, поверх которой он открыт. В светлой
+                 теме это выглядело как просвечивающие плитки со значками, в тёмной, где
+                 остаётся 5% заливки, — как наложенный текст, который просто не прочитать.
+                 От размера окна это не зависело: менялось лишь то, что оказывалось под
+                 списком, и в развёрнутом окне туда попадала пустая часть страницы.
+
+                 FlyoutBackground и FlyoutBorderBrush — то, чем библиотека красит
+                 собственные меню и всплывающие панели. Обе кисти непрозрачны
+                 (#2C2C2C в тёмной теме, #F9F9F9 в светлой) и есть в обеих темах;
+                 в палитре они прямо помечены как «замена акрилу для всплывающих окон». -->
+            <Border Background="{DynamicResource FlyoutBackground}"
+                    BorderBrush="{DynamicResource FlyoutBorderBrush}" BorderThickness="1"
                     CornerRadius="10" Padding="6" MinWidth="210" Margin="0,0,10,10">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.18" Color="Black"/>
