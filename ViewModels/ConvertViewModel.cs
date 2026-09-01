@@ -218,15 +218,30 @@ namespace TweakFirmware.ViewModels
         // ответ «ноль», а не как «пока нечего показать».
 
         /// <summary>
-        /// Пересчёт предпросмотра — не сразу. Раньше он вызывался прямо из обработчика
-        /// изменения текста, то есть на каждое нажатие клавиши в поле пути, и каждый раз
-        /// спрашивал файловую систему в потоке интерфейса: на локальном диске незаметно,
-        /// на сетевом пути окно подвисало на каждую букву.
-        ///
-        /// Счётчик поколений отбрасывает устаревшие вызовы: пока ждали или пока ходили
-        /// на диск, путь мог измениться ещё раз, и старый ответ затёр бы новый.
+        /// Пересчёт предпросмотра после набора текста — не сразу. Раньше он вызывался прямо
+        /// из обработчика изменения текста, то есть на каждое нажатие клавиши в поле пути,
+        /// и каждый раз спрашивал файловую систему в потоке интерфейса: на локальном диске
+        /// незаметно, на сетевом пути окно подвисало на каждую букву.
         /// </summary>
-        private async void SchedulePreviewUpdate()
+        private void SchedulePreviewUpdate() => MeasureAndUpdatePreview(InputSettleDelayMs);
+
+        /// <summary>Пересчитать сейчас же, не дожидаясь, пока допечатают, — выбор пресета,
+        /// «Обзор», перетаскивание, смена языка. На диск всё равно идём в фоне.</summary>
+        private void UpdatePreviewNow() => MeasureAndUpdatePreview(delayMs: 0);
+
+        /// <summary>
+        /// Общий путь пересчёта. Счётчик поколений отбрасывает устаревшие вызовы: пока
+        /// ждали или пока ходили на диск, путь мог измениться ещё раз, и старый ответ
+        /// затёр бы новый.
+        ///
+        /// Размер файла спрашивается только из Task.Run. «Пересчитать сейчас же» раньше
+        /// значило «прямо здесь», в потоке интерфейса, и вызывается это в том числе
+        /// из OnLanguageChanged — то есть при открытии раздела, когда страница и так
+        /// строится. Один FileInfo на локальном диске незаметен, на сетевом пути и
+        /// на отключённой флешке — нет: там он ждёт таймаута файловой системы.
+        /// Ровно та же правка уже сделана в «Сборке файла».
+        /// </summary>
+        private async void MeasureAndUpdatePreview(int delayMs)
         {
             // Метод возвращает void: его вызывает обработчик изменения свойства, ждать
             // его некому. Значит, любое исключение отсюда становится необработанным
@@ -236,8 +251,11 @@ namespace TweakFirmware.ViewModels
             {
                 int generation = ++_previewGeneration;
 
-                await Task.Delay(InputSettleDelayMs);
-                if (generation != _previewGeneration) return;
+                if (delayMs > 0)
+                {
+                    await Task.Delay(delayMs);
+                    if (generation != _previewGeneration) return;
+                }
 
                 string path = SourcePath;
                 var probe = await Task.Run(() => FileProbe.Measure(path));
@@ -250,14 +268,6 @@ namespace TweakFirmware.ViewModels
                 AppLogger.Log(Strings.Format("Common_UnexpectedErrorLog",
                     nameof(ConvertViewModel), ex.GetType().Name, ex.Message));
             }
-        }
-
-        /// <summary>Пересчитать сейчас же — когда путь задан не набором текста
-        /// (кнопка «Обзор», перетаскивание, возврат на вкладку).</summary>
-        private void UpdatePreviewNow()
-        {
-            _previewGeneration++;
-            UpdatePreview(FileProbe.Measure(SourcePath));
         }
 
         private void UpdatePreview(FileProbeResult source)
