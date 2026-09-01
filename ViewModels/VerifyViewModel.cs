@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -111,6 +112,14 @@ namespace TweakFirmware.ViewModels
         public bool CanRemoveFile => !IsBusy && Files.Count > VerifyRequest.MinFiles;
 
         private CancellationTokenSource? _cts;
+
+        /// <summary>
+        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
+        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
+        /// от того, перевели ли за это время системные часы.
+        /// </summary>
+        private readonly SpeedEstimator _speed = new();
+        private readonly Stopwatch _clock = new();
 
         /// <summary>
         /// Итог последнего сравнения — чтобы после смены языка перерисовать карточку
@@ -352,7 +361,11 @@ namespace TweakFirmware.ViewModels
             var progress = new Progress<VerifyProgress>(p =>
             {
                 OverallProgress = p.TotalBytes > 0 ? (double)p.TotalBytesProcessed / p.TotalBytes * 100.0 : 0;
-                CurrentFileLabel = Strings.Format("Verify_FileLabelProgress", p.FileIndex, p.FileCount, p.FileName);
+
+                _speed.Add(_clock.Elapsed, p.TotalBytesProcessed);
+                CurrentFileLabel = ProgressCaption.Build(
+                    Strings.Format("Verify_FileLabelProgress", p.FileIndex, p.FileCount, p.FileName),
+                    _speed.BytesPerSecond, _speed.Remaining(p.TotalBytes));
             });
 
             try
@@ -395,6 +408,11 @@ namespace TweakFirmware.ViewModels
             ResultRows.Clear();
             _lastOutcome = null;
             OverallProgress = 0;
+
+            // Часы пускаются здесь, а не при нажатии «Начать»: до первого прочитанного
+            // байта успевает пройти проверка, что все файлы на месте.
+            _speed.Reset();
+            _clock.Restart();
         }
 
         /// <summary>

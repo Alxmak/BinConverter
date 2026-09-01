@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -94,6 +95,22 @@ namespace TweakFirmware.ViewModels
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
+        /// <summary>
+        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
+        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
+        /// от того, перевели ли за это время системные часы.
+        /// </summary>
+        private readonly SpeedEstimator _speed = new();
+        private readonly Stopwatch _clock = new();
+
+        /// <summary>
+        /// Начало подписи под полосой — то, что показывалось и до появления оценки.
+        /// Хранится отдельно, потому что при проверке хэша отсчёты идут дальше, а имя
+        /// текущего файла меняться уже не будет: подпись нужно пересобрать, не потеряв
+        /// её первую половину.
+        /// </summary>
+        private string _captionBase = "";
+
         /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
         private const int InputSettleDelayMs = 250;
 
@@ -178,7 +195,18 @@ namespace TweakFirmware.ViewModels
         partial void OnOverallProgressChanged(double value) =>
             OperationLockService.Instance.Progress = value / 100.0;
 
-        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+        partial void OnIsPausedChanged(bool value)
+        {
+            OperationLockService.Instance.IsPaused = value;
+
+            // На паузе оценка врёт: время идёт, а байты — нет. Убираем её из подписи,
+            // а после возобновления она посчитается заново, с чистого листа: иначе первые
+            // секунды после паузы показывали бы скорость, размазанную по простою.
+            if (!value) return;
+
+            _speed.Reset();
+            CurrentFileLabel = _captionBase;
+        }
 
         [RelayCommand]
         private async Task BrowseSourceAsync()
@@ -403,7 +431,9 @@ namespace TweakFirmware.ViewModels
                 double overallPct = totalWorkBytes > 0 ? (double)p.TotalBytesWritten / totalWorkBytes * 100.0 : 100.0;
                 CurrentFileProgress = filePct;
                 OverallProgress = overallPct;
-                CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+
+                _captionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                UpdateCaption(p.TotalBytesWritten, totalWorkBytes);
             });
 
             var hashProgress = new Progress<(long done, long total)>(p =>
@@ -418,6 +448,10 @@ namespace TweakFirmware.ViewModels
                 ShaProgress = p.total > 0 ? (double)p.done / p.total * 100.0 : 100.0;
                 double overallPct = totalWorkBytes > 0 ? (double)(sourceSize + p.done) / totalWorkBytes * 100.0 : 100.0;
                 OverallProgress = Math.Min(100.0, overallPct);
+
+                // Проверка хэша — вторая половина той же работы, и оценка идёт по ней
+                // сквозной: иначе на середине операции «осталось» скакнуло бы вдвое.
+                UpdateCaption(sourceSize + p.done, totalWorkBytes);
             });
 
             try
@@ -461,6 +495,22 @@ namespace TweakFirmware.ViewModels
             OperationLockService.Instance.OperationStarted(CancelNow);
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
+
+            // Часы пускаются здесь, а не при нажатии «Начать»: между нажатием и первым
+            // байтом успевают пройти проверки места и вопрос о перезаписи, а ждать ответа
+            // человека — не работа, и в скорость это попадать не должно.
+            _speed.Reset();
+            _clock.Restart();
+        }
+
+        /// <summary>
+        /// Пересобирает подпись под полосой: к тому, что показывалось раньше, добавляются
+        /// оценка оставшегося времени и скорость — если их уже есть из чего посчитать.
+        /// </summary>
+        private void UpdateCaption(long doneBytes, long totalBytes)
+        {
+            _speed.Add(_clock.Elapsed, doneBytes);
+            CurrentFileLabel = ProgressCaption.Build(_captionBase, _speed.BytesPerSecond, _speed.Remaining(totalBytes));
         }
 
         /// <summary>

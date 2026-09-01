@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -174,6 +175,23 @@ namespace TweakFirmware.ViewModels
         }
 
         private CancellationTokenSource? _cts;
+
+        /// <summary>
+        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
+        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
+        /// от того, перевели ли за это время системные часы.
+        /// </summary>
+        private readonly SpeedEstimator _speed = new();
+        private readonly Stopwatch _clock = new();
+
+        /// <summary>Название прохода, по которому сейчас идёт счёт, — чтобы заметить смену.</summary>
+        private string _lastStage = "";
+
+        /// <summary>
+        /// Считает ли текущая операция байты. Если нет, показывать скорость нельзя:
+        /// у разных проходов счёт идёт то в страницах, то в разделах.
+        /// </summary>
+        private bool _countsBytes;
         private readonly PauseController _pause = new();
 
         private PartitionAnalysisResult? _result;
@@ -232,7 +250,15 @@ namespace TweakFirmware.ViewModels
         partial void OnProgressChanged(double value) =>
             OperationLockService.Instance.Progress = value / 100.0;
 
-        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+        partial void OnIsPausedChanged(bool value)
+        {
+            OperationLockService.Instance.IsPaused = value;
+
+            // На паузе оценка врёт: время идёт, а работа — нет. После возобновления она
+            // посчитается заново, с чистого листа: иначе первые секунды показывали бы
+            // скорость, размазанную по простою.
+            if (value) _speed.Reset();
+        }
 
         partial void OnSourcePathChanged(string value)
         {
@@ -409,12 +435,17 @@ namespace TweakFirmware.ViewModels
         /// поле, это ещё и не проходило проверку на null (CS8602): компилятор прав, такой
         /// код действительно небезопасен.
         /// </returns>
-        private CancellationToken BeginOperation(bool supportsPause)
+        private CancellationToken BeginOperation(bool supportsPause, bool countsBytes = false)
         {
             _cts = new CancellationTokenSource();
             IsBusy = true;
             SupportsPause = supportsPause;
             Progress = 0;
+
+            _countsBytes = countsBytes;
+            _lastStage = "";
+            _speed.Reset();
+            _clock.Restart();
 
             OperationLockService.Instance.OperationStarted(CancelNow);
 
@@ -706,7 +737,9 @@ namespace TweakFirmware.ViewModels
         {
             if (!await SourceStillMatchesAnalysisAsync()) return;
 
-            var ct = BeginOperation(supportsPause: true);
+            // Извлечение — единственная операция вкладки, которая считает записанные байты
+            // (см. PartitionExtractOperation): только у неё скорость под полосой осмысленна.
+            var ct = BeginOperation(supportsPause: true, countsBytes: true);
 
             try
             {
@@ -999,8 +1032,27 @@ namespace TweakFirmware.ViewModels
 
         private void OnProgress(AnalysisProgress value)
         {
-            StageLabel = value.Stage;
             Progress = value.Total > 0 ? Math.Clamp(value.Done * 100.0 / value.Total, 0, 100) : 0;
+
+            // Проходов у разбора много, и каждый идёт со своей скоростью: накопленное
+            // на предыдущем к следующему не относится совсем, а счётчик у нового прохода
+            // и вовсе начинается с нуля.
+            if (!string.Equals(value.Stage, _lastStage, StringComparison.Ordinal))
+            {
+                _lastStage = value.Stage;
+                _speed.Reset();
+                _clock.Restart();
+            }
+
+            _speed.Add(_clock.Elapsed, value.Done);
+
+            // Скорость показываем только там, где счёт идёт по байтам. У проходов разбора
+            // это то страницы, то разделы, и «180 МБ/с» на них было бы просто неправдой.
+            // А вот оценка оставшегося времени от единиц не зависит: доля есть доля.
+            StageLabel = ProgressCaption.Build(
+                value.Stage,
+                _countsBytes ? _speed.BytesPerSecond : null,
+                _speed.Remaining(value.Total));
         }
     }
 }

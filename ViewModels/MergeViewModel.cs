@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,6 +73,17 @@ namespace TweakFirmware.ViewModels
         private CancellationTokenSource? _cts;
         private PauseController? _pauseController;
 
+        /// <summary>
+        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
+        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
+        /// от того, перевели ли за это время системные часы.
+        /// </summary>
+        private readonly SpeedEstimator _speed = new();
+        private readonly Stopwatch _clock = new();
+
+        /// <summary>Начало подписи под полосой — то, что показывалось и до появления оценки.</summary>
+        private string _captionBase = "";
+
         /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
         private const int InputSettleDelayMs = 250;
 
@@ -132,7 +144,18 @@ namespace TweakFirmware.ViewModels
         partial void OnOverallProgressChanged(double value) =>
             OperationLockService.Instance.Progress = value / 100.0;
 
-        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+        partial void OnIsPausedChanged(bool value)
+        {
+            OperationLockService.Instance.IsPaused = value;
+
+            // На паузе оценка врёт: время идёт, а байты — нет. Убираем её из подписи,
+            // а после возобновления она посчитается заново, с чистого листа: иначе первые
+            // секунды после паузы показывали бы скорость, размазанную по простою.
+            if (!value) return;
+
+            _speed.Reset();
+            CurrentFileLabel = _captionBase;
+        }
 
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // цепочка частей должна осматриваться и при прямом вводе, не только через SetSource.
@@ -303,7 +326,10 @@ namespace TweakFirmware.ViewModels
                 double totalPct = p.TotalBytes > 0 ? (double)p.TotalBytesProcessed / p.TotalBytes * 100.0 : 100.0;
                 CurrentFileProgress = filePct;
                 OverallProgress = totalPct;
-                CurrentFileLabel = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+
+                _captionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                _speed.Add(_clock.Elapsed, p.TotalBytesProcessed);
+                CurrentFileLabel = ProgressCaption.Build(_captionBase, _speed.BytesPerSecond, _speed.Remaining(p.TotalBytes));
             });
 
             try
@@ -343,6 +369,12 @@ namespace TweakFirmware.ViewModels
             OperationLockService.Instance.OperationStarted(CancelNow);
             PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0;
+
+            // Часы пускаются здесь, а не при нажатии «Начать»: между нажатием и первым
+            // байтом успевают пройти проверки и вопрос о перезаписи, а ждать ответа
+            // человека — не работа, и в скорость это попадать не должно.
+            _speed.Reset();
+            _clock.Restart();
         }
 
         private async Task ShowOutcomeAsync(MergeOutcome outcome)
