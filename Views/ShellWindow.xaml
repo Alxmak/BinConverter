@@ -12,6 +12,22 @@
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True">
 
+    <!-- Полоса прогресса прямо на кнопке в панели задач. Операции здесь идут десятками
+         минут, и окно на это время сворачивают — а свёрнутое окно не сообщало ровно
+         ничего: чтобы узнать, работает программа или давно закончила, приходилось её
+         разворачивать. Цвет говорит о состоянии: обычный — идёт, жёлтый — пауза,
+         красный — кончилось не тем, чего ждали.
+
+         Источник указан явно, а не взят из DataContext окна (там лежит та же служба).
+         TaskbarItemInfo — не элемент разметки, а Freezable, и в логическом дереве окна
+         не стоит: DataContext до него доходит не всегда, и привязка молча осталась бы
+         пустой. -->
+    <ui:FluentWindow.TaskbarItemInfo>
+        <TaskbarItemInfo
+            ProgressValue="{Binding TaskbarProgress, Source={x:Static services:OperationLockService.Instance}}"
+            ProgressState="{Binding TaskbarState, Source={x:Static services:OperationLockService.Instance}}"/>
+    </ui:FluentWindow.TaskbarItemInfo>
+
     <ui:FluentWindow.Resources>
         <!-- Общий стиль кнопки лежит в Styles/AppStyles.xaml; здесь только уменьшаем
              отступы — кнопки баннера обновления компактнее, чем на рабочих вкладках. -->

@@ -173,6 +173,13 @@ namespace TweakFirmware.ViewModels
         }
         partial void OnIsVerifyingChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
+        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
+        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
+        partial void OnOverallProgressChanged(double value) =>
+            OperationLockService.Instance.Progress = value / 100.0;
+
+        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+
         [RelayCommand]
         private async Task BrowseSourceAsync()
         {
@@ -421,6 +428,12 @@ namespace TweakFirmware.ViewModels
 
                 // При конфликте операция могла уйти в соседнюю папку — показываем, куда именно.
                 if (outcome.OutputFolderChanged) OutputFolder = outcome.OutputFolder;
+
+                // Красной полосой в панели задач отмечаем только то, что случилось само:
+                // отмену человек и так помнит, а до начала работы окно ещё перед глазами —
+                // там достаточно обычного сообщения.
+                OperationLockService.Instance.ReportResult(
+                    outcome.Status is not (ConvertStatus.Failed or ConvertStatus.HashMismatch));
 
                 await ShowOutcomeAsync(outcome);
             }

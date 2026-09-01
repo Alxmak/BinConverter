@@ -227,6 +227,13 @@ namespace TweakFirmware.ViewModels
 
         partial void OnSupportsPauseChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
+        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
+        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
+        partial void OnProgressChanged(double value) =>
+            OperationLockService.Instance.Progress = value / 100.0;
+
+        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+
         partial void OnSourcePathChanged(string value)
         {
             OnPropertyChanged(nameof(CanAnalyse));
@@ -484,6 +491,11 @@ namespace TweakFirmware.ViewModels
                 var result = await Task.Run(() => PartitionAnalysisOperation.RunAsync(
                     new PartitionAnalysisRequest { SourcePath = SourcePath }, this, ct));
 
+                // Неопознанная разметка — тоже красная полоса: разбор гигабайтного дампа
+                // идёт минутами, и «ничего не нашлось» надо увидеть, не разворачивая окно.
+                OperationLockService.Instance.ReportResult(
+                    result.Status is not (PartitionAnalysisStatus.Failed or PartitionAnalysisStatus.LayoutNotRecognised));
+
                 ApplyResult(result);
                 PrepareRename(result);
                 await SaveArtifactsAsync(result, ct);
@@ -710,6 +722,11 @@ namespace TweakFirmware.ViewModels
                 var outcome = await Task.Run(() => PartitionExtractOperation.RunAsync(
                     request, _table, this, ct, _pause));
 
+                // Красной полосой в панели задач отмечаем только то, что случилось само:
+                // отмену человек и так помнит, а до начала работы окно ещё перед глазами.
+                OperationLockService.Instance.ReportResult(
+                    outcome.Status != PartitionExtractStatus.Failed);
+
                 await ReportExtractOutcomeAsync(outcome);
             }
             finally
@@ -798,6 +815,8 @@ namespace TweakFirmware.ViewModels
             {
                 var outcome = await Task.Run(() => NandSplitOperation.RunAsync(
                     SourcePath, _result?.Geometry, OutputPath, this, ct, _pause));
+
+                OperationLockService.Instance.ReportResult(outcome.Status != NandSplitStatus.Failed);
 
                 if (outcome.Status == NandSplitStatus.Completed)
                 {

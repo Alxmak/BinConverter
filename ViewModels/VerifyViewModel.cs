@@ -263,6 +263,12 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(CanRemoveFile));
         }
 
+        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
+        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно. Паузы
+        // в сверке нет: она только читает, и обрывать её нечем.
+        partial void OnOverallProgressChanged(double value) =>
+            OperationLockService.Instance.Progress = value / 100.0;
+
         /// <summary>
         /// Подписи и доступность кнопок зависят от количества строк, поэтому пересчитываются
         /// после каждого добавления и удаления: иначе после удаления второй из трёх строк
@@ -356,6 +362,13 @@ namespace TweakFirmware.ViewModels
 
                 _lastOutcome = outcome;
                 ShowResultRows(outcome);
+
+                // Расхождение хэшей — тоже красная полоса, а не только ошибка чтения:
+                // ради этого ответа сверку и запускают, и «файлы разные» — ровно тот
+                // случай, когда возвращаться к окну надо не дожидаясь конца.
+                OperationLockService.Instance.ReportResult(
+                    outcome.Status is not (VerifyStatus.Failed or VerifyStatus.Different));
+
                 await ShowOutcomeAsync(outcome);
             }
             finally

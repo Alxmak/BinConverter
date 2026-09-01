@@ -127,6 +127,13 @@ namespace TweakFirmware.ViewModels
             OnPropertyChanged(nameof(IsNotBusy));
         }
 
+        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
+        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
+        partial void OnOverallProgressChanged(double value) =>
+            OperationLockService.Instance.Progress = value / 100.0;
+
+        partial void OnIsPausedChanged(bool value) => OperationLockService.Instance.IsPaused = value;
+
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // цепочка частей должна осматриваться и при прямом вводе, не только через SetSource.
         partial void OnSourcePathChanged(string value) => ScheduleChainProbe();
@@ -307,6 +314,12 @@ namespace TweakFirmware.ViewModels
 
                 // При конфликте операция могла уйти в соседнее имя — показываем, куда именно.
                 if (outcome.OutputPathChanged) OutputPath = outcome.OutputPath;
+
+                // Красной полосой в панели задач отмечаем только то, что случилось само:
+                // отмену человек и так помнит, а до начала работы окно ещё перед глазами —
+                // там достаточно обычного сообщения.
+                OperationLockService.Instance.ReportResult(
+                    outcome.Status is not (MergeStatus.Failed or MergeStatus.HashMismatch));
 
                 await ShowOutcomeAsync(outcome);
             }
