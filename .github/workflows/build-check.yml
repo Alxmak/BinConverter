@@ -49,5 +49,12 @@ jobs:
       - name: Собрать приложение (Release)
         run: dotnet build TweakFirmware.csproj -c Release --no-restore -warnaserror
 
+      # Предупреждения тестового проекта тоже роняют прогон, и это не педантизм:
+      # у сборки приложения и у сборки тестов свои счётчики, а сюда смотрят реже.
+      # Анализатор xUnit ловит осмысленное — например, проверку размера коллекции
+      # через Assert.Equal вместо Assert.Single, — и один такой warning уже прожил
+      # целый прогон незамеченным, потому что «зелено» относилось к приложению.
+      # Свойством, а не флагом -warnaserror: dotnet test разбирает свои аргументы сам,
+      # и msbuild-флаг до него может не доехать.
       - name: Прогнать тесты Core
-        run: dotnet test TweakFirmware.Tests/TweakFirmware.Tests.csproj -c Release --no-restore --verbosity normal
+        run: dotnet test TweakFirmware.Tests/TweakFirmware.Tests.csproj -c Release --no-restore --verbosity normal -p:TreatWarningsAsErrors=true

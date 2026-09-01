@@ -63,7 +63,7 @@ namespace TweakFirmware.Tests
             Assert.Null(geometry);
 
             // Восемь блоков — одно сообщение (первое). Без прореживания их было бы восемь.
-            Assert.Equal(1, host.Reports.Count);
+            Assert.Single(host.Reports);
         }
     }
 }
