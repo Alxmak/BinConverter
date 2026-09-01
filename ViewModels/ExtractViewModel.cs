@@ -110,14 +110,20 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string suggestedFileName = "";
 
         /// <summary>Искать ли файловые системы внутри разделов — ответ даётся заранее.</summary>
-        [ObservableProperty] private bool searchFileSystems = true;
+        [ObservableProperty] private bool searchFileSystems = TabOptionsService.Get(TabOptionsService.ExtractSearchFileSystems, true);
 
         // Оба параметра относятся к «Извлечь отмеченные» — единственной операции вкладки,
         // которая пишет столько, что место на диске стоит считать заранее, и оставляет
         // после себя папку, которую хочется открыть. Значения по умолчанию те же, что
         // в Конвертировании и Сборке.
-        [ObservableProperty] private bool checkDiskSpace = true;
-        [ObservableProperty] private bool openFolderAfter = true;
+        [ObservableProperty] private bool checkDiskSpace = TabOptionsService.Get(TabOptionsService.ExtractCheckDiskSpace, true);
+        [ObservableProperty] private bool openFolderAfter = TabOptionsService.Get(TabOptionsService.ExtractOpenFolder, true);
+
+        // Положение галочек переживает перезапуск (TabOptionsService); значения по
+        // умолчанию остались прежними и заданы здесь же.
+        partial void OnSearchFileSystemsChanged(bool value) => TabOptionsService.Set(TabOptionsService.ExtractSearchFileSystems, value);
+        partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.ExtractCheckDiskSpace, value);
+        partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.ExtractOpenFolder, value);
 
         /// <summary>
         /// Поддерживает ли текущая работа паузу. Разбор дампа — нет: он читает файл

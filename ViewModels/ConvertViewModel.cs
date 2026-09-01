@@ -60,9 +60,16 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private bool showAllFiles;
         [ObservableProperty] private string expandButtonText = Strings.Get("Convert_ShowAllFilesButton");
 
-        [ObservableProperty] private bool verifyHashAfter = true;
-        [ObservableProperty] private bool openFolderAfter = true;
-        [ObservableProperty] private bool checkDiskSpace = true;
+        // Положение галочек переживает перезапуск (TabOptionsService). Значения по
+        // умолчанию остались прежними и заданы здесь же: служба знает только то, что
+        // человек менял, а нетронутая галочка в файл не попадает вовсе.
+        [ObservableProperty] private bool verifyHashAfter = TabOptionsService.Get(TabOptionsService.ConvertVerifyHash, true);
+        [ObservableProperty] private bool openFolderAfter = TabOptionsService.Get(TabOptionsService.ConvertOpenFolder, true);
+        [ObservableProperty] private bool checkDiskSpace = TabOptionsService.Get(TabOptionsService.ConvertCheckDiskSpace, true);
+
+        partial void OnVerifyHashAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.ConvertVerifyHash, value);
+        partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.ConvertOpenFolder, value);
+        partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.ConvertCheckDiskSpace, value);
 
         // Доступность всех трёх кнопок операции решается через CanExecute: общая строка
         // кнопок (OperationBar) ничего не знает про IsBusy и не привязывает IsEnabled сама.

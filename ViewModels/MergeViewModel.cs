@@ -44,8 +44,13 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private string outputPath = "";
         [ObservableProperty] private string expectedHashText = "";
 
-        [ObservableProperty] private bool checkDiskSpace = true;
-        [ObservableProperty] private bool openFolderAfter = true;
+        // Положение галочек переживает перезапуск (TabOptionsService). Значения по
+        // умолчанию остались прежними и заданы здесь же.
+        [ObservableProperty] private bool checkDiskSpace = TabOptionsService.Get(TabOptionsService.MergeCheckDiskSpace, true);
+        [ObservableProperty] private bool openFolderAfter = TabOptionsService.Get(TabOptionsService.MergeOpenFolder, true);
+
+        partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.MergeCheckDiskSpace, value);
+        partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.MergeOpenFolder, value);
 
         // Доступность всех трёх кнопок операции — через CanExecute, см. то же в Конвертировании.
         [ObservableProperty]
