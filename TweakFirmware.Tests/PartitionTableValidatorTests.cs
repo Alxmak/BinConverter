@@ -145,5 +145,28 @@ namespace TweakFirmware.Tests
             Assert.Equal(new[] { "system", "boot" }, table.Items.Select(p => p.Name).ToArray());
             Assert.Equal(0x2000, table[0].Offset);
         }
+
+        [Fact]
+        public void EveryKindOfIssue_HasItsOwnMessageNamingThePartition()
+        {
+            // У Describe есть ветка «всё остальное» — та, что описывает повтор записи.
+            // Значит, новый вид замечания, добавленный в перечисление и забытый здесь,
+            // молча начнёт читаться как «раздел встречается дважды»: замечание в журнале
+            // будет, но не про то. Ни компилятор, ни остальные тесты этого не заметят.
+            var messages = new List<string>();
+
+            foreach (PartitionIssueKind kind in Enum.GetValues<PartitionIssueKind>())
+            {
+                var issue = new PartitionIssue(kind, "system", 0x1000, 0x2000, 0x300, "userdata");
+                string text = issue.Describe();
+
+                Assert.False(string.IsNullOrWhiteSpace(text), $"{kind}: пустое описание");
+                Assert.Contains("system", text);
+                messages.Add(text);
+            }
+
+            // Все описания разные — то есть каждый вид попал в свою ветку, а не в общую.
+            Assert.Equal(messages.Count, messages.Distinct().Count());
+        }
     }
 }

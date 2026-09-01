@@ -8,4 +8,16 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Часть общих мелочей объявлена internal намеренно: ProbeHelpers и DumpStrings —
+         это подробности реализации зондов и детекторов, наружу их показывать незачем,
+         а вот проверять надо. Через ProbeHelpers.ClampToPartition проходит окончательная
+         длина каждого найденного тома, а через DumpStrings — имя каждого раздела,
+         которое потом становится именем извлечённого файла. Ошибка на единицу здесь
+         не заметна ни глазами, ни компилятором.
+
+         Открываем ровно тестовому проекту и ничего больше: публичным API это не делает. -->
+    <InternalsVisibleTo Include="TweakFirmware.Tests" />
+  </ItemGroup>
+
 </Project>
