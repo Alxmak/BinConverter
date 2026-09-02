@@ -506,7 +506,7 @@ namespace TweakFirmware.ViewModels
             switch (outcome.Status)
             {
                 case VerifyStatus.NotEnoughFiles:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Verify_SelectBothFiles"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Verify_SelectTwoFiles"));
                     break;
 
                 case VerifyStatus.FileMissing:

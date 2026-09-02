@@ -158,7 +158,7 @@
                 </Border>
 
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                    <c:OperationBar StartText="{loc:Loc Merge_StartButton}"
+                    <c:OperationBar StartText="{loc:Loc Common_StartButton}"
                                     StartCommand="{Binding StartCommand}"
                                     PauseCommand="{Binding TogglePauseCommand}"
                                     CancelCommand="{Binding CancelCommand}"/>

@@ -110,7 +110,7 @@
                 <!-- Те же кнопки, что в Конвертировании и Сборке. PauseCommand
                      не передаём — паузы в сравнении нет, и кнопки не будет. -->
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                    <c:OperationBar StartText="{loc:Loc Verify_CompareButton}"
+                    <c:OperationBar StartText="{loc:Loc Common_StartButton}"
                                     StartCommand="{Binding StartCommand}"
                                     CancelCommand="{Binding CancelCommand}"/>
                 </Border>

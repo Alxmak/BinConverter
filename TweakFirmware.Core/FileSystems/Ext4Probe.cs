@@ -141,7 +141,7 @@ namespace TweakFirmware.Core.FileSystems
             var lines = new List<string>
             {
                 Strings.Format("Extract_Ext4Volume", sb.Name, $"0x{sb.Offset:X}", $"0x{sb.VolumeSize:X}"),
-                Strings.Format("Extract_Ext4BlockSize", sb.BlockSize / 1024)
+                Strings.Format("Extract_BlockSize", sb.BlockSize / 1024)
             };
 
             if (sb.BlockCount > 0)

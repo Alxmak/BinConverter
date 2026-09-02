@@ -6,7 +6,7 @@
                  xmlns:c="clr-namespace:TweakFirmware.Controls"
                  xmlns:services="clr-namespace:TweakFirmware.Services"
                  xmlns:loc="clr-namespace:TweakFirmware.Services"
-                 Title="{loc:Loc Shell_WindowTitle}"
+                 Title="{loc:Loc Common_AppName}"
                  Icon="pack://application:,,,/Assets/AppIcon-64.png"
                  Height="860" Width="1280" MinHeight="600" MinWidth="900"
                  WindowStartupLocation="CenterScreen"
@@ -99,7 +99,7 @@
              Кадр на 32 пришлось бы растягивать уже при 150%, а 256 — уменьшать
              в восемь раз. Иконка самого окна (атрибут Icon выше) остаётся 64-й:
              её Windows просит и мелкой для панели задач, и крупной для Alt+Tab. -->
-        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Shell_TitleBarTitle}" Padding="0">
+        <ui:TitleBar Grid.Row="0" Title="{loc:Loc Common_AppName}" Padding="0">
             <ui:TitleBar.Header>
                 <!-- Полоса тянется на всю высоту заголовка намеренно: так кнопка меню
                      остаётся ровно той же высоты, что была, когда стояла в шапке одна.

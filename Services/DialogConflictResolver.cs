@@ -20,7 +20,7 @@ namespace TweakFirmware.Services
                 Strings.Format("Convert_ConflictMessage", baseFileName),
                 Strings.Get("Common_OverwriteChoice"),
                 Strings.Get("Convert_NewFolderNearby"),
-                Strings.Get("Common_CancelChoice"));
+                Strings.Get("Common_CancelButton"));
 
             return Map(choice);
         }
@@ -32,7 +32,7 @@ namespace TweakFirmware.Services
                 Strings.Format("Merge_FileExistsMessage", Path.GetFileName(outputPath)),
                 Strings.Get("Common_OverwriteChoice"),
                 Strings.Get("Merge_NewNameNearby"),
-                Strings.Get("Common_CancelChoice"));
+                Strings.Get("Common_CancelButton"));
 
             return Map(choice);
         }

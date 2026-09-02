@@ -30,7 +30,7 @@
                            Stretch="Uniform" VerticalAlignment="Center"/>
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Tweak Firmware" FontSize="20" FontWeight="SemiBold"
+                            <TextBlock Text="{loc:Loc Common_AppName}" FontSize="20" FontWeight="SemiBold"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                             <!-- Номер версии плашкой рядом с названием, а не строкой под ним:

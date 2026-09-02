@@ -87,7 +87,7 @@ namespace TweakFirmware.Core.FileSystems
                     Strings.Format("Extract_SquashFsVolume", $"{major}.{minor}",
                         swapped ? Strings.Get("Extract_SquashFsSwapped") : "",
                         $"0x{offset:X}", $"0x{length:X}"),
-                    Strings.Format("Extract_SquashFsBlockSize", blockSize / 1024),
+                    Strings.Format("Extract_BlockSize", blockSize / 1024),
                     major == 4 ? Strings.Format("Extract_SquashFsCompression", CompressionName(compression)) : ""
                 }
             };

@@ -487,9 +487,10 @@ namespace TweakFirmware.ViewModels
             }
 
             if (!ShowAllFiles && _expectedFileCount > CollapsedFileListCount)
-                sb.AppendLine(Strings.Format("Convert_MoreFilesLine", _expectedFileCount - CollapsedFileListCount));
+                sb.AppendLine(Strings.Format("Convert_MoreFilesLine", _expectedFileCount - CollapsedFileListCount,
+                    PluralForms.Files(_expectedFileCount - CollapsedFileListCount)));
 
-            ExpandButtonText = ShowAllFiles ? Strings.Get("Convert_CollapseList") : Strings.Format("Convert_ShowAllFilesCount", _expectedFileCount);
+            ExpandButtonText = ShowAllFiles ? Strings.Get("Convert_CollapseList") : Strings.Format("Convert_ShowAllFilesCount", _expectedFileCount, PluralForms.Files(_expectedFileCount));
             DisplayedFilesText = sb.ToString().TrimEnd();
         }
 
@@ -730,14 +731,14 @@ namespace TweakFirmware.ViewModels
                 _pauseController.Resume();
                 IsPaused = false;
                 PauseButtonText = Strings.Get("Common_PauseButton");
-                AppLogger.Log(Strings.Get("Convert_ResumedLog"));
+                AppLogger.Log(Strings.Get("Common_ResumedLog"));
             }
             else
             {
                 _pauseController.Pause();
                 IsPaused = true;
                 PauseButtonText = Strings.Get("Common_ResumeButton");
-                AppLogger.Log(Strings.Get("Convert_PausedLog"));
+                AppLogger.Log(Strings.Get("Common_PausedLog"));
             }
         }
 
