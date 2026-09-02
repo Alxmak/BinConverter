@@ -19,8 +19,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Про версии действий — то же, что в build-check.yml: они на Node 24, потому
+      # что Node 20 выводят из обращения. Здесь это важнее вдвойне: этот прогон
+      # запускается раз в релиз, и его поломку видно только в момент выпуска.
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Дальше всё считается от одного значения, а не от github.ref_name: при запуске
       # вручную ref_name — это "main", и в имена файлов попало бы оно.
@@ -38,7 +41,7 @@ jobs:
           Write-Host "Релиз: $tag"
 
       - name: Установить .NET 8 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
@@ -77,7 +80,7 @@ jobs:
         run: iscc /DMyAppVersion=${{ steps.tag.outputs.version }} installer\Setup.iss
 
       - name: Создать релиз на GitHub
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             ./TweakFirmware-${{ steps.tag.outputs.name }}-win-x64.zip

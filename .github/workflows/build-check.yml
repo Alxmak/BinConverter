@@ -23,11 +23,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Версии действий держим на текущих мажорах не ради новизны: GitHub выводит
+      # из обращения Node 20, на котором работали @v4. Пока раннер запускает их
+      # принудительно на Node 24 и ругается предупреждением, но однажды перестанет —
+      # и прогон упадёт на ровном месте, в тот момент, когда нужен будет релиз.
       - name: Checkout кода
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Установить .NET 8 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
