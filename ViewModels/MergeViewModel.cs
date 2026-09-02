@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,7 +11,7 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class MergeViewModel : LogHostViewModel
+    public partial class MergeViewModel : OperationTabViewModel
     {
         // Пока часть цепочки не выбрана, собирать нечего: кнопка «Начать» гаснет,
         // а не встречает нажатие сообщением об ошибке.
@@ -52,42 +50,11 @@ namespace TweakFirmware.ViewModels
         partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.MergeCheckDiskSpace, value);
         partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.MergeOpenFolder, value);
 
-        // Доступность всех трёх кнопок операции — через CanExecute, см. то же в Конвертировании.
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
-        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
-        private bool isBusy;
-
-        [ObservableProperty] private bool isPaused;
-        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
-
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
         [ObservableProperty] private double currentFileProgress;
 
         public bool CanStart => !IsBusy && SourcePath.Length > 0;
-
-        /// <summary>Сборку можно ставить на паузу всё время, пока она идёт: отдельной
-        /// фазы проверки хэша, как в Конвертировании, здесь нет.</summary>
-        public bool CanPause => IsBusy;
-
-        /// <summary>Пока идёт сборка, поля и параметры вкладки недоступны.</summary>
-        public bool IsNotBusy => !IsBusy;
-
-        private CancellationTokenSource? _cts;
-        private PauseController? _pauseController;
-
-        /// <summary>
-        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
-        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
-        /// от того, перевели ли за это время системные часы.
-        /// </summary>
-        private readonly SpeedEstimator _speed = new();
-        private readonly Stopwatch _clock = new();
-
-        /// <summary>Начало подписи под полосой — то, что показывалось и до появления оценки.</summary>
-        private string _captionBase = "";
 
         /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
         private const int InputSettleDelayMs = 250;
@@ -133,34 +100,20 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         protected override void OnLanguageChanged()
         {
-            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            base.OnLanguageChanged();
             ProbeChainNow();
         }
 
-        partial void OnIsBusyChanged(bool value)
+        protected override void OnBusyChanged(bool busy)
         {
             OnPropertyChanged(nameof(CanStart));
-            OnPropertyChanged(nameof(CanPause));
-            OnPropertyChanged(nameof(IsNotBusy));
+            StartCommand.NotifyCanExecuteChanged();
         }
 
-        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
-        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
-        partial void OnOverallProgressChanged(double value) =>
-            OperationLockService.Instance.Progress = value / 100.0;
+        /// <summary>Подпись под полосой «Текущий файл» — там же идёт и оценка.</summary>
+        protected override void ApplyCaption(string text) => CurrentFileLabel = text;
 
-        partial void OnIsPausedChanged(bool value)
-        {
-            OperationLockService.Instance.IsPaused = value;
-
-            // На паузе оценка врёт: время идёт, а байты — нет. Убираем её из подписи,
-            // а после возобновления она посчитается заново, с чистого листа: иначе первые
-            // секунды после паузы показывали бы скорость, размазанную по простою.
-            if (!value) return;
-
-            _speed.Reset();
-            CurrentFileLabel = _captionBase;
-        }
+        partial void OnOverallProgressChanged(double value) => ReportTaskbarProgress(value);
 
         // Пункт: поле пути теперь редактируется свободно (можно вставлять и печатать) —
         // цепочка частей должна осматриваться и при прямом вводе, не только через SetSource.
@@ -324,8 +277,7 @@ namespace TweakFirmware.ViewModels
                 ExpectedHash = ExpectedHashText
             };
 
-            _cts = new CancellationTokenSource();
-            _pauseController = new PauseController();
+            var ct = PrepareOperation();
 
             var progress = new Progress<MergeProgress>(p =>
             {
@@ -334,16 +286,15 @@ namespace TweakFirmware.ViewModels
                 CurrentFileProgress = filePct;
                 OverallProgress = totalPct;
 
-                _captionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
-                _speed.Add(_clock.Elapsed, p.TotalBytesProcessed);
-                CurrentFileLabel = ProgressCaption.Build(_captionBase, _speed.BytesPerSecond, _speed.Remaining(p.TotalBytes));
+                CaptionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                UpdateCaption(p.TotalBytesProcessed, p.TotalBytes);
             });
 
             try
             {
                 var outcome = await MergeOperation.RunAsync(
                     request, new DialogConflictResolver(), progress,
-                    AppLogger.Log, _pauseController, _cts.Token, MarkOperationStarted);
+                    AppLogger.Log, Pause, ct, MarkOperationStarted);
 
                 // При конфликте операция могла уйти в соседнее имя — показываем, куда именно.
                 if (outcome.OutputPathChanged) OutputPath = outcome.OutputPath;
@@ -358,30 +309,25 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                OverallProgress = 0; CurrentFileProgress = 0;
-                IsBusy = false;
-                IsPaused = false;
-                OperationLockService.Instance.OperationFinished();
-                _cts?.Dispose();
-                _cts = null;
-                _pauseController = null;
+                FinishOperation();
             }
+        }
+
+        /// <summary>Свои полосы обнуляем здесь, всё остальное снимает базовый класс.</summary>
+        protected override void FinishOperation()
+        {
+            OverallProgress = 0;
+            CurrentFileProgress = 0;
+
+            base.FinishOperation();
         }
 
         /// <summary>Вызывается операцией, когда все проверки прошли и работа началась.</summary>
         private void MarkOperationStarted()
         {
-            IsBusy = true;
-            IsPaused = false;
-            OperationLockService.Instance.OperationStarted(CancelNow);
-            PauseButtonText = Strings.Get("Common_PauseButton");
-            OverallProgress = 0; CurrentFileProgress = 0;
+            MarkStarted();
 
-            // Часы пускаются здесь, а не при нажатии «Начать»: между нажатием и первым
-            // байтом успевают пройти проверки и вопрос о перезаписи, а ждать ответа
-            // человека — не работа, и в скорость это попадать не должно.
-            _speed.Reset();
-            _clock.Restart();
+            OverallProgress = 0; CurrentFileProgress = 0;
         }
 
         private async Task ShowOutcomeAsync(MergeOutcome outcome)
@@ -477,48 +423,5 @@ namespace TweakFirmware.ViewModels
             string? folder = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(folder)) ResultFolder.Open(folder);
         }
-        /// <summary>Спрашивает, прежде чем прервать, — по той же причине,
-        /// что и в «Конвертировании»: цена случайного нажатия здесь вся работа.</summary>
-        [RelayCommand(CanExecute = nameof(IsBusy))]
-        private async Task CancelAsync()
-        {
-            var answer = await DialogService.ShowConfirmAsync(
-                Strings.Get("Common_CancelConfirmTitle"),
-                Strings.Get("Common_CancelConfirmWritingMessage"),
-                Strings.Get("Common_CancelConfirmStop"),
-                null,
-                Strings.Get("Common_CancelConfirmKeep"));
-
-            if (answer == DialogChoice.Primary) CancelNow();
-        }
-
-        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
-        private void CancelNow()
-        {
-            _pauseController?.Resume();
-            _cts?.Cancel();
-        }
-
-        [RelayCommand(CanExecute = nameof(CanPause))]
-        private void TogglePause()
-        {
-            if (_pauseController == null) return;
-
-            if (IsPaused)
-            {
-                _pauseController.Resume();
-                IsPaused = false;
-                PauseButtonText = Strings.Get("Common_PauseButton");
-                AppLogger.Log(Strings.Get("Common_ResumedLog"));
-            }
-            else
-            {
-                _pauseController.Pause();
-                IsPaused = true;
-                PauseButtonText = Strings.Get("Common_ResumeButton");
-                AppLogger.Log(Strings.Get("Common_PausedLog"));
-            }
-        }
-
     }
 }

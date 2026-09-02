@@ -1,11 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,7 +16,7 @@ using TweakFirmware.Services;
 
 namespace TweakFirmware.ViewModels
 {
-    public partial class ConvertViewModel : LogHostViewModel
+    public partial class ConvertViewModel : OperationTabViewModel
     {
         private const int CollapsedFileListCount = 4;
         private const int MaxFilesToEnumerate = 2000;
@@ -100,20 +98,12 @@ namespace TweakFirmware.ViewModels
         partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.ConvertOpenFolder, value);
         partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.ConvertCheckDiskSpace, value);
 
-        // Доступность всех трёх кнопок операции решается через CanExecute: общая строка
-        // кнопок (OperationBar) ничего не знает про IsBusy и не привязывает IsEnabled сама.
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
-        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
-        private bool isBusy;
-
-        [ObservableProperty] private bool isPaused;
-        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
-
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
-        private bool isVerifying;
+        /// <summary>
+        /// Идёт вторая половина работы — повторное чтение частей ради SHA-256. Паузы
+        /// у неё нет: на этом проходе нечего останавливать, а кнопка на паузе выглядела
+        /// бы зависшей.
+        /// </summary>
+        [ObservableProperty] private bool isVerifying;
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
@@ -121,31 +111,10 @@ namespace TweakFirmware.ViewModels
         [ObservableProperty] private double shaProgress;
 
         public bool CanStart => !IsBusy && SourcePath.Length > 0;
-        public bool CanPause => IsBusy && !IsVerifying;
 
-        /// <summary>Пока идёт операция, поля и параметры вкладки недоступны — менять их
-        /// на ходу нельзя, иначе настройки разойдутся с уже запущенным процессом.</summary>
-        public bool IsNotBusy => !IsBusy;
+        public override bool CanPause => base.CanPause && !IsVerifying;
+
         public bool IsCustomPreset => SelectedPreset?.IsCustom == true;
-
-        private CancellationTokenSource? _cts;
-        private PauseController? _pauseController;
-
-        /// <summary>
-        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
-        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
-        /// от того, перевели ли за это время системные часы.
-        /// </summary>
-        private readonly SpeedEstimator _speed = new();
-        private readonly Stopwatch _clock = new();
-
-        /// <summary>
-        /// Начало подписи под полосой — то, что показывалось и до появления оценки.
-        /// Хранится отдельно, потому что при проверке хэша отсчёты идут дальше, а имя
-        /// текущего файла меняться уже не будет: подпись нужно пересобрать, не потеряв
-        /// её первую половину.
-        /// </summary>
-        private string _captionBase = "";
 
         /// <summary>Сколько ждать после последнего нажатия, прежде чем идти на диск.</summary>
         private const int InputSettleDelayMs = 250;
@@ -190,12 +159,13 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         protected override void OnLanguageChanged()
         {
+            base.OnLanguageChanged();
+
             Presets[^1].Name = Strings.Get("Convert_CustomPresetName");
             LimitUnits[0].Name = Strings.Get("Convert_UnitBytes");
             LimitUnits[1].Name = Strings.Get("Convert_UnitKilobytes");
             LimitUnits[2].Name = Strings.Get("Convert_UnitMegabytes");
             LimitUnits[3].Name = Strings.Get("Convert_UnitGigabytes");
-            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
             UpdateLimitHint();
             UpdatePreviewNow();
         }
@@ -270,31 +240,22 @@ namespace TweakFirmware.ViewModels
             if (!_settingOutputFolderInternally) _outputFolderIsAuto = false;
         }
 
-        partial void OnIsBusyChanged(bool value)
+        protected override void OnBusyChanged(bool busy)
         {
             OnPropertyChanged(nameof(CanStart));
-            OnPropertyChanged(nameof(CanPause));
-            OnPropertyChanged(nameof(IsNotBusy));
+            StartCommand.NotifyCanExecuteChanged();
         }
-        partial void OnIsVerifyingChanged(bool value) => OnPropertyChanged(nameof(CanPause));
 
-        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
-        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
-        partial void OnOverallProgressChanged(double value) =>
-            OperationLockService.Instance.Progress = value / 100.0;
+        /// <summary>Подпись под полосой «Текущий файл» — там же идёт и оценка.</summary>
+        protected override void ApplyCaption(string text) => CurrentFileLabel = text;
 
-        partial void OnIsPausedChanged(bool value)
+        partial void OnIsVerifyingChanged(bool value)
         {
-            OperationLockService.Instance.IsPaused = value;
-
-            // На паузе оценка врёт: время идёт, а байты — нет. Убираем её из подписи,
-            // а после возобновления она посчитается заново, с чистого листа: иначе первые
-            // секунды после паузы показывали бы скорость, размазанную по простою.
-            if (!value) return;
-
-            _speed.Reset();
-            CurrentFileLabel = _captionBase;
+            OnPropertyChanged(nameof(CanPause));
+            TogglePauseCommand.NotifyCanExecuteChanged();
         }
+
+        partial void OnOverallProgressChanged(double value) => ReportTaskbarProgress(value);
 
         [RelayCommand]
         private async Task BrowseSourceAsync()
@@ -515,8 +476,7 @@ namespace TweakFirmware.ViewModels
                 CheckDiskSpace = CheckDiskSpace
             };
 
-            _cts = new CancellationTokenSource();
-            _pauseController = new PauseController();
+            var ct = PrepareOperation();
 
             // Общая работа: при проверке хэша файл читается ещё раз, поэтому байт вдвое больше.
             //
@@ -534,7 +494,7 @@ namespace TweakFirmware.ViewModels
                 CurrentFileProgress = filePct;
                 OverallProgress = overallPct;
 
-                _captionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
+                CaptionBase = Strings.Format("Common_FileProgressLabel", p.CurrentFileName, p.CurrentFileIndex, p.TotalFiles);
                 UpdateCaption(p.TotalBytesWritten, totalWorkBytes);
             });
 
@@ -545,7 +505,7 @@ namespace TweakFirmware.ViewModels
                     IsVerifying = true;
                     // Фаза проверки хэша паузу не поддерживает, и оставленная пауза выглядела бы
                     // как зависший бар — снимаем её сами.
-                    if (IsPaused) { _pauseController?.Resume(); IsPaused = false; PauseButtonText = Strings.Get("Common_PauseButton"); }
+                    if (IsPaused) { Pause.Resume(); IsPaused = false; }
                 }
                 ShaProgress = p.total > 0 ? (double)p.done / p.total * 100.0 : 100.0;
                 double overallPct = totalWorkBytes > 0 ? (double)(sourceSize + p.done) / totalWorkBytes * 100.0 : 100.0;
@@ -560,7 +520,7 @@ namespace TweakFirmware.ViewModels
             {
                 var outcome = await ConvertOperation.RunAsync(
                     request, new DialogConflictResolver(), splitProgress, hashProgress,
-                    AppLogger.Log, _pauseController, _cts.Token, MarkOperationStarted);
+                    AppLogger.Log, Pause, ct, MarkOperationStarted);
 
                 // При конфликте операция могла уйти в соседнюю папку — показываем, куда именно.
                 if (outcome.OutputFolderChanged) OutputFolder = outcome.OutputFolder;
@@ -575,44 +535,28 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
-                IsBusy = false;
-                IsPaused = false;
-                IsVerifying = false;
-                OperationLockService.Instance.OperationFinished();
-                // Dispose до обнуления: и здесь, и в Cancel мы в потоке интерфейса,
-                // поэтому «отменить уже освобождённый» невозможно.
-                _cts?.Dispose();
-                _cts = null;
-                _pauseController = null;
+                FinishOperation();
             }
+        }
+
+        /// <summary>Свои полосы обнуляем здесь, всё остальное снимает базовый класс.</summary>
+        protected override void FinishOperation()
+        {
+            OverallProgress = 0;
+            CurrentFileProgress = 0;
+            ShaProgress = 0;
+            IsVerifying = false;
+
+            base.FinishOperation();
         }
 
         /// <summary>Вызывается операцией, когда все проверки прошли и работа началась.</summary>
         private void MarkOperationStarted()
         {
-            IsBusy = true;
-            IsPaused = false;
+            MarkStarted();
+
             IsVerifying = false;
-            OperationLockService.Instance.OperationStarted(CancelNow);
-            PauseButtonText = Strings.Get("Common_PauseButton");
             OverallProgress = 0; CurrentFileProgress = 0; ShaProgress = 0;
-
-            // Часы пускаются здесь, а не при нажатии «Начать»: между нажатием и первым
-            // байтом успевают пройти проверки места и вопрос о перезаписи, а ждать ответа
-            // человека — не работа, и в скорость это попадать не должно.
-            _speed.Reset();
-            _clock.Restart();
-        }
-
-        /// <summary>
-        /// Пересобирает подпись под полосой: к тому, что показывалось раньше, добавляются
-        /// оценка оставшегося времени и скорость — если их уже есть из чего посчитать.
-        /// </summary>
-        private void UpdateCaption(long doneBytes, long totalBytes)
-        {
-            _speed.Add(_clock.Elapsed, doneBytes);
-            CurrentFileLabel = ProgressCaption.Build(_captionBase, _speed.BytesPerSecond, _speed.Remaining(totalBytes));
         }
 
         /// <summary>
@@ -702,57 +646,6 @@ namespace TweakFirmware.ViewModels
         private void OpenResultFolder(string folder)
         {
             if (OpenFolderAfter) ResultFolder.Open(folder);
-        }
-
-        /// <summary>
-        /// Спрашивает, прежде чем прервать. Раньше не спрашивала ни кнопка, ни Esc,
-        /// а цена ошибки здесь — вся работа: недописанные файлы удаляются, и на дампе
-        /// в несколько гигабайт это десятки минут заново. Esc вдобавок рефлекторная
-        /// клавиша «закрыть что-нибудь ненужное», а «Отмена» — крупная красная кнопка
-        /// в восьми пикселях под «Начать».
-        /// </summary>
-        [RelayCommand(CanExecute = nameof(IsBusy))]
-        private async Task CancelAsync()
-        {
-            var answer = await DialogService.ShowConfirmAsync(
-                Strings.Get("Common_CancelConfirmTitle"),
-                Strings.Get("Common_CancelConfirmWritingMessage"),
-                Strings.Get("Common_CancelConfirmStop"),
-                null,
-                Strings.Get("Common_CancelConfirmKeep"));
-
-            if (answer == DialogChoice.Primary) CancelNow();
-        }
-
-        /// <summary>
-        /// Прервать молча. Тем же способом операцию останавливает закрытие окна — там
-        /// решение уже принято в своём диалоге, и спрашивать второй раз незачем.
-        /// </summary>
-        private void CancelNow()
-        {
-            _pauseController?.Resume();
-            _cts?.Cancel();
-        }
-
-        [RelayCommand(CanExecute = nameof(CanPause))]
-        private void TogglePause()
-        {
-            if (_pauseController == null || IsVerifying) return;
-
-            if (IsPaused)
-            {
-                _pauseController.Resume();
-                IsPaused = false;
-                PauseButtonText = Strings.Get("Common_PauseButton");
-                AppLogger.Log(Strings.Get("Common_ResumedLog"));
-            }
-            else
-            {
-                _pauseController.Pause();
-                IsPaused = true;
-                PauseButtonText = Strings.Get("Common_ResumeButton");
-                AppLogger.Log(Strings.Get("Common_PausedLog"));
-            }
         }
 
     }

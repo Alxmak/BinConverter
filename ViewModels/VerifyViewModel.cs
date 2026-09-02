@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -40,7 +38,7 @@ namespace TweakFirmware.ViewModels
         public string FileNames { get; init; } = "";
     }
 
-    public partial class VerifyViewModel : LogHostViewModel
+    public partial class VerifyViewModel : OperationTabViewModel
     {
         /// <summary>Строки выбора файлов. Их число меняется кнопками «Добавить»/«Убрать».</summary>
         public ObservableCollection<VerifyFileSlot> Files { get; } = new();
@@ -51,18 +49,6 @@ namespace TweakFirmware.ViewModels
 
         [ObservableProperty] private double overallProgress;
         [ObservableProperty] private string currentFileLabel = "";
-
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(StartCommand))]
-        [NotifyCanExecuteChangedFor(nameof(AddFileCommand))]
-        [NotifyCanExecuteChangedFor(nameof(RemoveFileCommand))]
-        // Без этой строки «Отмена» не включалась никогда. RelayCommand из
-        // CommunityToolkit не слушает CommandManager.RequerySuggested, как обычные
-        // команды WPF: пока не позвать NotifyCanExecuteChanged, кнопка остаётся с тем
-        // CanExecute, что был посчитан при создании, — а при создании IsBusy равен false.
-        // На остальных вкладках эта строка есть, здесь её забыли.
-        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
-        private bool isBusy;
 
         [ObservableProperty] private bool hasResult;
 
@@ -105,21 +91,14 @@ namespace TweakFirmware.ViewModels
         public bool CanStart =>
             !IsBusy && Files.Count(slot => slot.Path.Length > 0) >= VerifyRequest.MinFiles;
 
-        /// <summary>Пока идёт сравнение, поля вкладки недоступны.</summary>
-        public bool IsNotBusy => !IsBusy;
-
         public bool CanAddFile => !IsBusy && Files.Count < VerifyRequest.MaxFiles;
         public bool CanRemoveFile => !IsBusy && Files.Count > VerifyRequest.MinFiles;
 
-        private CancellationTokenSource? _cts;
-
         /// <summary>
-        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
-        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
-        /// от того, перевели ли за это время системные часы.
+        /// Сравнение только читает файлы, удалять после него нечего — и пугать человека
+        /// потерянными файлами было бы неправдой.
         /// </summary>
-        private readonly SpeedEstimator _speed = new();
-        private readonly Stopwatch _clock = new();
+        protected override string CancelConfirmMessageKey => "Common_CancelConfirmReadingMessage";
 
         /// <summary>
         /// Итог последнего сравнения — чтобы после смены языка перерисовать карточку
@@ -245,6 +224,8 @@ namespace TweakFirmware.ViewModels
 
         protected override void OnLanguageChanged()
         {
+            base.OnLanguageChanged();
+
             // Подписи «Файл 1»/«Файл 2» и заметка про предел файлов.
             RenumberFiles();
             OnPropertyChanged(nameof(MaxFilesNote));
@@ -264,19 +245,21 @@ namespace TweakFirmware.ViewModels
             }
         }
 
-        partial void OnIsBusyChanged(bool value)
+        protected override void OnBusyChanged(bool busy)
         {
             OnPropertyChanged(nameof(CanStart));
-            OnPropertyChanged(nameof(IsNotBusy));
             OnPropertyChanged(nameof(CanAddFile));
             OnPropertyChanged(nameof(CanRemoveFile));
+
+            StartCommand.NotifyCanExecuteChanged();
+            AddFileCommand.NotifyCanExecuteChanged();
+            RemoveFileCommand.NotifyCanExecuteChanged();
         }
 
-        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
-        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно. Паузы
-        // в сверке нет: она только читает, и обрывать её нечем.
-        partial void OnOverallProgressChanged(double value) =>
-            OperationLockService.Instance.Progress = value / 100.0;
+        /// <summary>Подпись под полосой сравнения — там же идёт и оценка.</summary>
+        protected override void ApplyCaption(string text) => CurrentFileLabel = text;
+
+        partial void OnOverallProgressChanged(double value) => ReportTaskbarProgress(value);
 
         /// <summary>
         /// Подписи и доступность кнопок зависят от количества строк, поэтому пересчитываются
@@ -356,22 +339,20 @@ namespace TweakFirmware.ViewModels
             var paths = Files.Select(f => f.Path).Where(path => path.Length > 0).ToArray();
             var request = new VerifyRequest { FilePaths = paths };
 
-            _cts = new CancellationTokenSource();
+            var ct = PrepareOperation();
 
             var progress = new Progress<VerifyProgress>(p =>
             {
                 OverallProgress = p.TotalBytes > 0 ? (double)p.TotalBytesProcessed / p.TotalBytes * 100.0 : 0;
 
-                _speed.Add(_clock.Elapsed, p.TotalBytesProcessed);
-                CurrentFileLabel = ProgressCaption.Build(
-                    Strings.Format("Verify_FileLabelProgress", p.FileIndex, p.FileCount, p.FileName),
-                    _speed.BytesPerSecond, _speed.Remaining(p.TotalBytes));
+                CaptionBase = Strings.Format("Verify_FileLabelProgress", p.FileIndex, p.FileCount, p.FileName);
+                UpdateCaption(p.TotalBytesProcessed, p.TotalBytes);
             });
 
             try
             {
                 var outcome = await VerifyOperation.RunAsync(
-                    request, progress, AppLogger.Log, _cts.Token, MarkOperationStarted);
+                    request, progress, AppLogger.Log, ct, MarkOperationStarted);
 
                 _lastOutcome = outcome;
                 ShowResultRows(outcome);
@@ -386,33 +367,32 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                OverallProgress = 0;
-                CurrentFileLabel = "";
-                IsBusy = false;
-                OperationLockService.Instance.OperationFinished();
-                _cts?.Dispose();
-                _cts = null;
+                FinishOperation();
             }
+        }
+
+        /// <summary>Свою полосу обнуляем здесь, всё остальное снимает базовый класс.</summary>
+        protected override void FinishOperation()
+        {
+            OverallProgress = 0;
+
+            base.FinishOperation();
         }
 
         /// <summary>Вызывается операцией, когда файлы найдены и сравнение началось.</summary>
         private void MarkOperationStarted()
         {
-            IsBusy = true;
-            // Как в Конвертировании и Сборке: пока считаем хэши, переключение разделов
-            // в меню заблокировано — иначе можно уйти со вкладки и потерять процесс из виду.
-            OperationLockService.Instance.OperationStarted(CancelNow);
+            // Паузы у сравнения нет: оно только читает, останавливать нечего.
+            // А переключение разделов в меню блокируется, как и в остальных вкладках, —
+            // иначе можно уйти отсюда и потерять работу из виду.
+            MarkStarted(supportsPause: false);
+
             HasResult = false;
             ResultHeadline = Strings.Get("Verify_NoResultYet");
             ResultSubline = "";
             ResultRows.Clear();
             _lastOutcome = null;
             OverallProgress = 0;
-
-            // Часы пускаются здесь, а не при нажатии «Начать»: до первого прочитанного
-            // байта успевает пройти проверка, что все файлы на месте.
-            _speed.Reset();
-            _clock.Restart();
         }
 
         /// <summary>
@@ -563,25 +543,5 @@ namespace TweakFirmware.ViewModels
             .Select(row => new DialogService.HashRow(row.Title, row.Hash, row.FileNames))
             .ToArray();
 
-        /// <summary>
-        /// Спрашивает, прежде чем прервать. Сообщение здесь своё: сравнение только читает
-        /// файлы, удалять после него нечего, и пугать человека потерянными файлами
-        /// было бы неправдой. Esc на странице ведёт сюда же.
-        /// </summary>
-        [RelayCommand(CanExecute = nameof(IsBusy))]
-        private async Task CancelAsync()
-        {
-            var answer = await DialogService.ShowConfirmAsync(
-                Strings.Get("Common_CancelConfirmTitle"),
-                Strings.Get("Common_CancelConfirmReadingMessage"),
-                Strings.Get("Common_CancelConfirmStop"),
-                null,
-                Strings.Get("Common_CancelConfirmKeep"));
-
-            if (answer == DialogChoice.Primary) CancelNow();
-        }
-
-        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
-        private void CancelNow() => _cts?.Cancel();
     }
 }

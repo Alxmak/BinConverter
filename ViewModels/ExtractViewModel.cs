@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -57,22 +56,13 @@ namespace TweakFirmware.ViewModels
     /// местах обязан спросить человека. Ядро при этом ни диалогов, ни журнала не знает,
     /// поэтому мостиком служит эта ViewModel.
     /// </summary>
-    public partial class ExtractViewModel : LogHostViewModel, IAnalysisHost
+    public partial class ExtractViewModel : OperationTabViewModel, IAnalysisHost
     {
         /// <summary>Найденные разделы — то, что показано в таблице.</summary>
         public ObservableCollection<PartitionRow> Partitions { get; } = new();
 
         [ObservableProperty] private string sourcePath = "";
         [ObservableProperty] private string outputPath = "";
-
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(AnalyseCommand))]
-        [NotifyCanExecuteChangedFor(nameof(ExtractCommand))]
-        [NotifyCanExecuteChangedFor(nameof(SaveUdevCommand))]
-        [NotifyCanExecuteChangedFor(nameof(SplitNandCommand))]
-        [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
-        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
-        private bool isBusy;
 
         [ObservableProperty] private double progress;
         [ObservableProperty] private string stageLabel = "";
@@ -125,25 +115,6 @@ namespace TweakFirmware.ViewModels
         partial void OnCheckDiskSpaceChanged(bool value) => TabOptionsService.Set(TabOptionsService.ExtractCheckDiskSpace, value);
         partial void OnOpenFolderAfterChanged(bool value) => TabOptionsService.Set(TabOptionsService.ExtractOpenFolder, value);
 
-        /// <summary>
-        /// Поддерживает ли текущая работа паузу. Разбор дампа — нет: он читает файл
-        /// короткими прыжками по адресам, приостанавливать там нечего и незачем.
-        /// Извлечение и разделение пишут гигабайты подряд, и вот их остановить полезно —
-        /// ровно как в «Конвертировании» и «Сборке файла», где кнопка паузы уже есть.
-        /// </summary>
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(TogglePauseCommand))]
-        private bool supportsPause;
-
-        [ObservableProperty] private bool isPaused;
-
-        /// <summary>Подпись на кнопке паузы: её же меняет на «Возобновить».</summary>
-        [ObservableProperty] private string pauseButtonText = Strings.Get("Common_PauseButton");
-
-        public bool IsNotBusy => !IsBusy;
-
-        public bool CanPause => IsBusy && SupportsPause;
-
         public bool CanAnalyse => !IsBusy && SourcePath.Length > 0;
         public bool CanUseResult => !IsBusy && HasResult;
         public bool CanSplitNand => !IsBusy && IsNandDump;
@@ -179,26 +150,6 @@ namespace TweakFirmware.ViewModels
                 if (value.HasValue) SetAllSelected(value.Value);
             }
         }
-
-        private CancellationTokenSource? _cts;
-
-        /// <summary>
-        /// Оценка «сколько осталось» под полосой прогресса. Часы отдельные, а не
-        /// DateTime.Now в каждом отсчёте: разность двух моментов Stopwatch не зависит
-        /// от того, перевели ли за это время системные часы.
-        /// </summary>
-        private readonly SpeedEstimator _speed = new();
-        private readonly Stopwatch _clock = new();
-
-        /// <summary>Название прохода, по которому сейчас идёт счёт, — чтобы заметить смену.</summary>
-        private string _lastStage = "";
-
-        /// <summary>
-        /// Считает ли текущая операция байты. Если нет, показывать скорость нельзя:
-        /// у разных проходов счёт идёт то в страницах, то в разделах.
-        /// </summary>
-        private bool _countsBytes;
-        private readonly PauseController _pause = new();
 
         private PartitionAnalysisResult? _result;
         private PartitionTable _table = new();
@@ -237,43 +188,25 @@ namespace TweakFirmware.ViewModels
             if (!_settingOutputPathInternally) _outputPathIsAuto = false;
         }
 
-        partial void OnIsBusyChanged(bool value)
+        protected override void OnBusyChanged(bool busy)
         {
-            OnPropertyChanged(nameof(IsNotBusy));
             OnPropertyChanged(nameof(CanAnalyse));
             OnPropertyChanged(nameof(CanUseResult));
             OnPropertyChanged(nameof(CanExtract));
             OnPropertyChanged(nameof(CanSplitNand));
             OnPropertyChanged(nameof(CanRenameDump));
-            OnPropertyChanged(nameof(CanPause));
+
+            AnalyseCommand.NotifyCanExecuteChanged();
+            ExtractCommand.NotifyCanExecuteChanged();
+            SaveUdevCommand.NotifyCanExecuteChanged();
+            SplitNandCommand.NotifyCanExecuteChanged();
             RenameDumpCommand.NotifyCanExecuteChanged();
         }
 
-        partial void OnSupportsPauseChanged(bool value) => OnPropertyChanged(nameof(CanPause));
+        /// <summary>Подпись под полосой разбора: название прохода, а к нему оценка.</summary>
+        protected override void ApplyCaption(string text) => StageLabel = text;
 
-        // Полоса на кнопке в панели задач показывает тот же общий ход работы, что и полоса
-        // на странице, — чтобы за ним не приходилось разворачивать свёрнутое окно.
-        partial void OnProgressChanged(double value) =>
-            OperationLockService.Instance.Progress = value / 100.0;
-
-        partial void OnIsPausedChanged(bool value)
-        {
-            OperationLockService.Instance.IsPaused = value;
-
-            // На паузе оценка врёт: время идёт, а работа — нет. После возобновления она
-            // посчитается заново, с чистого листа: иначе первые секунды показывали бы
-            // скорость, размазанную по простою.
-            if (!value) return;
-
-            _speed.Reset();
-
-            // И убираем её с экрана. Пока стоит пауза, новых отсчётов не приходит вовсе,
-            // так что последнее «осталось ~12 мин · 180 МБ/с» висело бы всё это время —
-            // хотя не осталось ничего и никто никуда не идёт. В «Конвертировании»
-            // и «Сборке» подпись в этот момент возвращают к началу; здесь начало —
-            // название прохода.
-            StageLabel = _lastStage;
-        }
+        partial void OnProgressChanged(double value) => ReportTaskbarProgress(value);
 
         partial void OnSourcePathChanged(string value)
         {
@@ -444,66 +377,28 @@ namespace TweakFirmware.ViewModels
         /// установку обновления.
         /// </summary>
         /// <returns>
-        /// Токен отмены — им и надо пользоваться дальше, а не полем <c>_cts</c>.
-        /// Поле обнуляется в <see cref="EndOperation"/>, то есть к моменту, когда до него
-        /// доберётся лямбда внутри <c>Task.Run</c>, там может уже не быть ничего. Читая
-        /// поле, это ещё и не проходило проверку на null (CS8602): компилятор прав, такой
-        /// код действительно небезопасен.
+        /// Токен отмены — им и надо пользоваться дальше, а не полем <c>Cts</c> базового
+        /// класса. Поле обнуляется в <see cref="FinishOperation"/>, то есть к моменту,
+        /// когда до него доберётся лямбда внутри <c>Task.Run</c>, там может уже не быть
+        /// ничего. Читая поле, это ещё и не проходило проверку на null (CS8602):
+        /// компилятор прав, такой код действительно небезопасен.
         /// </returns>
         private CancellationToken BeginOperation(bool supportsPause, bool countsBytes = false)
         {
-            _cts = new CancellationTokenSource();
-            IsBusy = true;
-            SupportsPause = supportsPause;
+            var ct = PrepareOperation();
+
+            MarkStarted(supportsPause, countsBytes);
             Progress = 0;
 
-            _countsBytes = countsBytes;
-            _lastStage = "";
-            _speed.Reset();
-            _clock.Restart();
-
-            OperationLockService.Instance.OperationStarted(CancelNow);
-
-            return _cts.Token;
+            return ct;
         }
 
-        /// <summary>
-        /// Конец любого из них.
-        ///
-        /// Пауза снимается всегда: контроллер один на вкладку, и если работу отменили,
-        /// не сняв паузу, следующая операция ушла бы в ожидание ещё до первого байта —
-        /// без нажатой кнопки и без объяснения.
-        /// </summary>
-        private void EndOperation()
+        /// <summary>Свою полосу обнуляем здесь, всё остальное снимает базовый класс.</summary>
+        protected override void FinishOperation()
         {
-            _pause.Resume();
-            IsPaused = false;
-            PauseButtonText = Strings.Get("Common_PauseButton");
-
-            SupportsPause = false;
-            IsBusy = false;
-            StageLabel = "";
             Progress = 0;
 
-            _cts?.Dispose();
-            _cts = null;
-
-            OperationLockService.Instance.OperationFinished();
-        }
-
-        /// <summary>
-        /// Пауза и возобновление — одна кнопка, как в «Конвертировании» и «Сборке файла».
-        /// Контроллер паузы вкладка передавала в ядро и раньше, но нажать её было негде:
-        /// команды не существовало, и остановить извлечение можно было только отменой.
-        /// </summary>
-        [RelayCommand(CanExecute = nameof(CanPause))]
-        private void TogglePause()
-        {
-            if (IsPaused) _pause.Resume();
-            else _pause.Pause();
-
-            IsPaused = _pause.IsPaused;
-            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            base.FinishOperation();
         }
 
         // ---------- разбор ----------
@@ -559,7 +454,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                EndOperation();
+                FinishOperation();
             }
         }
 
@@ -777,7 +672,7 @@ namespace TweakFirmware.ViewModels
                 };
 
                 var outcome = await Task.Run(() => PartitionExtractOperation.RunAsync(
-                    request, _table, this, ct, _pause));
+                    request, _table, this, ct, Pause));
 
                 // Красной полосой в панели задач отмечаем только то, что случилось само:
                 // отмену человек и так помнит, а до начала работы окно ещё перед глазами.
@@ -788,7 +683,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                EndOperation();
+                FinishOperation();
             }
         }
 
@@ -871,7 +766,7 @@ namespace TweakFirmware.ViewModels
             try
             {
                 var outcome = await Task.Run(() => NandSplitOperation.RunAsync(
-                    SourcePath, _result?.Geometry, OutputPath, this, ct, _pause));
+                    SourcePath, _result?.Geometry, OutputPath, this, ct, Pause));
 
                 OperationLockService.Instance.ReportResult(outcome.Status != NandSplitStatus.Failed);
 
@@ -888,7 +783,7 @@ namespace TweakFirmware.ViewModels
             }
             finally
             {
-                EndOperation();
+                FinishOperation();
             }
         }
 
@@ -939,27 +834,10 @@ namespace TweakFirmware.ViewModels
 
         public bool CanRenameDump => !IsBusy && CanRename;
 
-        /// <summary>
-        /// Спрашивает, прежде чем прервать. Сообщение общее для всех трёх работ вкладки:
-        /// разбор ничего не пишет и терять там нечего, но извлечение и разделение NAND
-        /// пишут гигабайты, а какая из трёх идёт сейчас, человек и так видит по подписи
-        /// под полосой. Одно честное предупреждение лучше трёх разных.
-        /// </summary>
-        [RelayCommand(CanExecute = nameof(IsBusy))]
-        private async Task CancelAsync()
-        {
-            var answer = await DialogService.ShowConfirmAsync(
-                Strings.Get("Common_CancelConfirmTitle"),
-                Strings.Get("Common_CancelConfirmWritingMessage"),
-                Strings.Get("Common_CancelConfirmStop"),
-                null,
-                Strings.Get("Common_CancelConfirmKeep"));
-
-            if (answer == DialogChoice.Primary) CancelNow();
-        }
-
-        /// <summary>Прервать молча — этим же пользуется закрытие окна.</summary>
-        private void CancelNow() => _cts?.Cancel();
+        // Отмена — общая, из базового класса. Сообщение у неё про запись: разбор ничего
+        // не пишет и терять там нечего, но извлечение и разделение NAND пишут гигабайты,
+        // а какая из трёх работ идёт сейчас, человек и так видит по подписи под полосой.
+        // Одно честное предупреждение лучше трёх разных.
 
         private void SetAllSelected(bool value)
         {
@@ -973,9 +851,7 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         protected override void OnLanguageChanged()
         {
-            // Подпись кнопки паузы тоже собрана кодом, и её состояние надо сохранить:
-            // если сейчас пауза, после смены языка должно остаться «Возобновить».
-            PauseButtonText = Strings.Get(IsPaused ? "Common_ResumeButton" : "Common_PauseButton");
+            base.OnLanguageChanged();
 
             if (_result is null)
             {
@@ -1060,23 +936,19 @@ namespace TweakFirmware.ViewModels
 
             // Проходов у разбора много, и каждый идёт со своей скоростью: накопленное
             // на предыдущем к следующему не относится совсем, а счётчик у нового прохода
-            // и вовсе начинается с нуля.
-            if (!string.Equals(value.Stage, _lastStage, StringComparison.Ordinal))
+            // и вовсе начинается с нуля. Название прохода служит и подписью под полосой,
+            // и приметой того, что проход сменился.
+            if (!string.Equals(value.Stage, CaptionBase, StringComparison.Ordinal))
             {
-                _lastStage = value.Stage;
-                _speed.Reset();
-                _clock.Restart();
+                CaptionBase = value.Stage;
+                ResetEstimate();
             }
 
-            _speed.Add(_clock.Elapsed, value.Done);
-
-            // Скорость показываем только там, где счёт идёт по байтам. У проходов разбора
-            // это то страницы, то разделы, и «180 МБ/с» на них было бы просто неправдой.
-            // А вот оценка оставшегося времени от единиц не зависит: доля есть доля.
-            StageLabel = ProgressCaption.Build(
-                value.Stage,
-                _countsBytes ? _speed.BytesPerSecond : null,
-                _speed.Remaining(value.Total));
+            // Скорость базовый класс покажет только там, где счёт идёт по байтам:
+            // у проходов разбора он то в страницах, то в разделах, и «180 МБ/с» на них
+            // было бы просто неправдой. А оценка времени от единиц не зависит: доля
+            // есть доля.
+            UpdateCaption(value.Done, value.Total);
         }
     }
 }
