@@ -307,7 +307,10 @@ namespace TweakFirmware.ViewModels
         /// программы (<see cref="DialogService"/>), а не системный MessageBox.</summary>
         public async Task SetSourceAsync(string path)
         {
-            if (!File.Exists(path))
+            // Существование файла тоже спрашиваем в фоне: путь сюда приходит из «Обзора»
+            // и из перетаскивания, а перетащить можно и ярлык сетевой папки, которой
+            // сейчас нет, — и тогда ответа приходится ждать секундами.
+            if (!await Task.Run(() => File.Exists(path)))
             {
                 await DialogService.ShowWarningAsync(Strings.Get("Common_FileNotFoundTitle"),
                     Strings.Format("Common_FileNotFoundMessage", path));
@@ -516,7 +519,12 @@ namespace TweakFirmware.ViewModels
             _pauseController = new PauseController();
 
             // Общая работа: при проверке хэша файл читается ещё раз, поэтому байт вдвое больше.
-            long sourceSize = FileProbe.Measure(SourcePath).SizeBytes;
+            //
+            // Размер спрашиваем в фоне, как и весь остальной поход на диск в этой вкладке.
+            // Здесь это было единственное синхронное обращение: на отключившемся сетевом
+            // диске оно вешало окно на таймаут файловой системы — прямо по нажатию «Начать»,
+            // то есть в момент, когда программа должна выглядеть особенно живой.
+            long sourceSize = await Task.Run(() => FileProbe.Measure(SourcePath).SizeBytes);
             long totalWorkBytes = sourceSize * (VerifyHashAfter ? 2 : 1);
 
             var splitProgress = new Progress<SplitProgress>(p =>

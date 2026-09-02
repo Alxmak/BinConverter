@@ -511,7 +511,13 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanAnalyse))]
         private async Task AnalyseAsync()
         {
-            if (!File.Exists(SourcePath))
+            // Один поход на диск на оба вопроса — «есть ли файл» и «какой он», — и тот
+            // в фоне: на отключившемся сетевом диске синхронный ответ ждёт таймаута
+            // файловой системы, а окно всё это время не отвечает. Остальной осмотр
+            // в этой вкладке давно так и делается.
+            var probe = await Task.Run(() => FileProbe.Measure(SourcePath));
+
+            if (!probe.Exists)
             {
                 await DialogService.ShowErrorAsync(
                     Strings.Get("Common_FileNotFoundTitle"), Strings.Format("Common_FileNotFoundMessage", SourcePath));
@@ -528,7 +534,7 @@ namespace TweakFirmware.ViewModels
 
             // Примету файла запоминаем до чтения, а не после: разбор длится долго,
             // и подмена в это время должна считаться подменой.
-            _analysedFile = FileProbe.Measure(SourcePath);
+            _analysedFile = probe;
 
             try
             {
@@ -735,7 +741,10 @@ namespace TweakFirmware.ViewModels
         /// </summary>
         private async Task<bool> SourceStillMatchesAnalysisAsync()
         {
-            if (FileProbe.Measure(SourcePath).SameFileAs(_analysedFile)) return true;
+            // В фоне: проверка стоит перед каждым действием над результатом, а сам
+            // поход на диск может ждать таймаута — см. пояснение в AnalyseAsync.
+            var probe = await Task.Run(() => FileProbe.Measure(SourcePath));
+            if (probe.SameFileAs(_analysedFile)) return true;
 
             // Разбор больше не о чем: убираем его целиком, иначе на экране останется
             // таблица, которой человек снова попробует воспользоваться.
