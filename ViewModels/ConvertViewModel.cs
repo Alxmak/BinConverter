@@ -477,20 +477,25 @@ namespace TweakFirmware.ViewModels
 
             var sb = new StringBuilder();
             sb.AppendLine(Strings.Get("Convert_EachFileSizeHeader"));
-            long remaining = _expectedTotalSize;
-            for (int i = 1; i <= _expectedFileCount; i++)
+
+            // Считаем только показываемые части. Раньше цикл шёл по всем — до двух тысяч
+            // проходов, из которых пригождались четыре, — потому что размер очередной
+            // части набирался вычитанием. Размер части считается сразу по её номеру,
+            // и той же формулой, что у самой нарезки (FileSplitter.PartSizeAt).
+            for (int i = 1; i <= toShow; i++)
             {
-                long partSize = Math.Min(_expectedLimitBytes, remaining);
-                remaining -= partSize;
-                if (i > toShow) continue;
+                long partSize = FileSplitter.PartSizeAt(_expectedTotalSize, _expectedLimitBytes, i - 1);
                 sb.AppendLine(Strings.Format("Convert_FileSizeLine", i, SizeFormatHelper.Format(partSize)));
             }
 
-            if (!ShowAllFiles && _expectedFileCount > CollapsedFileListCount)
-                sb.AppendLine(Strings.Format("Convert_MoreFilesLine", _expectedFileCount - CollapsedFileListCount,
-                    PluralForms.Files(_expectedFileCount - CollapsedFileListCount)));
+            int hidden = _expectedFileCount - CollapsedFileListCount;
+            if (!ShowAllFiles && hidden > 0)
+                sb.AppendLine(Strings.Format("Convert_MoreFilesLine", hidden, PluralForms.Files(hidden)));
 
-            ExpandButtonText = ShowAllFiles ? Strings.Get("Convert_CollapseList") : Strings.Format("Convert_ShowAllFilesCount", _expectedFileCount, PluralForms.Files(_expectedFileCount));
+            ExpandButtonText = ShowAllFiles
+                ? Strings.Get("Convert_CollapseList")
+                : Strings.Format("Convert_ShowAllFilesCount", _expectedFileCount, PluralForms.Files(_expectedFileCount));
+
             DisplayedFilesText = sb.ToString().TrimEnd();
         }
 

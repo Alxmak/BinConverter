@@ -68,6 +68,25 @@ namespace TweakFirmware.Core
             return (int)count;
         }
 
+        /// <summary>
+        /// Размер части с данным номером (считая с нуля): все, кроме последней, ровно
+        /// по лимиту, последняя — остаток. За последней частью — ноль.
+        ///
+        /// Живёт здесь, а не в двух местах: то же самое считает предпросмотр в интерфейсе,
+        /// и раньше он делал это своим циклом по всем частям сразу — до двух тысяч
+        /// проходов ради четырёх показанных строк.
+        /// </summary>
+        public static long PartSizeAt(long totalSizeBytes, long maxPartSizeBytes, int index)
+        {
+            if (maxPartSizeBytes <= 0 || index < 0 || totalSizeBytes <= 0) return 0;
+
+            // Проверка до умножения: у номера за пределами нарезки произведение
+            // переполнило бы long и дало бы отрицательный «остаток».
+            if (index > (totalSizeBytes - 1) / maxPartSizeBytes) return 0;
+
+            return Math.Min(maxPartSizeBytes, totalSizeBytes - (long)index * maxPartSizeBytes);
+        }
+
         public static async Task<SplitResult> SplitAsync(
             string sourcePath,
             string outputFolder,
@@ -104,9 +123,6 @@ namespace TweakFirmware.Core
             string currentPath = basePath;
             long writtenInCurrent = 0;
             long totalWritten = 0;
-
-            // Размер файла с данным 0-based индексом (все, кроме последнего, — ровно maxPartSizeBytes)
-            long CurrentFileExpectedSize(int idx) => Math.Min(maxPartSizeBytes, totalBytes - (long)idx * maxPartSizeBytes);
 
             // ВАЖНО: исходный файл открывается только на чтение (FileAccess.Read) —
             // программа никогда не модифицирует и не удаляет исходный BIN.
@@ -168,7 +184,7 @@ namespace TweakFirmware.Core
                             TotalFiles = totalFiles,
                             CurrentFileName = Path.GetFileName(currentPath),
                             CurrentFileBytesWritten = writtenInCurrent,
-                            CurrentFileSizeBytes = CurrentFileExpectedSize(partIndex),
+                            CurrentFileSizeBytes = PartSizeAt(totalBytes, maxPartSizeBytes, partIndex),
                             TotalBytesWritten = totalWritten,
                             TotalBytes = totalBytes
                         });
