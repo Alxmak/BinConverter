@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -319,6 +320,58 @@ namespace TweakFirmware.Tests
             Assert.Equal(HashOf(File.ReadAllBytes(output)), outcome.ResultHash);
         }
 
+        // ============ Поток вызывающего ============
+
+        /// <summary>
+        /// Сборка обязана оставаться в потоке того, кто её позвал: вопрос о перезаписи
+        /// строит окно, а сигнал «работа началась» будит команды вкладки — и то, и другое
+        /// в чужом потоке падает с «вызывающий поток не может получить доступ к данному
+        /// объекту». Один ConfigureAwait(false) после осмотра папки уже уводил туда всё,
+        /// что идёт следом, и вкладка после этого оставалась с невыключенной занятостью:
+        /// кнопка «Начать» выглядела живой и не отвечала на нажатие.
+        ///
+        /// Окна в тестах нет, поэтому поток интерфейса изображает свой контекст
+        /// синхронизации: продолжения он складывает в очередь, а разбирает её только
+        /// поток теста. Так вопрос «остались ли мы у себя» сводится к сравнению номеров.
+        /// </summary>
+        [Fact]
+        public void Merge_StaysOnTheCallersThread()
+        {
+            WritePiece(0x000, 0x100, "boot", 0xAA);
+            WritePiece(0x100, 0x100, "rootfs", 0xBB);
+
+            // Файл результата уже есть — иначе про перезапись никто не спросит.
+            string output = Path.Combine(_root, "merged.bin");
+            File.WriteAllBytes(output, new byte[] { 0x00 });
+
+            int callerThread = Environment.CurrentManagedThreadId;
+            int askedOn = 0;
+            int startedOn = 0;
+
+            var pump = new PumpingContext();
+            var previous = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(pump);
+
+            PartitionMergeOutcome outcome;
+            try
+            {
+                var task = PartitionMergeOperation.RunAsync(
+                    new PartitionMergeRequest { SourceFolder = _parts, OutputPath = output },
+                    new ThreadRecordingResolver(id => askedOn = id), null, Log, null, CancellationToken.None,
+                    onStarted: () => startedOn = Environment.CurrentManagedThreadId);
+
+                outcome = pump.RunUntilCompleted(task);
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(previous);
+            }
+
+            Assert.True(outcome.Succeeded);
+            Assert.Equal(callerThread, askedOn);
+            Assert.Equal(callerThread, startedOn);
+        }
+
         // ============ Вспомогательное ============
 
         private Task<PartitionMergeOutcome> RunAsync(PartitionMergeRequest request) =>
@@ -350,6 +403,65 @@ namespace TweakFirmware.Tests
 
             public Task<ConflictDecision> ResolveOutputFileConflictAsync(string outputPath) =>
                 Task.FromResult(ConflictDecision.Overwrite);
+        }
+
+        /// <summary>
+        /// Соглашается на перезапись и запоминает, в каком потоке его об этом спросили.
+        /// Отвечает готовым результатом, без собственного ожидания: своё ожидание вернуло
+        /// бы работу в контекст теста само по себе — и проверка перестала бы что-либо
+        /// значить.
+        /// </summary>
+        private sealed class ThreadRecordingResolver : IConflictResolver
+        {
+            private readonly Action<int> _record;
+
+            public ThreadRecordingResolver(Action<int> record) => _record = record;
+
+            public Task<ConflictDecision> ResolveOutputFolderConflictAsync(string outputFolder, string baseFileName) =>
+                Task.FromResult(ConflictDecision.Overwrite);
+
+            public Task<ConflictDecision> ResolveOutputFileConflictAsync(string outputPath)
+            {
+                _record(Environment.CurrentManagedThreadId);
+                return Task.FromResult(ConflictDecision.Overwrite);
+            }
+        }
+
+        /// <summary>
+        /// Заменитель потока интерфейса. Продолжения не выполняет сразу, а складывает
+        /// в очередь; разбирает её только тот поток, который позвал
+        /// <c>RunUntilCompleted</c>. Всё, что ушло мимо этой очереди, окажется
+        /// в потоке пула — и проверка это увидит.
+        /// </summary>
+        private sealed class PumpingContext : SynchronizationContext
+        {
+            private readonly BlockingCollection<(SendOrPostCallback Work, object? State)> _queue = new();
+
+            public override void Post(SendOrPostCallback d, object? state) => _queue.Add((d, state));
+
+            /// <summary>
+            /// Крутит очередь, пока работа не кончится, и отдаёт её итог. Ограничение
+            /// по времени — чтобы сорвавшаяся операция не подвесила весь прогон тестов
+            /// молча. Ожидание живёт здесь, а не в самом тесте: блокирующее ожидание
+            /// в теле теста запрещено анализатором xUnit, а прогон идёт с
+            /// «предупреждение = ошибка».
+            /// </summary>
+            public T RunUntilCompleted<T>(Task<T> task)
+            {
+                var deadline = DateTime.UtcNow.AddSeconds(30);
+
+                while (!task.IsCompleted)
+                {
+                    if (_queue.TryTake(out var item, millisecondsTimeout: 50)) item.Work(item.State);
+                    else if (DateTime.UtcNow > deadline) throw new TimeoutException("Сборка не завершилась за 30 секунд.");
+                }
+
+                // Хвост очереди: последние продолжения могли встать в неё уже после того,
+                // как задача отчиталась о завершении.
+                while (_queue.TryTake(out var rest)) rest.Work(rest.State);
+
+                return task.GetAwaiter().GetResult();
+            }
         }
     }
 }

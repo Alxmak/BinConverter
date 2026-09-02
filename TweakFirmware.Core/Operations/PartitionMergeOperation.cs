@@ -108,6 +108,11 @@ namespace TweakFirmware.Core.Operations
     /// Все проверки идут до первого записанного байта: собранный не из того образ
     /// выглядит настоящим, а узнать о подмене можно будет только по хэшу — если было
     /// с чем сверять.
+    ///
+    /// Метод обязан оставаться в потоке того, кто его позвал: он спрашивает про
+    /// перезапись существующего файла и зовёт <c>onStarted</c>, а это окно и свойства
+    /// интерфейса. Отсюда правило для всех await'ов ниже — никакого
+    /// <c>ConfigureAwait(false)</c>; чем это кончается, написано у первого из них.
     /// </summary>
     public static class PartitionMergeOperation
     {
@@ -137,7 +142,15 @@ namespace TweakFirmware.Core.Operations
                 // Без передачи токена в Task.Run: с уже отменённым токеном работа даже
                 // не началась бы, а наружу ушло бы исключение отмены — и отказ выглядел бы
                 // как нечитаемая папка. Осмотр короткий, отмена дождётся записи.
-                plan = await Task.Run(() => PartitionMergePlan.Build(request.SourceFolder)).ConfigureAwait(false);
+                //
+                // И без ConfigureAwait(false). Пока он здесь стоял, всё, что идёт после
+                // этой строки, выполнялось в потоке пула: вопрос о перезаписи пытался
+                // построить окно, а onStarted — тронуть команды вкладки, и оба падали
+                // с «вызывающий поток не может получить доступ к данному объекту».
+                // Падало это посреди MarkStarted: занятость успевала встать, а finally
+                // снять её уже не мог — и кнопка «Начать» оставалась живой на вид
+                // и мёртвой на нажатие до перезапуска программы.
+                plan = await Task.Run(() => PartitionMergePlan.Build(request.SourceFolder));
             }
             catch (Exception ex)
             {
@@ -172,7 +185,8 @@ namespace TweakFirmware.Core.Operations
 
             if (File.Exists(outputPath))
             {
-                var decision = await conflicts.ResolveOutputFileConflictAsync(outputPath).ConfigureAwait(false);
+                // Здесь строится окно — поток менять нельзя, см. пояснение выше.
+                var decision = await conflicts.ResolveOutputFileConflictAsync(outputPath);
 
                 if (decision == ConflictDecision.Cancel)
                 {
@@ -241,9 +255,10 @@ namespace TweakFirmware.Core.Operations
             {
                 // Без передачи токена в Task.Run: отмена должна дойти до самой записи
                 // и отработать штатно, а не превратиться в исключение до её начала.
+                // Сама запись идёт в потоке пула (Task.Run), а вот итог и сообщения после
+                // неё разбирает уже вызывающий — поэтому ConfigureAwait(false) и тут нет.
                 var result = await Task.Run(() => PartitionMerger.MergeAsync(
-                    plan, outputPath, request.FillByte, progress, log, ct, createdFiles, pauseController))
-                    .ConfigureAwait(false);
+                    plan, outputPath, request.FillByte, progress, log, ct, createdFiles, pauseController));
 
                 log(Strings.Format("PartitionMerge_FinishedLog", result.PiecesUsed, result.TotalBytes));
                 log(Strings.Format("Common_ResultHashLog", result.ResultHash));
