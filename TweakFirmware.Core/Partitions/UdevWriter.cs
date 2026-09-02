@@ -127,8 +127,15 @@ namespace TweakFirmware.Core.Partitions
     /// таблицу разделов кнопкой «Загрузить из папки». Менять её нельзя — сломается
     /// связка с программатором, ради которой всё и делается.
     /// </summary>
+    /// <summary>Что удалось прочитать из имени извлечённого файла.</summary>
+    public readonly record struct PartitionFileInfo(long Offset, long Length, string Name);
+
     public static class PartitionFileNaming
     {
+        private const string Prefix = "USER_0x";
+        private const string HexPrefix = "0x";
+        private const string BinExtension = ".bin";
+
         public static string ForPartition(PartitionEntry part) =>
             ForPartition(part.Offset, part.Length, part.Name, part.FsType);
 
@@ -136,8 +143,8 @@ namespace TweakFirmware.Core.Partitions
         {
             var text = new StringBuilder();
 
-            text.Append("USER_0x").Append(offset.ToString("X10", CultureInfo.InvariantCulture));
-            text.Append("_0x").Append(length.ToString("X8", CultureInfo.InvariantCulture));
+            text.Append(Prefix).Append(offset.ToString("X10", CultureInfo.InvariantCulture));
+            text.Append('_').Append(HexPrefix).Append(length.ToString("X8", CultureInfo.InvariantCulture));
             text.Append('_').Append(SanitiseName(name));
 
             string extension = Extension(fsType);
@@ -145,6 +152,88 @@ namespace TweakFirmware.Core.Partitions
 
             text.Append(".bin");
             return text.ToString();
+        }
+
+        /// <summary>
+        /// Обратный разбор имени: адрес, размер и имя раздела.
+        ///
+        /// Нужен объединению разделов. Всё, что требуется для обратной сборки, программатор
+        /// (и мы) кладёт прямо в имя файла — куда этот кусок ложится и какой он длины, —
+        /// поэтому папка извлечённых разделов самодостаточна: ни таблицы, ни .udev рядом
+        /// не нужно.
+        ///
+        /// Разбор нестрогий к числу знаков в числах: своё имя мы пишем с фиксированной
+        /// шириной (10 и 8), но чужие файлы могли получиться и в другой программе.
+        /// А вот нулевую длину не принимаем: раздел без единого байта — это не раздел,
+        /// и складывать его в образ нечего.
+        /// </summary>
+        public static bool TryParse(string? fileName, out PartitionFileInfo info)
+        {
+            info = default;
+            if (string.IsNullOrEmpty(fileName)) return false;
+
+            string name = Path.GetFileName(fileName);
+
+            if (!name.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!name.EndsWith(BinExtension, StringComparison.OrdinalIgnoreCase)) return false;
+
+            int offsetEnd = name.IndexOf('_', Prefix.Length);
+            if (offsetEnd < 0) return false;
+            if (!TryHex(name[Prefix.Length..offsetEnd], out long offset)) return false;
+
+            int sizeStart = offsetEnd + 1;
+            if (string.Compare(name, sizeStart, HexPrefix, 0, HexPrefix.Length, StringComparison.OrdinalIgnoreCase) != 0)
+                return false;
+
+            sizeStart += HexPrefix.Length;
+            int sizeEnd = name.IndexOf('_', sizeStart);
+            if (sizeEnd < 0) return false;
+            if (!TryHex(name[sizeStart..sizeEnd], out long length) || length <= 0) return false;
+
+            string rest = name[(sizeEnd + 1)..^BinExtension.Length];
+            if (rest.Length == 0) return false;
+
+            info = new PartitionFileInfo(offset, length, StripFileSystemExtension(rest));
+            return true;
+        }
+
+        /// <summary>
+        /// Шестнадцатеричное число без знака. Через ulong, потому что long.TryParse
+        /// с NumberStyles.HexNumber читает старший бит как знак: «0xFFFFFFFFFFFFFFFF»
+        /// стало бы минус единицей вместо отказа.
+        /// </summary>
+        private static bool TryHex(string text, out long value)
+        {
+            value = 0;
+            if (text.Length is 0 or > 16) return false;
+
+            if (!ulong.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+                return false;
+
+            if (parsed > long.MaxValue) return false;
+
+            value = (long)parsed;
+            return true;
+        }
+
+        /// <summary>
+        /// Убирает расширение файловой системы, которое сами же и дописали: в имени
+        /// раздела его не было, а в таблице объединения должно стоять то же имя,
+        /// что стояло в таблице разбора.
+        /// </summary>
+        private static string StripFileSystemExtension(string name)
+        {
+            foreach (FsType type in Enum.GetValues<FsType>())
+            {
+                string extension = Extension(type);
+                if (extension.Length == 0) continue;
+
+                string suffix = "." + extension;
+                if (name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    return name[..^suffix.Length];
+            }
+
+            return name;
         }
 
         /// <summary>Расширение по типу файловой системы — чтобы образ открывался привычной программой.</summary>

@@ -7,7 +7,7 @@ namespace TweakFirmware.Services
     /// <summary>
     /// Галочки рабочих вкладок между запусками.
     ///
-    /// Все восемь стоят по умолчанию, и все восемь до сих пор возвращались в это
+    /// Все они стоят по умолчанию, и до появления этой службы все они возвращались в это
     /// положение при каждом запуске. Для того, кто снимает одну и ту же — скажем,
     /// «Проверить свободное место» при работе с сетевой папкой, где свободное место
     /// не спросишь, — это значило снимать её заново перед каждой операцией, и однажды
@@ -33,6 +33,9 @@ namespace TweakFirmware.Services
         public const string ExtractSearchFileSystems = "ExtractSearchFileSystems";
         public const string ExtractOpenFolder = "ExtractOpenFolder";
         public const string ExtractCheckDiskSpace = "ExtractCheckDiskSpace";
+        public const string PartitionMergeFillZeros = "PartitionMergeFillZeros";
+        public const string PartitionMergeOpenFolder = "PartitionMergeOpenFolder";
+        public const string PartitionMergeCheckDiskSpace = "PartitionMergeCheckDiskSpace";
 
         private static readonly string SettingsPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tweak Firmware", "options.txt");

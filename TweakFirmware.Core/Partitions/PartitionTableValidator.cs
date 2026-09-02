@@ -53,7 +53,7 @@ namespace TweakFirmware.Core.Partitions
             // Для перекрытия в Extra лежит начало соседнего раздела — то есть адрес,
             // с которого они наезжают друг на друга.
             PartitionIssueKind.Overlap =>
-                Strings.Format("Extract_IssueOverlap", Name, OtherName, Extra),
+                Strings.Format("Common_IssueOverlap", Name, OtherName, Extra),
             _ =>
                 Strings.Format("Extract_IssueDuplicate", Name, Offset, Length)
         };

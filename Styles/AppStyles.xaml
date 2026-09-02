@@ -267,4 +267,66 @@
         </Setter>
     </Style>
 
+    <!-- Вид таблиц. Таких в программе две — найденные разделы в «Извлечении» и состав
+         образа в «Объединении», — и разъезжаться им незачем: обе показывают разделы
+         одинаковыми столбцами.
+
+         Свой шаблон строки. Шаблон WPF-UI держит слева отдельную колонку под полоску
+         выделения шириной 3px, и появлялась она только у выделенной строки. Отсюда всё
+         сразу: строка съезжала вправо, у неё не хватало этих 3px под колонки (ширины-то
+         общие на всю таблицу), и внизу вылезала горизонтальная полоса прокрутки ради
+         трёх пикселей. Здесь полоски нет вовсе, а выделение — та же подложка, что и при
+         наведении.
+
+         Шаблон свой, а не подправленный библиотечный: дотянуться до полоски снаружи
+         нельзя, её Visibility выставляет триггер внутри шаблона. Заголовок строки
+         и панель подробностей не нужны — заголовки строк скрыты, подробностей нет.
+         Горизонтальные линии от шаблона не зависят: их рисует сама ячейка
+         (DataGridCell.OnRender).
+
+         BasedOn обязателен (стиль без него вытесняет Template и контрол перестаёт
+         рисоваться), а базовые стили здесь именованные: неявных для DataGridRow,
+         DataGridCell и DataGridColumnHeader в библиотеке нет, их раздаёт сам стиль
+         DataGrid. Имена ключей — деталь WPF-UI: если в новой версии их переименуют,
+         окно упадёт при открытии вкладки, а не при сборке. -->
+    <Style x:Key="TableRow" TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRow">
+                    <Border x:Name="RowBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource ControlCornerRadius}"
+                            SnapsToDevicePixels="True">
+                        <DataGridCellsPresenter ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background"
+                                    Value="{DynamicResource ListViewItemBackgroundPointerOver}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background"
+                                    Value="{DynamicResource ListViewItemBackgroundPointerOver}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Отступ слева убран и у ячеек, и у шапки: в стилях WPF-UI это 6px у ячейки
+         и 8px у заголовка, из-за чего вся таблица стояла правее заголовка карточки.
+         Расстояние между колонками держится теперь правым отступом, а левый край
+         первой колонки совпадает с заголовком. -->
+    <Style x:Key="TableCell" TargetType="DataGridCell" BasedOn="{StaticResource DefaultDataGridCellStyle}">
+        <Setter Property="Padding" Value="0,0,12,0"/>
+    </Style>
+
+    <Style x:Key="TableColumnHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource DefaultDataGridColumnHeaderStyle}">
+        <Setter Property="Padding" Value="0,4,12,4"/>
+    </Style>
+
 </ResourceDictionary>

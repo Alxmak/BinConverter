@@ -3,15 +3,165 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:loc="clr-namespace:TweakFirmware.Services"
-      Title="{loc:Loc Placeholder_PartitionMergeTitle}"
+      xmlns:c="clr-namespace:TweakFirmware.Controls"
+      Title="{loc:Loc PartitionMerge_Title}"
       ScrollViewer.CanContentScroll="False">
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
-            <ui:SymbolIcon Symbol="ArrowJoin20" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.5"/>
-            <TextBlock Text="{loc:Loc Placeholder_PartitionMergeTitle}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-            <TextBlock Text="{loc:Loc Placeholder_PartitionMergeText}" TextAlignment="Center" TextWrapping="Wrap" FontSize="13"
-                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,8,0,0"/>
-            <TextBlock Text="{loc:Loc Shell_Placeholder_InDevelopment}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,8,0,0"/>
+
+    <!-- Esc отменяет идущую операцию — как на остальных рабочих вкладках. -->
+    <Page.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}"/>
+    </Page.InputBindings>
+
+    <ScrollViewer x:Name="RootScroll" Padding="24,16" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="960" HorizontalAlignment="Stretch">
+
+            <!-- Пока идёт сборка, поля недоступны: менять папку или имя результата
+                 на ходу нельзя. -->
+            <Border Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                <StackPanel>
+
+                    <Grid Style="{StaticResource RowGrid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc PartitionMerge_SourceFolderLabel}" Style="{StaticResource RowLabel}"/>
+                        <!-- Цель перетаскивания — само поле; см. пояснение в Конвертировании. -->
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding SourceFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
+                                    PlaceholderText="{loc:Loc Common_NoFolderSelected}"
+                                    AllowDrop="True" PreviewDragOver="SourceBox_DragOver" PreviewDrop="SourceBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseSourceCommand}"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource LabelColumnWidth}"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc PartitionMerge_OutputFileLabel}" Style="{StaticResource RowLabel}"/>
+                        <ui:TextBox ClearButtonEnabled="False" Grid.Column="1" Text="{Binding OutputPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                                    Style="{StaticResource PathBox}"
+                                    PlaceholderText="{loc:Loc Common_NoFileSelected}"
+                                    AllowDrop="True" PreviewDragOver="OutputBox_DragOver" PreviewDrop="OutputBox_Drop"/>
+                        <Button Grid.Column="2" Content="{loc:Loc Common_BrowseButton}" Command="{Binding BrowseOutputCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- «Общая информация» и «Параметры» рядом — тот же порядок, что на остальных вкладках. -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_GeneralInfoTitle}" Style="{StaticResource CardTitle}"/>
+
+                        <!-- Пока папка не выбрана, показывать нечего. Вторая строка подсказки
+                             своя: собираются не любые файлы, а названные по схеме извлечения,
+                             и знать об этом нужно до выбора папки, а не после того, как
+                             «ничего не нашлось». -->
+                        <c:HintBanner Text="{loc:Loc PartitionMerge_SelectFolderHint}"
+                                      Note="{loc:Loc PartitionMerge_NamingHint}"
+                                      Visibility="{Binding ShowInfoHint, Converter={StaticResource BoolToVis}}"/>
+
+                        <TextBlock Text="{Binding GeneralInfoText}" TextWrapping="Wrap" FontSize="13"
+                                   LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GeneralInfoText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" IsEnabled="{Binding IsNotBusy}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ParametersTitle}" Style="{StaticResource CardTitle}"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc PartitionMerge_FillZerosCheckbox}"
+                                  IsChecked="{Binding FillWithZeros}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_CheckDiskSpaceCheckbox}"
+                                  IsChecked="{Binding CheckDiskSpace}" Margin="0,0,0,10"/>
+                        <CheckBox Style="{StaticResource CardCheckBox}" Content="{loc:Loc Common_OpenFolderCheckbox}"
+                                  IsChecked="{Binding OpenFolderAfter}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Common_ProgressTitle}" Style="{StaticResource CardTitle}"/>
+
+                        <c:ProgressRow Label="{loc:Loc PartitionMerge_OverallProgressLabel}"
+                                       Value="{Binding OverallProgress}" Fill="#2F6FED"/>
+
+                        <c:ProgressRow Label="{loc:Loc Common_CurrentFileProgressLabel}"
+                                       Value="{Binding CurrentFileProgress}" Fill="#16A34A"
+                                       Caption="{Binding CurrentFileLabel}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <c:OperationBar StartText="{loc:Loc Common_StartButton}"
+                                    StartCommand="{Binding StartCommand}"
+                                    PauseCommand="{Binding TogglePauseCommand}"
+                                    CancelCommand="{Binding CancelCommand}"/>
+                </Border>
+            </Grid>
+
+            <!-- Карточка появляется только когда есть что показать: до выбора папки
+                 пустая таблица с одними заголовками читалась бы как «ничего не нашлось». -->
+            <Border Style="{StaticResource CardStyle}"
+                    Visibility="{Binding HasRows, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc PartitionMerge_PiecesTitle}" Style="{StaticResource CardTitle}"/>
+
+                    <!-- MaxHeight задан прямо здесь, и это не косметика: без него список
+                         внутри страницы-скроллера меряется в бесконечной высоте и создаёт
+                         разом все строки (та же ловушка описана у карточки журнала). -->
+                    <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              MaxHeight="420" SelectionMode="Single"
+                              CanUserReorderColumns="False" CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              Background="Transparent" BorderThickness="0"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                              RowStyle="{StaticResource TableRow}"
+                              CellStyle="{StaticResource TableCell}"
+                              ColumnHeaderStyle="{StaticResource TableColumnHeader}">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{loc:Loc Common_ColumnNumber}" Binding="{Binding Number}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="{loc:Loc Common_ColumnOffset}" Binding="{Binding Offset}" IsReadOnly="True" Width="2*"/>
+                            <DataGridTextColumn Header="{loc:Loc Common_ColumnLength}" Binding="{Binding Length}" IsReadOnly="True" Width="2*"/>
+                            <DataGridTextColumn Header="{loc:Loc Common_ColumnName}" Binding="{Binding Name}" IsReadOnly="True" Width="3*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <c:LogCard/>
+
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

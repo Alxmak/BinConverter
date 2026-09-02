@@ -188,7 +188,7 @@ namespace TweakFirmware.Core.Operations
                 {
                     outputPath = FileConflictHelper.SuggestAlternativeFilePath(outputPath);
                     pathChanged = true;
-                    log(Strings.Format("Merge_ConflictLog", outputPath));
+                    log(Strings.Format("Common_FileConflictLog", outputPath));
                 }
             }
 
@@ -250,7 +250,7 @@ namespace TweakFirmware.Core.Operations
                     request.AnyChainFilePath, outputPath, progress, log, ct, createdFiles, pauseController));
 
                 log(Strings.Format("Merge_FinishedLog", result.PartsUsed, result.TotalBytes));
-                log(Strings.Format("Merge_ResultHashLog", result.MergedHash));
+                log(Strings.Format("Common_ResultHashLog", result.MergedHash));
 
                 MergeStatus status = MergeStatus.Completed;
                 if (request.HasExpectedHash)

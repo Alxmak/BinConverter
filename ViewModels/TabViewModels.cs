@@ -26,6 +26,7 @@ namespace TweakFirmware.ViewModels
         public static MergeViewModel MergeTab { get; } = new();
         public static VerifyViewModel VerifyTab { get; } = new();
         public static ExtractViewModel ExtractTab { get; } = new();
+        public static PartitionMergeViewModel PartitionMergeTab { get; } = new();
         public static AboutViewModel AboutTab { get; } = new();
     }
 }

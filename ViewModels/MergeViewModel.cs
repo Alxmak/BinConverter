@@ -258,7 +258,7 @@ namespace TweakFirmware.ViewModels
             // можно, но человеку надо знать об этом до запуска, а не после.
             if (probe.UnevenPartNumber is int uneven)
                 ChainInfoText += "\n" + Strings.Format("Merge_UnevenPartsWarning", uneven);
-            ResultSizeText = Strings.Format("Merge_ResultSizeLine", SizeFormatHelper.Format(probe.TotalBytes));
+            ResultSizeText = Strings.Format("Common_ResultSizeLine", SizeFormatHelper.Format(probe.TotalBytes));
 
             if (_outputPathIsAuto)
                 SetOutputPathAuto(Path.Combine(OutputPathSettingsService.GetMergeFolder(), probe.SuggestedOutputFileName));
@@ -344,7 +344,7 @@ namespace TweakFirmware.ViewModels
                     break;
 
                 case MergeStatus.OutputPathNotSpecified:
-                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Merge_SpecifyOutputFile"));
+                    await DialogService.ShowWarningAsync(Strings.Get("Common_CannotStartTitle"), Strings.Get("Common_SpecifyOutputFile"));
                     break;
 
                 // Самая дорогая из ошибок, которые программа может допустить: сборка
@@ -378,7 +378,7 @@ namespace TweakFirmware.ViewModels
 
                 case MergeStatus.NotEnoughSpace:
                     await DialogService.ShowWarningAsync(Strings.Get("Common_LowSpaceTitle"),
-                        Strings.Format("Merge_LowSpaceMessage",
+                        Strings.Format("Common_LowSpaceMessage",
                             SizeFormatHelper.Format(outcome.ChainSizeBytes),
                             SizeFormatHelper.Format(outcome.SpaceCheck.RequiredBytes),
                             SizeFormatHelper.Format(outcome.SpaceCheck.AvailableBytes),
@@ -405,7 +405,7 @@ namespace TweakFirmware.ViewModels
                     // не «подтверждён», а просто «хэш собранного файла».
                     await DialogService.ShowInfoWithHashesAsync(Strings.Get("Common_DoneTitle"),
                         Strings.Format("Merge_DoneMessage", outcome.PartsUsed, outcome.TotalBytes),
-                        new DialogService.HashRow(Strings.Get("Merge_HashResultLabel"), outcome.MergedHash));
+                        new DialogService.HashRow(Strings.Get("Common_HashResultLabel"), outcome.MergedHash));
                     OpenResultFolder(outcome.OutputPath);
                     break;
 
@@ -415,7 +415,7 @@ namespace TweakFirmware.ViewModels
 
                 case MergeStatus.Failed:
                     await DialogService.ShowErrorAsync(Strings.Get("Common_Error"), outcome.DiskFull
-                        ? Strings.Get("Merge_DiskFullMessage")
+                        ? Strings.Get("Common_DiskFullMessage")
                         : Strings.Format("Merge_ErrorMessage", outcome.ErrorMessage));
                     break;
             }
