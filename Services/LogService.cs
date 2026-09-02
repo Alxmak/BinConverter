@@ -6,6 +6,26 @@ using TweakFirmware.Core;
 namespace TweakFirmware.Services
 {
     /// <summary>
+    /// Одна запись журнала.
+    ///
+    /// Отдельный тип, а не просто строка, и это не украшательство. Список на экране
+    /// сравнивает элементы, когда его просят найти выделенное или показать нужный
+    /// элемент, — а строки сравниваются по содержимому. Записи журнала повторяются
+    /// дословно (отметка времени идёт с точностью до секунды, а сообщения бывают
+    /// одинаковыми), и выделив одну строку, человек получал в буфере обмена и её
+    /// близнеца. У объекта же каждая запись отличается от любой другой сама по себе.
+    /// </summary>
+    public sealed class LogLine
+    {
+        public LogLine(string text) => Text = text;
+
+        public string Text { get; }
+
+        /// <summary>На случай, если запись где-то попадёт в строку помимо привязки.</summary>
+        public override string ToString() => Text;
+    }
+
+    /// <summary>
     /// Единственный на всё приложение источник строк журнала. Подписка на AppLogger
     /// происходит один раз (статический конструктор) — поэтому история не пропадает
     /// при переключении между разделами и хранит всё с момента запуска программы.
@@ -20,7 +40,7 @@ namespace TweakFirmware.Services
         /// </summary>
         public const int MaxVisibleLines = 5000;
 
-        public static ObservableCollection<string> Lines { get; } = new();
+        public static ObservableCollection<LogLine> Lines { get; } = new();
 
         static LogService()
         {
@@ -38,7 +58,7 @@ namespace TweakFirmware.Services
 
         private static void Append(string line)
         {
-            Lines.Add(line);
+            Lines.Add(new LogLine(line));
 
             if (Lines.Count <= MaxVisibleLines + TrimBatchSize) return;
 

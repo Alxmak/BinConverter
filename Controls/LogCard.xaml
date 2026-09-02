@@ -75,7 +75,7 @@
                      и хэши, и раньше их конец было просто не увидеть. -->
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding}" TextWrapping="Wrap"
+                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

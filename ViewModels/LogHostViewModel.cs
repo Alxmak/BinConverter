@@ -21,7 +21,7 @@ namespace TweakFirmware.ViewModels
     public abstract partial class LogHostViewModel : LocalizedViewModel
     {
         /// <summary>Проброс общей коллекции, а не своя копия на каждую вкладку.</summary>
-        public ObservableCollection<string> LogLines => LogService.Lines;
+        public ObservableCollection<LogLine> LogLines => LogService.Lines;
 
         [RelayCommand]
         private void OpenLog() => AppLogger.OpenLogFile();
