@@ -10,7 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using TweakFirmware.Core;
-using TweakFirmware.Core.Dump;
+using TweakFirmware.Core.Analysis;
 using TweakFirmware.Core.Localization;
 using TweakFirmware.Core.Operations;
 using TweakFirmware.Core.Partitions;
