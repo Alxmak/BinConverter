@@ -209,6 +209,8 @@ namespace TweakFirmware.ViewModels
 
             OperationLockService.Instance.OperationFinished();
 
+            // Dispose до обнуления: и здесь, и в CancelNow мы в потоке интерфейса,
+            // поэтому «отменить уже освобождённый» невозможно.
             Cts?.Dispose();
             Cts = null;
         }

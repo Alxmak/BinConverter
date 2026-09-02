@@ -268,6 +268,11 @@ namespace TweakFirmware.ViewModels
         /// программы (<see cref="DialogService"/>), а не системный MessageBox.</summary>
         public async Task SetSourceAsync(string path)
         {
+            // Что стояло в поле, когда файл выбрали или перетащили: проверка существования
+            // идёт в фоне и на мёртвом сетевом пути ждёт таймаута секундами — за это время
+            // в поле могли набрать своё, и затирать набранное нельзя.
+            string before = SourcePath;
+
             // Существование файла тоже спрашиваем в фоне: путь сюда приходит из «Обзора»
             // и из перетаскивания, а перетащить можно и ярлык сетевой папки, которой
             // сейчас нет, — и тогда ответа приходится ждать секундами.
@@ -277,6 +282,8 @@ namespace TweakFirmware.ViewModels
                     Strings.Format("Common_FileNotFoundMessage", path));
                 return;
             }
+
+            if (!string.Equals(before, SourcePath, StringComparison.Ordinal)) return;
 
             SourcePath = path;
         }
@@ -484,7 +491,12 @@ namespace TweakFirmware.ViewModels
             // Здесь это было единственное синхронное обращение: на отключившемся сетевом
             // диске оно вешало окно на таймаут файловой системы — прямо по нажатию «Начать»,
             // то есть в момент, когда программа должна выглядеть особенно живой.
-            long sourceSize = await Task.Run(() => FileProbe.Measure(SourcePath).SizeBytes);
+            //
+            // Путь берём из заявки, а не из живого свойства: поле ещё не заблокировано
+            // (занятость включает сама операция, когда пройдут проверки), а привязка
+            // обновляет путь на каждую нажатую клавишу. Иначе резался бы один файл,
+            // а полоса прогресса и оценка времени считались бы от размера другого.
+            long sourceSize = await Task.Run(() => FileProbe.Measure(request.SourcePath).SizeBytes);
             long totalWorkBytes = sourceSize * (VerifyHashAfter ? 2 : 1);
 
             var splitProgress = new Progress<SplitProgress>(p =>

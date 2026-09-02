@@ -155,14 +155,19 @@ namespace TweakFirmware.ViewModels
         /// о ненайденном файле идёт через <see cref="DialogService"/>.</summary>
         public async Task SetSourceAsync(string path)
         {
-            // В фоне по той же причине, что и в «Конвертировании»: перетащенный путь
-            // может вести на сетевую папку, которой сейчас нет.
+            // То же, что в «Конвертировании»: проверка идёт в фоне (перетащенный путь может
+            // вести на сетевую папку, которой сейчас нет, и ответа приходится ждать
+            // секундами), а набранное за это время в поле затирать нельзя.
+            string before = SourcePath;
+
             if (!await Task.Run(() => File.Exists(path)))
             {
                 await DialogService.ShowWarningAsync(Strings.Get("Common_FileNotFoundTitle"),
                     Strings.Format("Common_FileNotFoundMessage", path));
                 return;
             }
+
+            if (!string.Equals(before, SourcePath, StringComparison.Ordinal)) return;
 
             SourcePath = path;
         }

@@ -406,16 +406,26 @@ namespace TweakFirmware.ViewModels
         [RelayCommand(CanExecute = nameof(CanAnalyse))]
         private async Task AnalyseAsync()
         {
+            // Путь снимаем один раз, и дальше всё — осмотр, разбор, запись в журнал —
+            // идёт по нему, а не по живому свойству. Занятость включается ниже, то есть
+            // поле пути пока не заблокировано, а привязка обновляет его на каждую нажатую
+            // клавишу; на мёртвом сетевом пути, где осмотр ждёт таймаута файловой системы
+            // секундами, времени напечатать в поле другое — сколько угодно.
+            string path = SourcePath;
+
             // Один поход на диск на оба вопроса — «есть ли файл» и «какой он», — и тот
-            // в фоне: на отключившемся сетевом диске синхронный ответ ждёт таймаута
-            // файловой системы, а окно всё это время не отвечает. Остальной осмотр
-            // в этой вкладке давно так и делается.
-            var probe = await Task.Run(() => FileProbe.Measure(SourcePath));
+            // в фоне: синхронный ответ вешал бы окно на тот самый таймаут. Остальной
+            // осмотр в этой вкладке давно так и делается.
+            var probe = await Task.Run(() => FileProbe.Measure(path));
+
+            // Пока смотрели, в поле мог оказаться уже другой файл. Разбирать тот, что был,
+            // нельзя: на экране остался бы один путь, а таблица разделов — от другого.
+            if (!string.Equals(path, SourcePath, StringComparison.Ordinal)) return;
 
             if (!probe.Exists)
             {
                 await DialogService.ShowErrorAsync(
-                    Strings.Get("Common_FileNotFoundTitle"), Strings.Format("Common_FileNotFoundMessage", SourcePath));
+                    Strings.Get("Common_FileNotFoundTitle"), Strings.Format("Common_FileNotFoundMessage", path));
                 return;
             }
 
@@ -433,10 +443,10 @@ namespace TweakFirmware.ViewModels
 
             try
             {
-                AppLogger.Log(Strings.Format("Extract_AnalysisStarted", SourcePath));
+                AppLogger.Log(Strings.Format("Extract_AnalysisStarted", path));
 
                 var result = await Task.Run(() => PartitionAnalysisOperation.RunAsync(
-                    new PartitionAnalysisRequest { SourcePath = SourcePath }, this, ct));
+                    new PartitionAnalysisRequest { SourcePath = path }, this, ct));
 
                 // Неопознанная разметка — тоже красная полоса: разбор гигабайтного дампа
                 // идёт минутами, и «ничего не нашлось» надо увидеть, не разворачивая окно.
